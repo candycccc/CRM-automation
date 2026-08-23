@@ -1,0 +1,1691 @@
+<title>WeQuote CRM Phase 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* Single committed light theme — this document is a print-style specification
+   and deliberately renders on white in every viewer theme. Every colour is
+   painted explicitly so nothing is inherited from the host. */
+:root {
+  color-scheme: light;
+
+  --paper:       #FFFFFF;
+  --ground:      #F4F6F8;
+  --sunken:      #ECEFF3;
+  --ink:         #11151B;
+  --ink-2:       #3A4350;
+  --ink-3:       #697485;
+  --rule:        #DBE0E8;
+  --rule-strong: #B9C1CE;
+
+  --brand:       #FF4655;
+  --brand-deep:  #C0303D;
+
+  --sys:         #1B2A41;
+  --sys-soft:    #E8EDF5;
+  --cust:        #0F7A64;
+  --cust-soft:   #DDF3EE;
+  --open:        #8A5A00;
+  --open-soft:   #FCF0D8;
+  --stop:        #862E90;
+  --stop-soft:   #F5E7F6;
+  --p2:          #2A5FA8;
+  --p2-soft:     #E6EEFA;
+  --p3:          #6B4FA8;
+  --p3-soft:     #EDE8F8;
+
+  --shadow: 0 1px 2px rgba(17,21,27,.05), 0 10px 26px -14px rgba(17,21,27,.18);
+  --measure: 70ch;
+  --wide: 62rem;
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--ground); }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .sans { font-family: "Libre Franklin", "Helvetica Neue", Arial, sans-serif; }
+.mono, .pill, .eyebrow, .kv dt, caption, th, .cap, .num, .rail__label, .cover__k { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
+
+/* ---------- page frame ---------- */
+
+.sheet {
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: 0 1.25rem 5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+@media (min-width: 1140px) {
+  .sheet {
+    grid-template-columns: 15.5rem minmax(0, 1fr);
+    column-gap: 4rem;
+    padding: 0 2.5rem 6rem;
+  }
+}
+
+/* ---------- cover ---------- */
+
+.cover {
+  grid-column: 1 / -1;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-top: 4px solid var(--brand);
+  border-radius: 4px;
+  margin: 1.75rem 0 2.5rem;
+  padding: 2.5rem 2rem 2rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 800px) { .cover { padding: 3.25rem 3rem 2.25rem; } }
+
+.cover__top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.25rem;
+  align-items: baseline;
+  font-size: .6875rem;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-family: "IBM Plex Mono", monospace;
+}
+.cover__top b { color: var(--brand); font-weight: 600; }
+
+.cover h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  line-height: 1.03;
+  letter-spacing: -.028em;
+  font-weight: 800;
+  text-wrap: balance;
+  max-width: 26ch;
+}
+
+.cover__sub {
+  margin: 0;
+  max-width: 54ch;
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 1rem 1.5rem;
+  margin: 0;
+  border-top: 1px solid var(--rule);
+  padding-top: 1.25rem;
+}
+.kv > div { display: flex; flex-direction: column; gap: .1875rem; }
+.kv dt { font-size: .625rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+.kv dd { margin: 0; font-family: "Libre Franklin", sans-serif; font-size: .875rem; font-weight: 600; line-height: 1.35; }
+
+/* ---------- evidence pills ---------- */
+
+.pill {
+  display: inline-block;
+  font-size: .5625rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: .1875rem .4375rem;
+  border-radius: 2px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.pill--now  { background: var(--sys-soft);  color: var(--sys); }
+.pill--cur  { background: var(--sunken);    color: var(--ink-2); }
+.pill--p2   { background: var(--p2-soft);   color: var(--p2); }
+.pill--p3   { background: var(--p3-soft);   color: var(--p3); }
+.pill--open { background: var(--open-soft); color: var(--open); }
+.pill--stop { background: var(--stop-soft); color: var(--stop); }
+.pill--cust { background: var(--cust-soft); color: var(--cust); }
+
+.pillkey {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem .875rem;
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: .875rem 1rem;
+  margin-bottom: 2.5rem;
+  font-size: .8125rem;
+}
+.pillkey > span:first-child {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .625rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ---------- contents rail ---------- */
+
+.rail { display: none; }
+@media (min-width: 1140px) {
+  .rail {
+    display: block;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: .5rem 0 3rem;
+  }
+}
+.rail__label { font-size: .625rem; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); padding-bottom: .625rem; border-bottom: 1px solid var(--rule); margin-bottom: .625rem; }
+.rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+.rail a {
+  display: grid; grid-template-columns: 1.5rem 1fr; gap: .4375rem;
+  padding: .28125rem .375rem; border-radius: 3px;
+  font-family: "Libre Franklin", sans-serif; font-size: .78125rem; line-height: 1.3;
+  color: var(--ink-2); text-decoration: none;
+}
+.rail a:hover { background: var(--sunken); color: var(--ink); }
+.rail a:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.rail a > span:first-child { color: var(--ink-3); font-family: "IBM Plex Mono", monospace; font-size: .6875rem; }
+.rail .grp { font-family: "IBM Plex Mono", monospace; font-size: .5625rem; letter-spacing: .11em; text-transform: uppercase; color: var(--ink-3); padding: .875rem .375rem .25rem; }
+
+/* ---------- sections ---------- */
+
+main { min-width: 0; }
+
+section { padding-top: 3rem; scroll-margin-top: 1rem; }
+
+.eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: .625rem; font-size: .625rem; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); margin-bottom: .625rem; }
+.eyebrow .n { color: var(--brand); font-weight: 600; }
+
+h2 { margin: 0 0 .875rem; font-size: clamp(1.4375rem, 2.8vw, 1.875rem); line-height: 1.14; letter-spacing: -.018em; font-weight: 700; max-width: 32ch; text-wrap: balance; }
+h3 { margin: 2rem 0 .5rem; font-size: 1.0625rem; font-weight: 700; line-height: 1.3; letter-spacing: -.006em; max-width: 40ch; text-wrap: balance; }
+h4 { margin: 1.5rem 0 .375rem; font-size: .9375rem; font-weight: 700; }
+
+p, ul, ol { max-width: var(--measure); }
+p { margin: 0 0 1rem; }
+.lede { font-size: 1.125rem; line-height: 1.55; color: var(--ink-2); max-width: 54ch; }
+ul, ol { padding-left: 1.1875rem; margin: 0 0 1rem; }
+li { margin-bottom: .375rem; }
+li::marker { color: var(--ink-3); }
+strong { font-weight: 600; }
+code {
+  font-family: "IBM Plex Mono", monospace; font-size: .8125em;
+  background: var(--sunken); padding: .0625rem .25rem; border-radius: 2px;
+}
+
+hr.rule { border: 0; border-top: 1px solid var(--rule); margin: 2.5rem 0 0; max-width: var(--wide); }
+
+/* ---------- flow line ---------- */
+
+.flowhold { max-width: var(--wide); overflow-x: auto; margin: 1.5rem 0; padding-bottom: .375rem; }
+.flow { display: flex; align-items: stretch; gap: .3125rem; min-width: max-content; }
+.flow__n {
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 3px;
+  padding: .5625rem .75rem; display: flex; flex-direction: column; gap: .1875rem;
+  min-width: 7.5rem;
+}
+.flow__n b { font-family: "Libre Franklin", sans-serif; font-size: .8125rem; font-weight: 600; line-height: 1.2; }
+.flow__n span { font-family: "IBM Plex Mono", monospace; font-size: .5625rem; color: var(--ink-3); line-height: 1.35; }
+.flow__a { display: flex; align-items: center; color: var(--rule-strong); font-size: .875rem; }
+
+/* ---------- panel / callouts ---------- */
+
+.panel {
+  max-width: var(--wide); background: var(--paper);
+  border: 1px solid var(--rule); border-radius: 4px;
+  padding: 1.25rem 1.375rem; margin: 1.5rem 0;
+  display: flex; flex-direction: column; gap: .75rem;
+}
+.cap { font-size: .625rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+.panel p, .panel ul, .panel ol { max-width: 64ch; margin: 0; }
+
+.flag {
+  max-width: var(--wide); margin: 1.5rem 0;
+  border: 1px solid var(--rule); border-left: 3px solid var(--open);
+  background: var(--open-soft); border-radius: 0 4px 4px 0;
+  padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: .4375rem;
+}
+.flag--stop { border-left-color: var(--stop); background: var(--stop-soft); }
+.flag__t { font-family: "Libre Franklin", sans-serif; font-weight: 700; font-size: .8125rem; color: var(--open); display: flex; align-items: center; gap: .5rem; }
+.flag--stop .flag__t { color: var(--stop); }
+.flag p { margin: 0; max-width: 64ch; font-size: .96875rem; }
+
+/* ---------- tables ---------- */
+
+.tbl { max-width: var(--wide); overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); }
+table { width: 100%; border-collapse: collapse; font-family: "Libre Franklin", sans-serif; font-size: .84375rem; min-width: 36rem; }
+caption { caption-side: top; text-align: left; font-size: .625rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); padding: .8125rem 1rem .5625rem; border-bottom: 1px solid var(--rule); }
+th { text-align: left; font-weight: 600; font-size: .625rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding: .6875rem 1rem; border-bottom: 1px solid var(--rule-strong); vertical-align: bottom; }
+td { padding: .75rem 1rem; border-bottom: 1px solid var(--rule); vertical-align: top; line-height: 1.45; }
+tbody tr:last-child td { border-bottom: 0; }
+td.num { width: 2.25rem; color: var(--ink-3); font-size: .75rem; font-variant-numeric: tabular-nums; }
+td.res { font-weight: 600; white-space: nowrap; }
+td code, th code { font-size: .78125rem; }
+
+/* ---------- two-column split ---------- */
+
+.two { display: grid; gap: .75rem; max-width: var(--wide); margin: 1.5rem 0; grid-template-columns: 1fr; }
+@media (min-width: 720px) { .two { grid-template-columns: 1fr 1fr; } }
+
+.box { border-radius: 4px; padding: 1.125rem 1.25rem 1.25rem; display: flex; flex-direction: column; gap: .625rem; border: 1px solid var(--rule); background: var(--paper); }
+.box--cust { background: var(--cust-soft); border-color: #A9DACF; }
+.box--sys  { background: var(--sys-soft);  border-color: #B7C6DC; }
+.box--stop { background: var(--stop-soft); border-color: #DDB4E1; }
+.box h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+.box--cust h4 { color: var(--cust); }
+.box--sys h4  { color: var(--sys); }
+.box--stop h4 { color: var(--stop); }
+.box ul { margin: 0; padding-left: 1rem; max-width: none; }
+.box li { font-size: .90625rem; line-height: 1.5; }
+
+/* ---------- object cards ---------- */
+
+.objs { display: grid; gap: .75rem; max-width: var(--wide); margin: 1.5rem 0; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .objs { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 980px) { .objs { grid-template-columns: repeat(3, 1fr); } }
+
+.obj { background: var(--paper); border: 1px solid var(--rule); border-top: 3px solid var(--rule-strong); border-radius: 4px; padding: 1rem 1.0625rem 1.125rem; display: flex; flex-direction: column; gap: .5625rem; }
+.obj--a { border-top-color: var(--cust); }
+.obj--b { border-top-color: var(--ink-3); }
+.obj--c { border-top-color: var(--sys); }
+.obj--d { border-top-color: var(--brand); }
+.obj h4 { margin: 0; font-size: 1.0625rem; font-weight: 700; letter-spacing: -.01em; }
+.obj > p { margin: 0; font-size: .90625rem; line-height: 1.5; color: var(--ink-2); max-width: none; }
+.obj ul { margin: 0; padding-left: 1rem; max-width: none; border-top: 1px solid var(--rule); padding-top: .625rem; }
+.obj li { font-family: "Libre Franklin", sans-serif; font-size: .8125rem; line-height: 1.45; margin-bottom: .3125rem; }
+
+/* ---------- stage strip ---------- */
+
+.striphold { max-width: var(--wide); overflow-x: auto; margin: 1.5rem 0 .625rem; padding-bottom: .375rem; }
+.strip { display: flex; gap: .3125rem; min-width: 46rem; }
+.stg { flex: 1 1 0; background: var(--paper); border: 1px solid var(--rule); border-top: 3px solid var(--sys); border-radius: 3px; padding: .625rem .6875rem .75rem; display: flex; flex-direction: column; gap: .3125rem; }
+.stg--cond { border-top-style: dashed; }
+.stg--won  { border-top-color: var(--cust); }
+.stg--lost { border-top-color: var(--stop); }
+.stg b { font-family: "Libre Franklin", sans-serif; font-size: .84375rem; font-weight: 700; line-height: 1.2; }
+.stg span { font-family: "IBM Plex Mono", monospace; font-size: .5625rem; line-height: 1.4; color: var(--ink-3); }
+
+.legend { display: flex; flex-wrap: wrap; gap: .875rem; max-width: var(--wide); font-family: "IBM Plex Mono", monospace; font-size: .625rem; color: var(--ink-3); margin-bottom: 1.5rem; }
+.legend span { display: flex; align-items: center; gap: .375rem; }
+.legend i { width: 1.125rem; height: 3px; border-radius: 2px; display: block; }
+
+/* ---------- worked example ---------- */
+
+.ex { max-width: var(--wide); margin: 1.5rem 0; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; background: var(--paper); }
+.ex__h { padding: .875rem 1.125rem; border-bottom: 1px solid var(--rule); background: var(--sunken); display: flex; flex-wrap: wrap; gap: .375rem 1rem; align-items: baseline; }
+.ex__h b { font-family: "Libre Franklin", sans-serif; font-size: .96875rem; }
+.ex__h span { font-family: "IBM Plex Mono", monospace; font-size: .625rem; color: var(--ink-3); }
+.ex__b { padding: 1.125rem; display: flex; flex-direction: column; gap: .875rem; }
+.grp3 { display: grid; grid-template-columns: 1fr; gap: .5rem; }
+@media (min-width: 640px) { .grp3 { grid-template-columns: repeat(3, 1fr); } }
+.qc { border: 1px solid var(--rule); border-left: 3px solid var(--rule-strong); border-radius: 3px; padding: .625rem .75rem; display: flex; flex-direction: column; gap: .1875rem; background: var(--ground); }
+.qc--in { border-left-color: var(--cust); }
+.qc--out { border-left-color: var(--ink-3); }
+.qc em { font-family: "IBM Plex Mono", monospace; font-size: .625rem; color: var(--ink-3); font-style: normal; }
+.qc b { font-family: "Libre Franklin", sans-serif; font-size: .84375rem; }
+.qc span { font-size: .78125rem; color: var(--ink-2); line-height: 1.4; }
+.verd { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; padding: .8125rem 1rem; background: var(--sys-soft); border-radius: 3px; font-family: "Libre Franklin", sans-serif; font-size: .90625rem; }
+.verd b { font-size: 1rem; color: var(--sys); }
+
+/* ---------- phases ---------- */
+
+.phs { display: flex; flex-direction: column; gap: .5rem; max-width: var(--wide); margin: 1.5rem 0; }
+.ph { display: grid; grid-template-columns: 1fr; gap: .5rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 1rem 1.125rem; }
+@media (min-width: 780px) { .ph { grid-template-columns: 9rem 1fr 1fr; column-gap: 1.5rem; } }
+.ph--1 { border-left: 3px solid var(--brand); }
+.ph--2 { border-left: 3px solid var(--p2); }
+.ph--3 { border-left: 3px solid var(--p3); }
+.ph__id { display: flex; flex-direction: column; gap: .1875rem; }
+.ph__id em { font-family: "IBM Plex Mono", monospace; font-size: .5625rem; letter-spacing: .11em; text-transform: uppercase; font-style: normal; color: var(--ink-3); }
+.ph--1 .ph__id em { color: var(--brand); }
+.ph--2 .ph__id em { color: var(--p2); }
+.ph--3 .ph__id em { color: var(--p3); }
+.ph__id b { font-family: "Libre Franklin", sans-serif; font-size: .96875rem; font-weight: 700; line-height: 1.2; }
+.ph__c { display: flex; flex-direction: column; gap: .1875rem; }
+.ph__c em { font-family: "IBM Plex Mono", monospace; font-size: .5625rem; letter-spacing: .1em; text-transform: uppercase; font-style: normal; color: var(--ink-3); }
+.ph__c span { font-size: .90625rem; line-height: 1.5; }
+
+/* ---------- decision cards ---------- */
+
+.decs { display: flex; flex-direction: column; gap: .625rem; max-width: var(--wide); margin: 1.5rem 0; }
+.dec { background: var(--paper); border: 1px solid var(--rule); border-left: 3px solid var(--open); border-radius: 0 4px 4px 0; padding: 1rem 1.125rem; display: flex; flex-direction: column; gap: .4375rem; }
+.dec--hot { border-left-color: var(--brand); }
+.dec__h { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; }
+.dec__h em { font-family: "IBM Plex Mono", monospace; font-size: .625rem; color: var(--ink-3); font-style: normal; }
+.dec__h b { font-family: "Libre Franklin", sans-serif; font-size: .96875rem; font-weight: 700; line-height: 1.3; }
+.dec p { margin: 0; max-width: 66ch; font-size: .90625rem; }
+.dec__r { font-size: .90625rem; }
+.dec__r em { font-family: "Libre Franklin", sans-serif; font-size: .625rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); display: block; font-style: normal; margin-bottom: .0625rem; }
+
+/* ---------- colophon ---------- */
+
+.colo { max-width: var(--wide); margin-top: 3.5rem; padding-top: 1.25rem; border-top: 2px solid var(--ink); display: flex; flex-wrap: wrap; gap: 1.25rem 2.5rem; }
+.colo div { display: flex; flex-direction: column; gap: .1875rem; }
+.colo em { font-family: "IBM Plex Mono", monospace; font-size: .625rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); font-style: normal; }
+.colo span { font-family: "Libre Franklin", sans-serif; font-size: .84375rem; font-weight: 500; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="sheet">
+
+  <header class="cover">
+    <div class="cover__top"><b>WeQuote</b><span>CRM Automation</span><span>Product Requirements Document</span></div>
+    <h1>A pipeline that reports the sale, not the salesperson</h1>
+    <p class="cover__sub">Phase 1 introduces Leads, Deals and Automations in front of quoting. The stage of every Deal is derived from its quotes rather than typed in, so the pipeline and the invoice ledger can never disagree.</p>
+    <dl class="kv">
+      <div><dt>Version</dt><dd>3 · Consolidated</dd></div>
+      <div><dt>Status</dt><dd>Draft for sign-off</dd></div>
+      <div><dt>Audience</dt><dd>CTO · Product · Design · Engineering</dd></div>
+      <div><dt>Phase 1</dt><dd>Committed scope</dd></div>
+      <div><dt>Conflicts to resolve</dt><dd>Ten (§13)</dd></div>
+      <div><dt>Decisions open</dt><dd>Eight (§18)</dd></div>
+    </dl>
+  </header>
+
+  <div class="pillkey">
+    <span>Evidence labels</span>
+    <span class="pill pill--cur">Current WeQuote UI</span>
+    <span class="pill pill--now">Phase 1 committed</span>
+    <span class="pill pill--p2">Phase 2 direction</span>
+    <span class="pill pill--p3">Phase 3 direction</span>
+    <span class="pill pill--open">Open decision</span>
+    <span class="pill pill--stop">Conflict</span>
+  </div>
+
+  <nav class="rail" aria-label="Contents">
+    <div class="rail__label">Contents</div>
+    <ol>
+      <li class="grp">Foundations</li>
+      <li><a href="#s1"><span>1</span><span>Executive decision</span></a></li>
+      <li><a href="#s2"><span>2</span><span>Roadmap &amp; boundaries</span></a></li>
+      <li><a href="#s3"><span>3</span><span>Today versus target</span></a></li>
+      <li><a href="#s4"><span>4</span><span>Object model</span></a></li>
+      <li class="grp">Phase 1 logic</li>
+      <li><a href="#s5"><span>5</span><span>Lead lifecycle</span></a></li>
+      <li><a href="#s6"><span>6</span><span>Company &amp; enrolment</span></a></li>
+      <li><a href="#s7"><span>7</span><span>Quote event to Deal stage</span></a></li>
+      <li><a href="#s8"><span>8</span><span>Scope groups &amp; value</span></a></li>
+      <li class="grp">Automation</li>
+      <li><a href="#s9"><span>9</span><span>Creation journey</span></a></li>
+      <li><a href="#s10"><span>10</span><span>Block catalogue</span></a></li>
+      <li><a href="#s11"><span>11</span><span>Draft, test, publish</span></a></li>
+      <li><a href="#s12"><span>12</span><span>Required-work gate</span></a></li>
+      <li class="grp">Reality check</li>
+      <li><a href="#s13"><span>13</span><span>Conflict register</span></a></li>
+      <li><a href="#s14"><span>14</span><span>What is wired today</span></a></li>
+      <li><a href="#s15"><span>15</span><span>Existing integrations</span></a></li>
+      <li class="grp">Later phases</li>
+      <li><a href="#s16"><span>16</span><span>Phase 2 contract</span></a></li>
+      <li><a href="#s17"><span>17</span><span>Phase 3 contract</span></a></li>
+      <li class="grp">Delivery</li>
+      <li><a href="#s18"><span>18</span><span>Open decisions</span></a></li>
+      <li><a href="#s19"><span>19</span><span>Requirements</span></a></li>
+      <li><a href="#s20"><span>20</span><span>Acceptance criteria</span></a></li>
+      <li><a href="#s21"><span>21</span><span>Risks &amp; sign-off</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ==================== 1 ==================== -->
+    <section id="s1">
+      <div class="eyebrow"><span class="n">Section 1</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>Executive decision</h2>
+      <p class="lede">WeQuote CRM separates two kinds of logic, and the separation is the product.</p>
+
+      <div class="two">
+        <div class="box box--sys">
+          <h4>Protected — owned by WeQuote</h4>
+          <ul>
+            <li>Quote lifecycle progression</li>
+            <li>Which quote event derives which Deal stage</li>
+            <li>The meaning of Won, Lost, Archived and Expired</li>
+            <li>Precedence when several quotes disagree</li>
+          </ul>
+        </div>
+        <div class="box box--cust">
+          <h4>Editable — created by the customer</h4>
+          <ul>
+            <li>Automations: triggers, conditions, actions</li>
+            <li>Which of their companies each Automation serves</li>
+            <li>Notes, meetings, next actions, labels, interests, watchers</li>
+            <li>File requests and required-work checkpoints</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>A customer Automation may <strong>react</strong> to a quote event and <strong>organise work</strong> around a Deal. It may not redefine what a quote status means, approve a quote, simulate sending or acceptance, or write a protected stage directly.</p>
+
+      <p>The protected Phase 1 lifecycle is:</p>
+
+      <div class="flowhold">
+        <div class="flow">
+          <div class="flow__n"><b>Qualified</b><span>no quote yet</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>In Progress</b><span>first quote created</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>In Review</b><span>conditional</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Passed Review</b><span>conditional</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Sent</b><span>issued to client</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Won / Lost</b><span>outcome</span></div>
+        </div>
+      </div>
+
+      <p><code>In Review</code> and <code>Passed Review</code> appear only where Quote Review is enabled. <code>Archived</code> and <code>Expired</code> are derived statuses, not pipeline stages.</p>
+
+      <div class="panel">
+        <div class="cap">Why derive rather than let people type</div>
+        <p>Quote status already drives proposals, invoicing, reporting and the integrations we sell. If a salesperson could set a Deal stage independently, every one of those surfaces would inherit the disagreement. Deriving the pipeline from quotes makes the forecast exactly as trustworthy as the invoice ledger, because it is the same fact read twice.</p>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 2 ==================== -->
+    <section id="s2">
+      <div class="eyebrow"><span class="n">Section 2</span></div>
+      <h2>Roadmap and non-negotiable boundaries</h2>
+      <p class="lede">Three phases, ordered by how much structural control the customer gains — because each handover is harder to reverse than the last.</p>
+
+      <div class="phs">
+        <div class="ph ph--1">
+          <div class="ph__id"><em>Phase 1 · committed</em><b>Fixed lifecycle</b></div>
+          <div class="ph__c"><em>Customer gains</em><span>Automations inside seven fixed stages, from a template or from scratch. Company scope. Draft, test, publish. Required-work checkpoints and file requests.</span></div>
+          <div class="ph__c"><em>System guarantees</em><span>Quote events are the only thing that moves a protected stage. No custom stages. One owning company per Deal.</span></div>
+        </div>
+        <div class="ph ph--2">
+          <div class="ph__id"><em>Phase 2 · direction</em><b>Custom stages</b></div>
+          <div class="ph__c"><em>Customer gains</em><span>Their own stages inserted into five permitted lifecycle gaps. Forecast dashboards and weighted probability. Migration of existing Deals with impact preview.</span></div>
+          <div class="ph__c"><em>System guarantees</em><span>Protected milestones stay fixed. Every custom stage receives the identical core library.</span></div>
+        </div>
+        <div class="ph ph--3">
+          <div class="ph__id"><em>Phase 3 · direction</em><b>Free pipelines</b></div>
+          <div class="ph__c"><em>Customer gains</em><span>Standalone pipelines for processes unrelated to quoting, with manual or explicitly named stage moves.</span></div>
+          <div class="ph__c"><em>System guarantees</em><span>Nothing — deliberately. These pipelines make no claim about sales truth, so a stage name is only ever a label.</span></div>
+        </div>
+      </div>
+
+      <h3>Explicitly out of Phase 1</h3>
+      <ul>
+        <li>Customer-created custom stages</li>
+        <li>Fully custom pipelines</li>
+        <li>Forecast dashboards, weighted probabilities and forecast-specific filtering or sorting</li>
+        <li>Existing-Deal migration and pipeline-wide structural impact preview</li>
+        <li>Public web-to-lead capture forms <span class="pill pill--open">Open decision</span></li>
+      </ul>
+
+      <div class="flag">
+        <div class="flag__t">Why forecasting waits</div>
+        <p>A weighted forecast built on a Deal model that is still settling produces numbers that will be quoted back at us for years. Phase 2 owns forecast so that Phase 1 can change its mind about the Deal without invalidating a board pack.</p>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 3 ==================== -->
+    <section id="s3">
+      <div class="eyebrow"><span class="n">Section 3</span><span class="pill pill--cur">Current WeQuote UI</span></div>
+      <h2>Today versus target</h2>
+      <p class="lede">Nothing in the left column needs building. Nothing in the right column may be described to a customer as already available.</p>
+
+      <div class="two">
+        <div class="box">
+          <h4>Exists today</h4>
+          <ul>
+            <li>Quote states: In Progress, In Review, Passed Review, Sent, Accepted, Complete, Cancelled</li>
+            <li>Expired derived from a sent quote passing its expiry date</li>
+            <li>Quote activity recording viewed, passed review, changes requested and accepted</li>
+            <li>Submit Review, Pass Review, Mark as Sent, Mark as Accepted as trusted operations</li>
+            <li>Trading Name chosen per quote, with its own logo, addresses and VAT number</li>
+            <li>Approval thresholds by quote value and discount percentage</li>
+            <li>Customer records, contacts and a customer merge tool</li>
+            <li>Notes and documents stored as a name plus a link</li>
+          </ul>
+        </div>
+        <div class="box box--sys">
+          <h4>New in Phase 1</h4>
+          <ul>
+            <li>Lead, and the Lead inbox</li>
+            <li>Deal and Deal stage</li>
+            <li>Qualified, Won, Lost outcomes and Archived status</li>
+            <li>Deal Next Action, Labels, Interests, Watchers</li>
+            <li>Expected Close Date</li>
+            <li>CRM meeting and site-visit activity</li>
+            <li>Company scope for Automations</li>
+            <li>Request file, required upload, reminder and completion state</li>
+            <li>Create or link a related quote from a Deal</li>
+            <li>Multi-quote resolver and the sent-card engagement count</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flag">
+        <div class="flag__t">Terminology that will cause trouble</div>
+        <p>The existing <strong>Trading Name</strong> is not automatically the same entity as the new CRM <strong>Owning Company</strong>. Trading Name already does two jobs — it decides what appears on an invoice, and it feeds an accounting breakdown. Making it a third thing needs an explicit decision, not an assumption. See §18 · D4.</p>
+      </div>
+
+      <p>Two further pieces of vocabulary need holding apart. The existing Sales Overview already groups accepted and complete quotes as "Won" and shows a proposal seen status; the Phase 2 forecast view is a separate thing and this document does not relabel Sales Overview as a CRM forecast. And the existing notes-and-documents feature is not the Phase 1 file-request model, which adds a named request, a required upload, a reminder and a completion state.</p>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 4 ==================== -->
+    <section id="s4">
+      <div class="eyebrow"><span class="n">Section 4</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>Object model</h2>
+      <p class="lede">Six objects. Each boundary exists because something real changes at it.</p>
+
+      <div class="flowhold">
+        <div class="flow">
+          <div class="flow__n"><b>Lead</b><span>unqualified</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Deal</b><span>owns the stage</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Quote</b><span>priced work</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Accepted</b><span>won</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Project</b><span>delivery</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Invoice</b><span>billing</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Paid</b><span>cash</span></div>
+        </div>
+      </div>
+
+      <div class="objs">
+        <article class="obj obj--a">
+          <h4>Lead</h4>
+          <p>An unqualified opportunity, sitting in the Lead inbox.</p>
+          <ul>
+            <li>Created manually, from a form, or by import</li>
+            <li>Creating one creates or links a Customer in the same operation</li>
+            <li>Duplicate matching must let the user attach to an existing Customer</li>
+            <li>Holds title, source, estimated value, owner, customer, contacts, labels, interests, notes</li>
+            <li>Converted or discarded; discarding requires a reason</li>
+            <li>A converted Lead becomes read-only and stays in history</li>
+          </ul>
+        </article>
+        <article class="obj obj--b">
+          <h4>Customer</h4>
+          <p>An organisation or an individual.</p>
+          <ul>
+            <li>The Lead flow captures organisation and contact person separately</li>
+            <li>A new customer is flagged <strong>prospect</strong> until its first Deal, Quote or Project</li>
+            <li>Choosing an existing customer must never create a duplicate</li>
+          </ul>
+        </article>
+        <article class="obj obj--c">
+          <h4>Deal</h4>
+          <p>One commercial opportunity for one customer. The container that owns the pipeline position.</p>
+          <ul>
+            <li>Pipeline and stage; owner; one required Owning Company</li>
+            <li>Estimated and derived value; expected close date</li>
+            <li>Risk notes and lost reason</li>
+            <li>Linked contacts with Deal roles</li>
+            <li>Workflow tasks and approvals</li>
+            <li>Scope groups and linked quotes</li>
+            <li>Linked projects and invoices</li>
+          </ul>
+        </article>
+        <article class="obj obj--d">
+          <h4>Quote</h4>
+          <p>A commercial document, linked to a Deal when it takes part in CRM automation.</p>
+          <ul>
+            <li>Cannot be attached directly to a Lead</li>
+            <li>May be created from any Deal stage once the Deal exists</li>
+            <li>Quote state and Deal stage remain separate fields</li>
+          </ul>
+        </article>
+        <article class="obj obj--d">
+          <h4>Scope group</h4>
+          <p>A named set of mutually exclusive quote options inside one Deal.</p>
+          <ul>
+            <li>One quote may be marked primary in each group</li>
+            <li>Options inside a group do not add together</li>
+            <li>Different groups <strong>are</strong> additive</li>
+            <li>Accepting one quote accepts its group and system-rejects its siblings</li>
+            <li>Rejected siblings stay in the audit history</li>
+          </ul>
+        </article>
+        <article class="obj obj--b">
+          <h4>Project &amp; Invoice</h4>
+          <p>Downstream records, deliberately not pipeline stages.</p>
+          <ul>
+            <li>A Won Deal may prompt the user to create or link a Project</li>
+            <li>An accepted quote may raise an invoice action for Finance</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="panel">
+        <div class="cap">Scope groups are the important idea here</div>
+        <p>Our customers quote the same job three ways <em>and</em> quote three parts of a job separately, often on the same Deal. A flat list of quotes cannot tell those apart, so any value roll-up guesses. Scope groups make the distinction explicit: within a group the options compete, across groups they accumulate. Everything in §8 depends on this.</p>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 5 ==================== -->
+    <section id="s5">
+      <div class="eyebrow"><span class="n">Section 5</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>Lead lifecycle</h2>
+      <p class="lede">A Lead has four states and exactly one forward exit. It never holds a quote.</p>
+
+      <div class="flowhold">
+        <div class="flow">
+          <div class="flow__n"><b>Open</b><span>in the inbox</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Converted</b><span>became a Deal</span></div>
+          <div class="flow__a">·</div>
+          <div class="flow__n"><b>Discarded</b><span>reason required</span></div>
+          <div class="flow__a">·</div>
+          <div class="flow__n"><b>Archived</b><span>set aside</span></div>
+        </div>
+      </div>
+
+      <h3>Creating a Lead</h3>
+      <ol>
+        <li>User selects <strong>Create Lead</strong>.</li>
+        <li>User searches for an existing organisation or individual customer.</li>
+        <li>User selects a match, or creates a new <strong>prospect</strong> customer.</li>
+        <li>User enters contact and enquiry information.</li>
+        <li>System creates the Lead and links the customer.</li>
+        <li>If the New Lead response Automation is on, the system assigns an owner and creates a first-contact activity where one does not already exist.</li>
+      </ol>
+
+      <h3>Converting to a Deal</h3>
+      <p>The order is mandatory and cannot be short-circuited:</p>
+
+      <div class="flowhold">
+        <div class="flow">
+          <div class="flow__n"><b>Open Lead</b><span>step 1</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Convert to Deal</b><span>user confirms</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Lead read-only</b><span>marked converted</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Deal created</b><span>customer already linked</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Qualified</b><span>never skipped</span></div>
+        </div>
+      </div>
+
+      <ul>
+        <li>Conversion creates the Deal only — the customer is already linked from Lead creation.</li>
+        <li>Deal title defaults to the Lead title; estimated value and owner carry across.</li>
+        <li>Conversion must never skip Qualified or create a Deal in a later stage.</li>
+      </ul>
+
+      <p>The UI may offer <strong>Convert + Create Quote</strong> as one click, but the system still performs two ordered operations: convert the Lead into a Deal in Qualified, then create a draft quote linked to that Deal. The quote begins In Progress; the Deal stays in Qualified until a separate transition occurs.</p>
+
+      <div class="flag flag--stop">
+        <div class="flag__t">Conflict · duplicate customer risk</div>
+        <p>The specification requires a customer record at <em>Lead creation</em>, flagged as a prospect. That means every enquiry — including the ones that go nowhere — creates or matches a customer row. The existing customer list already runs to tens of thousands of records and already needs a dedicated merge tool, which tells us duplicates are a live problem today. See §13 · C9 and §21 for the mitigation this needs.</p>
+      </div>
+
+      <h3>Deliberate non-goals for Leads</h3>
+      <ul>
+        <li>No separate Lead kanban board</li>
+        <li>No project created when a Lead is created</li>
+        <li>No quote attached directly to a Lead</li>
+      </ul>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 6 ==================== -->
+    <section id="s6">
+      <div class="eyebrow"><span class="n">Section 6</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>Company and enrolment model</h2>
+      <p class="lede">One CRM account may hold several operating companies. A manager sees across them; an Automation runs for the ones it was built for.</p>
+
+      <p>Audio Vision is the working example: one account containing London, Manchester and Projects as separate operating branches.</p>
+
+      <div class="tbl">
+        <table>
+          <caption>Company model</caption>
+          <thead><tr><th>Record</th><th>Example</th><th>Rule</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Account</strong></td><td>Audio Vision Group</td><td>One account may view permitted records across all its companies.</td></tr>
+            <tr><td><strong>Owning Company</strong></td><td>Audio Vision — London</td><td>Required on every Deal. Used for Automation scope matching.</td></tr>
+            <tr><td><strong>Other companies</strong></td><td>Manchester; Projects</td><td>A user may view All Companies or filter to those they can access.</td></tr>
+            <tr><td><strong>Related quote</strong></td><td>AV-LON-1042</td><td>Inherits the Deal's owning company. Cross-company linking is never silent.</td></tr>
+            <tr><td><strong>Automation scope</strong></td><td>All, or selected</td><td>Required before the draft is created. Default: All Companies.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Scope must be visible in five places: Create Automation, the builder's flow summary, the map and list cards, the before-and-after comparison, and the publish confirmation. Change history records the old scope, the new scope, the user, the timestamp and the published version.</p>
+
+      <h3>Runtime eligibility order</h3>
+
+      <div class="flowhold">
+        <div class="flow">
+          <div class="flow__n"><b>Account</b><span>tenant boundary</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>User access</b><span>may see company</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Company scope</b><span>match</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Stage</b><span>match</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Active version</b><span>published only</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Execute</b><span>audited</span></div>
+        </div>
+      </div>
+
+      <div class="flag">
+        <div class="flag__t">The first box is new, and it matters</div>
+        <p>Company-level visibility does not exist in the product today. Quote visibility currently has two settings: records you own, or records shared with the whole organisation. There is no company, team or territory tier. Because the runtime order above makes company matching load-bearing, this is a new access-control layer and should be estimated as one.</p>
+      </div>
+
+      <p>A further consequence: an Automation fires from a queue, not from a person clicking. Access checks in the product today are derived from the signed-in user's session, and a queued job has no session. The account boundary must therefore be resolved and asserted explicitly when the event is received, before any company or stage matching happens.</p>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 7 ==================== -->
+    <section id="s7">
+      <div class="eyebrow"><span class="n">Section 7</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>Quote event to Deal stage</h2>
+      <p class="lede">A protected resolver, not a customer Automation. It reads every relevant quote on the Deal and writes one stage.</p>
+
+      <div class="flowhold">
+        <div class="flow">
+          <div class="flow__n"><b>Quote event</b><span>create · review · send · accept · cancel · expire</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Adapter</b><span>normalise, assert account</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Resolver</b><span>read all relevant quotes</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Protected mapping</b><span>derive stage or status</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>CRM update</b><span>stage, activity, history</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Automation</b><span>eligible flows run</span></div>
+        </div>
+      </div>
+
+      <h3>The seven stages</h3>
+
+      <div class="striphold">
+        <div class="strip">
+          <div class="stg"><b>Qualified</b><span>no quote exists</span></div>
+          <div class="stg"><b>In Progress</b><span>first quote created</span></div>
+          <div class="stg stg--cond"><b>In Review</b><span>submitted for review</span></div>
+          <div class="stg stg--cond"><b>Passed Review</b><span>reviewer approved</span></div>
+          <div class="stg"><b>Sent</b><span>issued to client</span></div>
+          <div class="stg stg--won"><b>Won</b><span>a quote accepted</span></div>
+          <div class="stg stg--lost"><b>Lost</b><span>no live quote left</span></div>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--sys)"></i> Always present</span>
+        <span><i style="background:var(--sys);opacity:.4"></i> Only where quote review is enabled</span>
+        <span><i style="background:var(--cust)"></i> Won</span>
+        <span><i style="background:var(--stop)"></i> Lost</span>
+      </div>
+
+      <h3>Which quotes the resolver reads</h3>
+
+      <p>A Deal may hold several quote families, each with its own revision history. For every family the resolver considers <strong>one</strong> revision, and ignores the rest.</p>
+
+      <div class="tbl">
+        <table>
+          <caption>Relevant quote — inclusion test</caption>
+          <thead><tr><th>Include only if</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>It is the family's current active revision</td><td>Superseded revisions must not set a stage</td></tr>
+            <tr><td>It is the family's latest revision</td><td>Latest and active are separate flags today and can disagree</td></tr>
+            <tr><td>It is not a sample</td><td>Demo quotes would otherwise derive real Deal stages</td></tr>
+            <tr><td>It is not a template</td><td>Template quotes are not commercial work</td></tr>
+            <tr><td>It is not archived</td><td>Archived work is out of play</td></tr>
+            <tr><td>It is not cancelled</td><td>Cancelled work is not viable</td></tr>
+            <tr><td>It is not an expired sent quote</td><td>Expiry removes viability without any decision being made</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flag">
+        <div class="flag__t">Two further flags need a ruling</div>
+        <p>The quote record also carries an over-quota flag and a sales-order flag. Neither is covered by any current specification. A sales order in particular lives downstream of acceptance, so treating it as a competing quote would fight the Won rule. See §18 · D5.</p>
+      </div>
+
+      <h3>Order of precedence</h3>
+      <p>Read top to bottom. The first line that matches is the answer.</p>
+
+      <div class="tbl">
+        <table>
+          <caption>Aggregate precedence</caption>
+          <thead><tr><th class="num">#</th><th>If this is true</th><th>The Deal is</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td>Any relevant quote is accepted or complete</td><td class="res">Won</td></tr>
+            <tr><td class="num">2</td><td>Every related quote is cancelled</td><td class="res">Archived <span class="pill pill--cur">status</span></td></tr>
+            <tr><td class="num">3</td><td>At least one relevant quote is sent</td><td class="res">Sent</td></tr>
+            <tr><td class="num">4</td><td>At least one relevant quote has passed review</td><td class="res">Passed Review</td></tr>
+            <tr><td class="num">5</td><td>At least one relevant quote is in review</td><td class="res">In Review</td></tr>
+            <tr><td class="num">6</td><td>At least one quote is a draft or in progress</td><td class="res">In Progress</td></tr>
+            <tr><td class="num">7</td><td>No quote exists</td><td class="res">Qualified</td></tr>
+            <tr><td class="num">8</td><td>Quotes exist, none accepted, none relevant, not all cancelled</td><td class="res">Lost</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Line 1 is absolute.</strong> Once any quote on the Deal is accepted, the Deal is Won and remaining quotes cannot reopen or downgrade it. <strong>Line 8 is the only way a Deal is genuinely lost</strong> — by running out of live options, not by someone marking it lost.</p>
+
+      <h3>Worked example</h3>
+
+      <div class="ex">
+        <div class="ex__h"><b>Hillside cinema room</b><span>one Deal · three quotes · one scope group</span></div>
+        <div class="ex__b">
+          <div class="grp3">
+            <div class="qc qc--in"><em>Option A</em><b>Sent</b><span>Client opened it twice</span></div>
+            <div class="qc qc--out"><em>Option B</em><b>Expired</b><span>Never opened, lapsed</span></div>
+            <div class="qc qc--in"><em>Option C</em><b>In Progress</b><span>Cheaper alternative, still being built</span></div>
+          </div>
+          <div class="verd">Deal stage: <b>Sent</b> — engagement <b>1 / 1</b> sent proposals viewed. Option B is excluded by expiry; Option C was never sent, so it is not in the denominator.</div>
+        </div>
+      </div>
+
+      <h3>Sent engagement count</h3>
+      <ul>
+        <li><strong>Denominator</strong>: the latest active, viable, customer-facing sent revision in each quote family.</li>
+        <li><strong>Numerator</strong>: those the client has opened at least once.</li>
+        <li>Excluded: drafts, in review, passed review, cancelled, expired, superseded and historical revisions.</li>
+        <li>Detailed view timestamps stay on each quote's own activity timeline.</li>
+      </ul>
+
+      <h3>Backward recalculation</h3>
+      <p>If the quote supplying the highest stage is cancelled or expires, the resolver recalculates from what remains, and the Deal may move to an earlier stage. The old state, new state, source quote and reason are all written to history.</p>
+
+      <div class="flag flag--stop">
+        <div class="flag__t">Conflict · this directly contradicts an existing specification</div>
+        <p>An existing approved document states the opposite: <em>"Never automatically move a Deal backwards"</em>, and that an expired quote should keep the Deal in Sent with a follow-up instead. Both behaviours are defensible and they cannot both ship. See §13 · C5 and §18 · D1.</p>
+      </div>
+
+      <h3>Change orders</h3>
+      <p>Variations on won work are routine for our customers and no current specification covers them. Proposed rule: a change order <strong>adds to the Deal's value</strong> and appears on its timeline, but <strong>does not reopen a won Deal</strong>. The Deal shows accepted base value and accepted variation value separately, and change orders stay out of the sent-engagement denominator. <span class="pill pill--open">Open decision</span> See §18 · D6.</p>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 8 ==================== -->
+    <section id="s8">
+      <div class="eyebrow"><span class="n">Section 8</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>Scope groups and Deal value</h2>
+      <p class="lede">The interface must never present a single blended total. Six different money questions have six different answers.</p>
+
+      <div class="tbl">
+        <table>
+          <caption>Values shown on a Deal</caption>
+          <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>Deal estimate</td><td>Manual figure, used when no quotes are linked</td></tr>
+            <tr><td>Accepted / signed</td><td>Locked at Won from accepted amounts</td></tr>
+            <tr><td>Invoiced</td><td>Raised, excluding drafts</td></tr>
+            <tr><td>Paid</td><td>Received</td></tr>
+            <tr><td>Outstanding</td><td>Invoiced but unpaid</td></tr>
+            <tr><td>Remaining to invoice</td><td>Accepted minus invoiced</td></tr>
+            <tr><td>Draft invoice value</td><td>Shown separately, never inside the invoiced total</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>How value derives</h3>
+      <ul>
+        <li>With no linked quotes, the Deal uses the manual estimate.</li>
+        <li>With quotes, value derives from the <strong>primary quote in each scope group</strong>.</li>
+        <li>Mutually exclusive options inside a group never add together.</li>
+        <li>Separate scope groups do add together.</li>
+        <li>A Won Deal locks to accepted amounts; a Lost Deal freezes for lost-value reporting.</li>
+        <li>Billing colours and value order must match the billing progress bar.</li>
+      </ul>
+
+      <h3>Quote events at group level</h3>
+
+      <div class="tbl">
+        <table>
+          <caption>Group-level effects</caption>
+          <thead><tr><th>Quote event</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td>Quote accepted</td><td>Accept the scope group and system-reject its sibling options. Siblings stay in the audit trail.</td></tr>
+            <tr><td>All scope groups resolved, at least one accepted</td><td>Deal moves to Won and the winning value locks.</td></tr>
+            <tr><td>Quote complete</td><td>No stage change — this is a fulfilment state, not a commercial one.</td></tr>
+            <tr><td>Quote cancelled</td><td>Remove it from active group value and prompt the owner for a next action.</td></tr>
+            <tr><td>All scope groups dropped</td><td>Require Sales to confirm Lost and choose a reason.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flag flag--stop">
+        <div class="flag__t">Conflict · scope groups versus flat precedence</div>
+        <p>The precedence ladder in §7 reads quotes as a flat list; the scope-group model above reads them as competing options inside additive groups. These are two different answers to the same question and the consolidated handoff dropped the scope-group model entirely. Scope groups are the richer of the two and match how our customers actually quote. See §13 · C8.</p>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 9 ==================== -->
+    <section id="s9">
+      <div class="eyebrow"><span class="n">Section 9</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>Automation creation journey</h2>
+      <p class="lede">One hierarchy for every pipeline type, and exactly two creation routes.</p>
+
+      <div class="flowhold">
+        <div class="flow">
+          <div class="flow__n"><b>Choose pipeline</b><span>same records as Deals</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Map or list</b><span>opens centred</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Card or empty state</b><span>always openable</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Builder</b><span>focus mode</span></div>
+        </div>
+      </div>
+
+      <ol>
+        <li>Choose the fixed stage.</li>
+        <li>Choose <strong>Use a template</strong> or <strong>Start from scratch</strong> — there is no third route.</li>
+        <li>Choose company scope.</li>
+        <li>An inactive draft is created.</li>
+        <li>Edit triggers, rules and actions.</li>
+        <li>Save draft.</li>
+        <li>Optionally test.</li>
+        <li>Validate.</li>
+        <li>Publish, unless a blocking conflict exists.</li>
+      </ol>
+
+      <p>A pipeline or stage with zero Automations must still open, showing an empty state that explains the situation and offers Create Automation. The stage is fixed enrolment metadata and stays read-only in the builder — it cannot be renamed there.</p>
+
+      <h3>Template pack</h3>
+      <p>Templates copy an editable inactive draft. They use the same engine as a scratch build and never alter the protected lifecycle.</p>
+
+      <div class="tbl">
+        <table>
+          <caption>Twelve templates across seven stages</caption>
+          <thead><tr><th>Stage</th><th>Template</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Qualified</td><td>Qualified first next action</td><td>Connected</td></tr>
+            <tr><td>Qualified</td><td>Qualified inactivity reminder</td><td>Connected</td></tr>
+            <tr><td>Qualified</td><td>Site visit and pre-quote readiness</td><td>Connected</td></tr>
+            <tr><td>In Progress</td><td>Quote build and scope-of-work checks</td><td>Connected</td></tr>
+            <tr><td>In Review</td><td>Internal quote review</td><td>Connected</td></tr>
+            <tr><td>Passed Review</td><td>Ready-to-send check</td><td>Connected</td></tr>
+            <tr><td>Passed Review</td><td><strong>High-value approval</strong></td><td><span class="pill pill--open">Gap</span></td></tr>
+            <tr><td>Sent</td><td>Sent quote follow-up</td><td>Connected</td></tr>
+            <tr><td>Sent</td><td>Quote expiry reminder</td><td>Connected</td></tr>
+            <tr><td>Won</td><td>Won Deal handoff</td><td>Connected</td></tr>
+            <tr><td>Won</td><td>Accepted quote to draft invoice</td><td>Connected</td></tr>
+            <tr><td>Lost</td><td>Lost Deal reason follow-up</td><td>Connected</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="cap">The one gap is the cheapest item in the pack</div>
+        <p>High-value approval fires when a configured quote-value or discount-percentage threshold is exceeded. Both thresholds already exist as live configuration in the product — they drive the current review requirement. Connecting this template is a wiring job, not a new capability. One ruling is needed: those thresholds are held per user, so whose threshold applies — the Deal owner's, the quote owner's, or the approver's? See §18 · D7.</p>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 10 ==================== -->
+    <section id="s10">
+      <div class="eyebrow"><span class="n">Section 10</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>One block catalogue</h2>
+      <p class="lede">One source of truth, not seven libraries. Every stage sees the same core; a stage only adds the quote events that can genuinely happen there.</p>
+
+      <div class="two">
+        <div class="box">
+          <h4>Shared core — triggers</h4>
+          <ul>
+            <li>Deal owner changes</li>
+            <li>Next action changes, becomes due, overdue or completed</li>
+            <li>Meeting or site visit changes</li>
+            <li>File added to the Deal</li>
+            <li>Requested file received</li>
+            <li>Deal inactivity reaches a configured duration</li>
+            <li>Expected close date approaching</li>
+            <li>Deal data changes: owner, label, interest, value, company, expected close</li>
+          </ul>
+        </div>
+        <div class="box">
+          <h4>Shared core — rules</h4>
+          <ul>
+            <li>Owner or next action is missing</li>
+            <li>Required task or file is missing</li>
+            <li>Meeting or site visit complete or incomplete</li>
+            <li>Recent activity exists or does not</li>
+            <li>Label, interest, value or company matches</li>
+            <li>Expected close date matches</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="box box--cust">
+          <h4>Shared core — actions</h4>
+          <ul>
+            <li>Assign Deal owner or a named person</li>
+            <li>Set or clear next action</li>
+            <li>Create note</li>
+            <li>Schedule meeting or site visit</li>
+            <li>Add or remove watcher</li>
+            <li>Add or remove Deal label</li>
+            <li>Add or remove interest</li>
+            <li>Request or attach file</li>
+            <li>Set expected close date</li>
+            <li>Send internal notification</li>
+          </ul>
+        </div>
+        <div class="box box--stop">
+          <h4>Never in the catalogue</h4>
+          <ul>
+            <li>Approve a quote or stand in for a reviewer</li>
+            <li>Send a proposal to a client</li>
+            <li>Accept a quote on a client's behalf</li>
+            <li>Mark a Deal Won or Lost</li>
+            <li>Write any protected stage directly</li>
+            <li>Redefine what a stage means</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Compatibility invariant</h3>
+      <ul>
+        <li>All seven stages expose identical core block identifiers, names, settings and validation.</li>
+        <li>A stage may only <strong>add</strong> quote-specific triggers and rules. It may never remove or rename the shared core.</li>
+        <li>Core actions do not change by stage in Phase 1.</li>
+        <li>Protected progression stays outside the editable catalogue.</li>
+      </ul>
+
+      <h3>Stage-specific additions</h3>
+
+      <div class="tbl">
+        <table>
+          <caption>What each stage adds, and what stays protected</caption>
+          <thead><tr><th>Stage</th><th>Adds triggers</th><th>Adds rules</th><th>Protected result, outside the library</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Qualified</strong></td><td>Deal enters Qualified</td><td>No related quote exists; still Qualified</td><td>First quote created → In Progress</td></tr>
+            <tr><td><strong>In Progress</strong></td><td>First quote created; quote edited; pricing or scope changes</td><td>Quote is draft; pricing or scope incomplete; review enabled</td><td>Submit review → In Review. Review off: send → Sent</td></tr>
+            <tr><td><strong>In Review</strong></td><td>Quote submitted; review note changes</td><td>Still in review; reviewer missing; technical note open</td><td>Review passes → Passed Review. Changes requested → In Progress</td></tr>
+            <tr><td><strong>Passed Review</strong></td><td>Quote passes review</td><td>Quote viable; client-facing content complete; further approval needed</td><td>Quote sent → Sent</td></tr>
+            <tr><td><strong>Sent</strong></td><td>Quote sent; client views quote; expiry approaching</td><td>Still sent; viewed or not; viable; not expired</td><td>Accepted → Won. None viable → Lost</td></tr>
+            <tr><td><strong>Won</strong></td><td>Quote accepted; Deal becomes Won</td><td>Accepted quote exists; deposit required; handoff incomplete</td><td>Terminal outcome</td></tr>
+            <tr><td><strong>Lost</strong></td><td>Deal becomes Lost</td><td>Loss reason missing; no viable quote remains</td><td>Terminal outcome</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flag">
+        <div class="flag__t">Create related quote — unresolved</div>
+        <p>If a <em>Create related quote</em> action is ever permitted, it must create the quote and let the protected resolver derive In Progress; it must never write the Deal stage itself. The current canonical matrix does not list it as a shared core action, so it stays out of Phase 1 rather than being invented to fill the gap. See §18 · D8.</p>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 11 ==================== -->
+    <section id="s11">
+      <div class="eyebrow"><span class="n">Section 11</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>Draft, test, validate, publish</h2>
+      <p class="lede">Customers edit rules while live deals run through them. Testing is encouraged, not compulsory.</p>
+
+      <div class="flowhold">
+        <div class="flow">
+          <div class="flow__n"><b>View</b><span>current published</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Edit</b><span>triggers, rules, actions</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Save draft</b><span>never affects live</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Test</b><span>optional</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Validate</b><span>conflict check</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Publish</b><span>atomic swap</span></div>
+        </div>
+      </div>
+
+      <div class="tbl">
+        <table>
+          <caption>State behaviour</caption>
+          <thead><tr><th>State</th><th>What the user sees</th><th>Publish</th></tr></thead>
+          <tbody>
+            <tr><td>No changes</td><td>Save draft disabled; no unpublished changes</td><td>Nothing to publish</td></tr>
+            <tr><td>Unpublished changes</td><td><code>Current · published</code> compared with <code>After · draft</code></td><td>Available if validation passes</td></tr>
+            <tr><td>Test passed</td><td><code>Test passed · just now</code></td><td>Available</td></tr>
+            <tr><td>Test outdated</td><td>Shown after any edit following a pass</td><td>Still available unless a conflict requires a retest</td></tr>
+            <tr><td>Blocking conflict</td><td>Exact step and reason highlighted</td><td>Disabled until fixed</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Why testing is optional</h3>
+      <p>Forcing a test for every wording change teaches people to click through warnings. Testing becomes mandatory only where validation finds a genuine conflict:</p>
+      <ul>
+        <li>An action missing mandatory configuration</li>
+        <li>A referenced target stage that no longer exists</li>
+        <li>A file-received trigger pointing at a deleted file request</li>
+        <li>Circular stage movement</li>
+        <li>A protected milestone used as a generic move target</li>
+        <li>A wait or retry path with no safe ending</li>
+      </ul>
+
+      <h3>Simulator</h3>
+      <p>A test saves a safe snapshot and never touches live CRM data. Timeline is the default tab and supports Play, Step, Reset and Speed. Before-and-after shows the CRM records and fields that would actually change — not two duplicate pipeline columns. Exiting with unsaved work offers Continue editing, Discard changes, and Save draft and exit.</p>
+
+      <h3>Runtime and audit</h3>
+      <ul>
+        <li>Only the active published snapshot executes. Drafts, test drafts, inactive and out-of-scope Automations never run.</li>
+        <li>Every run stores the source event, the Automation and version, the company scope, the branch taken and timestamps.</li>
+        <li>Retries are idempotent — no duplicate notes, meetings, next actions, file requests or movements.</li>
+      </ul>
+
+      <h3>Where results must appear</h3>
+      <div class="tbl">
+        <table>
+          <caption>Visible outcomes</caption>
+          <thead><tr><th>Outcome</th><th>Must appear in</th></tr></thead>
+          <tbody>
+            <tr><td>Note, meeting, site visit, next action</td><td>Deal activity</td></tr>
+            <tr><td>Operational follow-up or scheduled meeting</td><td>Deal activity <strong>and</strong> the Deal card</td></tr>
+            <tr><td>Label, interest, owner, expected close</td><td>Deal fields and history</td></tr>
+            <tr><td>File request</td><td>Needs your attention, the Deal card, and history</td></tr>
+            <tr><td>Every outcome</td><td>Change and activity history</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flag">
+        <div class="flag__t">Known acceptance defect, and a wider concern</div>
+        <p>When an Automation creates a scheduled meeting or follow-up for a Qualified Deal, it currently lands only in history — it must appear on the Deal card and in Deal activity as well.</p>
+        <p>More broadly: the product's existing activity log holds roughly 1,800 entries against roughly 11,000 quotes and tens of thousands of customer records. It is, in practice, unused. The CRM's entire value rests on that timeline, so understanding why nobody writes to it today should shape the interface more than anything else in this document. See §18 · D3.</p>
+      </div>
+
+      <p>Two vocabulary rules to hold: Deal labels remain a flexible multi-select — Hot, Warm, Cold, VIP and any customer-created value all use labels, and no separate temperature field is introduced. Interests are a distinct multi-select with their own add and remove actions. Expected close date sits on Deal details beneath labels, and is not a Lead field.</p>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 12 ==================== -->
+    <section id="s12">
+      <div class="eyebrow"><span class="n">Section 12</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>Required-work gate and file requests</h2>
+      <p class="lede">When work must happen before a stage can move, the system blocks the move and then resumes the exact operation the user started.</p>
+
+      <div class="flowhold">
+        <div class="flow">
+          <div class="flow__n"><b>Attempt</b><span>stage move or quote action</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Collect</b><span>every unfinished item</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Dialog</b><span>"have you completed…?"</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Resolve</b><span>upload or mark complete</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Continue</b><span>enabled when empty</span></div>
+          <div class="flow__a">→</div>
+          <div class="flow__n"><b>Resume</b><span>the original action</span></div>
+        </div>
+      </div>
+
+      <ul>
+        <li>List every unfinished item, including where there are ten or more.</li>
+        <li>Mark each item's source — a custom-stage requirement or a quote-lifecycle requirement.</li>
+        <li>File requirements offer Upload file; note, meeting and readiness requirements offer Mark complete.</li>
+        <li>Continue stays disabled until the list is empty.</li>
+        <li>Review in Deal opens Needs your attention.</li>
+        <li>After completion, resume the exact original operation — never substitute a generic fallback.</li>
+      </ul>
+
+      <h3>Requested file is received</h3>
+      <p>This trigger is never created from nothing. It must bind to a real, named, open file request on the Deal.</p>
+      <ul>
+        <li>The request may have been created in the current stage, an earlier stage, or manually.</li>
+        <li>Without a valid selectable request, the Automation cannot be saved.</li>
+        <li>Creating a request writes Deal activity, Needs your attention, history, and due-and-assignee status on the Deal card.</li>
+        <li>Uploading the matching file resolves the requirement automatically.</li>
+        <li>Reminder, due-date and assignee changes remain auditable.</li>
+      </ul>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 13 ==================== -->
+    <section id="s13">
+      <div class="eyebrow"><span class="n">Section 13</span><span class="pill pill--stop">Conflict</span></div>
+      <h2>Conflict register</h2>
+      <p class="lede">The source documents disagree in ten places. Each needs a decision recorded, not a silent merge.</p>
+
+      <p>Two models exist in the source material. The <strong>consolidated model</strong> has seven stages, all derived by the resolver. An <strong>earlier approved specification</strong> — which the current prototype implements — has five stages with some manual movement. They are not compatible.</p>
+
+      <div class="tbl">
+        <table>
+          <caption>Where the sources disagree</caption>
+          <thead><tr><th class="num">#</th><th>Topic</th><th>Consolidated model</th><th>Earlier spec &amp; prototype</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td class="num">C1</td><td>Deal stages</td><td>Seven: Qualified, In Progress, In Review, Passed Review, Sent, Won, Lost</td><td>Five: Qualified, Quoting, Sent, Won, Lost</td><td class="res">Consolidated wins; prototype changes</td></tr>
+            <tr><td class="num">C2</td><td>Stage movement</td><td>Entirely derived</td><td>User moves Qualified → Quoting</td><td class="res">Consolidated wins; removes a user action</td></tr>
+            <tr><td class="num">C3</td><td>First quote created</td><td>Derives In Progress</td><td>"Creating a quote early does not move the Deal"</td><td class="res">Consolidated wins</td></tr>
+            <tr><td class="num">C4</td><td>Quote in review / passed review</td><td>Derive Deal stages</td><td>"No automatic Deal stage change"</td><td class="res">Consolidated wins</td></tr>
+            <tr><td class="num">C5</td><td>Backward movement</td><td>Explicit recalculation; Deal may step back</td><td>"Never automatically move a Deal backwards"</td><td class="res"><span class="pill pill--open">Open · D1</span></td></tr>
+            <tr><td class="num">C6</td><td>Quote expires</td><td>Recalculate; may drop to In Progress</td><td>Keep in Sent and prompt a follow-up</td><td class="res">Follows C5</td></tr>
+            <tr><td class="num">C7</td><td>All quotes cancelled</td><td>Deal becomes Archived automatically</td><td>Never auto-Lost; Sales confirms with a reason</td><td class="res"><span class="pill pill--open">Open · D2</span></td></tr>
+            <tr><td class="num">C8</td><td>Multi-quote model</td><td>Flat precedence over quote families</td><td>Scope groups: exclusive within, additive across</td><td class="res">Scope groups are richer; reinstate</td></tr>
+            <tr><td class="num">C9</td><td>Lead and customer</td><td>Not specified at all</td><td>Lead creation creates or links a customer, flagged prospect</td><td class="res">Earlier spec is the only source; adopt with a duplicate-control requirement</td></tr>
+            <tr><td class="num">C10</td><td>Lead states</td><td>Not specified</td><td>Open, Archived, Discarded, Converted — fixed, not customer-defined</td><td class="res">Adopt as specified</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flag flag--stop">
+        <div class="flag__t">The most consequential omission</div>
+        <p>The consolidated handoff mentions Leads exactly twice — once to say expected close date is <em>not</em> a Lead field, and once as the filename of a diagram. It contains no Lead requirements, no Lead states and no Lead blocks, yet the navigation, the prototype and the runtime all have Leads, and the whole product story starts with one. The Lead specification in §5 is recovered from the earlier document because it is the only place it exists.</p>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 14 ==================== -->
+    <section id="s14">
+      <div class="eyebrow"><span class="n">Section 14</span><span class="pill pill--cur">Current prototype</span></div>
+      <h2>What is actually wired today</h2>
+      <p class="lede">The builder offers more triggers than the runtime can fire. This table is the difference between a demo and a product.</p>
+
+      <div class="tbl">
+        <table>
+          <caption>Working triggers in the Phase 1 prototype</caption>
+          <thead><tr><th>Trigger</th><th>Object</th><th>Template it drives</th><th>Limit</th></tr></thead>
+          <tbody>
+            <tr><td>New Lead is created</td><td>Lead</td><td>New Lead first contact</td><td>Form, import and manual creation are one shared event</td></tr>
+            <tr><td>Open Lead has no next activity</td><td>Lead</td><td>Inactive Lead reminder</td><td>A scan of state, not an event at the moment of going quiet</td></tr>
+            <tr><td>Lead is converted to a Deal</td><td>Lead + Deal</td><td>Lead to Deal conversion</td><td>Always-on system rule, not an editable template</td></tr>
+            <tr><td>Deal enters a selected stage</td><td>Deal</td><td>Client proposal &amp; approval</td><td>Scoped to one pipeline; template starts on Qualified</td></tr>
+            <tr><td>Deal reaches Won</td><td>Deal</td><td>Won Deal handoff</td><td>Runs on first match; does not itself mark the Deal Won</td></tr>
+            <tr><td>Quote is sent</td><td>Quote + Deal</td><td>Sent quote follow-up</td><td>First send of each revision, not a saved draft</td></tr>
+            <tr><td>Quote is accepted</td><td>Quote + Deal</td><td>Accepted quote → draft invoice</td><td>Quote must belong to a Deal; duplicate drafts prevented</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl">
+        <table>
+          <caption>Shown in the builder, but with no runtime behind it</caption>
+          <thead><tr><th>Category</th><th>Options displayed</th><th>Reality</th></tr></thead>
+          <tbody>
+            <tr><td>Lead</td><td>Submitted from a form; imported; added manually</td><td>All three resolve to the same shared created event</td></tr>
+            <tr><td>Quote</td><td>Quote created; quote expired</td><td>Neither is handled</td></tr>
+            <tr><td>Deal</td><td>Deal created; expected close date reached</td><td>Deal-created is emitted but has no handler; close-date scheduling does not exist</td></tr>
+            <tr><td>Dates</td><td>Expected close, quote expiry, invoice due, before/after a date at a time</td><td>Builder concepts only — they need a scheduler first</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flag flag--stop">
+        <div class="flag__t">This has a direct consequence for §10</div>
+        <p>The shared core in §10 lists eight triggers. Of those, <strong>Deal inactivity</strong>, <strong>expected close date approaching</strong>, <strong>meeting or site visit changes</strong> and <strong>file added</strong> have no runtime today, and the two date-based ones cannot exist at all until a scheduler is built. Several of the twelve templates depend on waiting a number of working days, which is the same missing capability. <strong>A scheduler is a Phase 1 dependency, and it is not currently named as one.</strong></p>
+      </div>
+
+      <p>Two further events exist but cannot be built against: the CRM emits a Deal-created event that the dispatcher has no handler for, and it recognises an invoice-created event that no workflow starts from. Neither should be described to a customer as available.</p>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 15 ==================== -->
+    <section id="s15">
+      <div class="eyebrow"><span class="n">Section 15</span><span class="pill pill--stop">Conflict</span><span class="pill pill--open">Open decision</span></div>
+      <h2>Existing integrations</h2>
+      <p class="lede">We already sell a CRM sync. No source document in this package mentions it.</p>
+
+      <p>WeQuote has shipped a substantial two-way <strong>Zoho CRM</strong> integration for years. It maps every quote to a Zoho <em>deal</em>, and it lets each customer configure how our quote statuses translate into their Zoho pipeline stages — in both directions. It is actively maintained and customers depend on it.</p>
+
+      <p>For those customers, our new Deal is a <em>second</em> deal, with a second set of stages. Two systems will hold a position for the same job.</p>
+
+      <div class="tbl">
+        <table>
+          <caption>Questions this raises</caption>
+          <thead><tr><th>Question</th><th>Proposed answer</th></tr></thead>
+          <tbody>
+            <tr><td>Which system owns the stage?</td><td>Ours is derived and read-only with respect to Zoho. We never write our derived stage into their pipeline.</td></tr>
+            <tr><td>How does the object mapping work?</td><td>Either the existing integration gains a Deal object type, or our Deal maps onto the existing quote-to-Zoho-deal link.</td></tr>
+            <tr><td>Does backward recalculation propagate?</td><td>No. The existing link record assumes forward-only progression, so pushing a backward correction risks overwriting customer-owned Zoho data. Log the divergence instead.</td></tr>
+            <tr><td>What does the customer see?</td><td>Needs a design answer for the case where both a WeQuote Deal and a Zoho deal exist for one quote.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flag flag--stop">
+        <div class="flag__t">Recommended gate</div>
+        <p>Until this is agreed, do not switch Deals on for organisations with an active Zoho CRM link. Shipping into that overlap without a decision produces support tickets we cannot answer.</p>
+      </div>
+
+      <p>Two smaller consequences. Customer records are already pulled inbound from Zoho, Magento and QuickBooks; those imported customers have no owning company, so a default is needed. And the accepted-quote-to-draft-invoice template must set the invoice to draft explicitly, because the product's default state for a new invoice is not draft.</p>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 16 ==================== -->
+    <section id="s16">
+      <div class="eyebrow"><span class="n">Section 16</span><span class="pill pill--p2">Phase 2 direction</span></div>
+      <h2>Phase 2 — custom stages</h2>
+      <p class="lede">Not Phase 1 scope. Documented here so Phase 1 does not build a dead end.</p>
+
+      <p>A custom stage may be inserted into one of five lifecycle gaps: Qualified → In Progress, In Progress → In Review, In Review → Passed Review, Passed Review → Sent, and Sent → Won/Lost. Custom stages are not permitted before Qualified or after Won and Lost in a quote-connected pipeline.</p>
+
+      <div class="two">
+        <div class="box box--sys">
+          <h4>Stays identical regardless of placement</h4>
+          <ul>
+            <li>The complete shared core library</li>
+            <li>Core block identifiers, names, settings, fields and validation</li>
+            <li>Draft, optional test, publish, active and inactive behaviour</li>
+            <li>Runtime and audit semantics</li>
+          </ul>
+        </div>
+        <div class="box">
+          <h4>Changes by placement</h4>
+          <ul>
+            <li>Read-only quote lifecycle context and available runtime data</li>
+            <li>The next protected system event</li>
+            <li>Valid named custom-stage targets</li>
+            <li>Flow summary context</li>
+            <li>Recommended examples and templates — not permissions</li>
+          </ul>
+        </div>
+      </div>
+
+      <p><strong>Placement is context, not a permission switch.</strong> This supersedes an earlier idea that each lifecycle segment has its own core library. Every custom stage saves its own trigger, rules, branches, actions, company scope, active state, draft and test state.</p>
+
+      <ul>
+        <li>Custom-to-custom movement stores an explicit target stage identifier. Relative "move to next stage" is never stored.</li>
+        <li>Custom-to-protected movement happens only through the trusted quote event.</li>
+        <li>One system event moves every Deal in a segment. Adding more custom stages must not create more quote-to-Deal transition rules.</li>
+        <li>If a new stage is inserted between two existing ones, an existing Automation targeting the later stage must not silently change — ask the user which one to target.</li>
+        <li>Structural add, rename, reorder, remove and migration of existing Deals all require an impact preview.</li>
+      </ul>
+
+      <p>Safe creation flow: duplicate the system template, map the custom stages, review before-and-after, then activate for new Deals only by default. Moving existing Deals requires stage-by-stage mapping, an impacted-record count and administrator confirmation.</p>
+
+      <div class="flag">
+        <div class="flag__t">A gap list that needs revisiting</div>
+        <p>There is no permitted gap before Qualified, which means the lead-facing part of the process could never be extended in Phase 2. Since Leads have their own fixed states rather than pipeline stages (§5), the cleaner answer is that Lead states are governed by their own mechanism and no pre-Qualified gap is needed. This should be confirmed rather than assumed.</p>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 17 ==================== -->
+    <section id="s17">
+      <div class="eyebrow"><span class="n">Section 17</span><span class="pill pill--p3">Phase 3 direction</span></div>
+      <h2>Phase 3 — fully custom pipelines</h2>
+      <p class="lede">Customer-defined processes that make no claim about sales truth.</p>
+
+      <ul>
+        <li>Every stage is customer-defined. There are no protected quote milestones and no resolver.</li>
+        <li>Every stage exposes the same generic CRM library.</li>
+        <li>Generic events cover stage entry and exit, Deal changes, activity, files and time.</li>
+        <li>Rules cover stage and Deal data, work and evidence, AND/OR groups and safe waits.</li>
+        <li>Actions cover CRM work plus explicit movement to a named stage.</li>
+        <li>Optional quote blocks appear only where related quote data genuinely exists.</li>
+        <li>No automatic movement caused by quote status. No relative next-stage movement.</li>
+      </ul>
+
+      <div class="panel">
+        <div class="cap">The rule that makes this safe to build</div>
+        <p>A stage name is a display label and nothing else. The platform must never infer behaviour from words such as Review, Sent, Closed — or Banana. A stage name never enables or disables a block. All logic references stage identifiers.</p>
+      </div>
+
+      <p>Phases 2 and 3 reuse the same generic core. Their only real difference is protected structure and who holds movement authority. When pipeline creation ships, the user chooses quote-connected or fully custom at the start; the system must never implement "remove the quote lifecycle" as a conversion shortcut, and the two types coexist.</p>
+
+      <p><span class="pill pill--open">Open decision</span> Whether Phase 3 supports templates or only start-from-scratch. The earlier agreed direction was start-from-scratch only.</p>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 18 ==================== -->
+    <section id="s18">
+      <div class="eyebrow"><span class="n">Section 18</span><span class="pill pill--open">Open decision</span></div>
+      <h2>Open decisions</h2>
+      <p class="lede">Eight questions that are not engineering's to answer. The first three change the shape of the product.</p>
+
+      <div class="decs">
+        <div class="dec dec--hot">
+          <div class="dec__h"><em>D1</em><b>Do Deals move backwards?</b></div>
+          <p>The consolidated model recalculates and lets a Deal step back — a sent proposal expires, and the Deal returns to In Progress because the only live quote is the one still being built. An earlier approved specification states the opposite outright.</p>
+          <div class="dec__r"><em>Recommendation</em>Allow it. A pipeline that only moves forward fills its Sent column with dead proposals from eight months ago, which nobody trusts and everybody works around in a spreadsheet. Record every step back with its reason, and never step back out of Won.</div>
+        </div>
+
+        <div class="dec dec--hot">
+          <div class="dec__h"><em>D2</em><b>What happens to our Zoho CRM customers?</b></div>
+          <p>We already sell a two-way Zoho CRM sync that maps quotes to Zoho deals with configurable stage mapping. Introducing our own Deal gives those customers two pipelines for one job. No source document in this package mentions the integration. Full detail in §15.</p>
+          <div class="dec__r"><em>Recommendation</em>Coexist, with our stage derived and read-only toward Zoho, and no backward corrections pushed outward. Hold Deals back for Zoho-connected organisations until this is agreed.</div>
+        </div>
+
+        <div class="dec dec--hot">
+          <div class="dec__h"><em>D3</em><b>Why does nobody use the activity timeline we already have?</b></div>
+          <p>The existing notes and activity log holds roughly 1,800 entries against roughly 11,000 quotes and tens of thousands of customer records. The CRM's whole value rests on the timeline — the notes, the calls, the reminders, the relationship history.</p>
+          <div class="dec__r"><em>Recommendation</em>Find out before building. Ask five customers. If the answer is that logging a note takes too many clicks, that finding should drive the interface more than anything else in this document.</div>
+        </div>
+
+        <div class="dec">
+          <div class="dec__h"><em>D4</em><b>Is the CRM company the existing Trading Name, or a new entity?</b></div>
+          <p>Trading Name already decides what appears on an invoice and feeds an accounting breakdown. Making it the CRM's enrolment scope gives one record a third job. Separately, many existing quotes have no trading name set at all, so a default is needed before a company can be made mandatory.</p>
+          <div class="dec__r"><em>Recommendation</em>Reuse it with the CRM's use clearly flagged, and assign the account's primary company to existing quotes that have none.</div>
+        </div>
+
+        <div class="dec">
+          <div class="dec__h"><em>D5</em><b>Which quotes count toward a Deal's stage?</b></div>
+          <p>Beyond the seven tests in §7, the quote record carries an over-quota flag and a sales-order flag. A sales order sits downstream of acceptance, so counting it as a competing quote would fight the Won rule.</p>
+          <div class="dec__r"><em>Recommendation</em>Exclude both. Neither should derive a Deal stage.</div>
+        </div>
+
+        <div class="dec">
+          <div class="dec__h"><em>D6</em><b>How do change orders affect a won Deal?</b></div>
+          <p>Variations on won work are routine and no current specification covers them. A change order can require its own review, send and acceptance cycle.</p>
+          <div class="dec__r"><em>Recommendation</em>Add to Deal value, show accepted base and accepted variations separately, never reopen the stage, and keep change orders out of the engagement count.</div>
+        </div>
+
+        <div class="dec">
+          <div class="dec__h"><em>D7</em><b>Whose approval threshold applies?</b></div>
+          <p>The high-value approval template fires on a quote-value or discount threshold. Those thresholds are configured per user in the product today.</p>
+          <div class="dec__r"><em>Recommendation</em>The quote owner's threshold.</div>
+        </div>
+
+        <div class="dec">
+          <div class="dec__h"><em>D8</em><b>Remaining smaller rulings</b></div>
+          <p>Whether an accepted quote can be reversed, or only reopened with an audit event. Default inactivity thresholds for Leads and Deals. Whether overdue reminders repeat or fire once — the recommendation is fire once with a persistent overdue state. Whether Finance is notified on each acceptance or only once all scope groups resolve. Whether a cancelled scope group changes Deal value before the owner confirms. Whether a Create related quote action is ever exposed. Whether Phase 3 supports templates.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 19 ==================== -->
+    <section id="s19">
+      <div class="eyebrow"><span class="n">Section 19</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>Functional requirements</h2>
+
+      <div class="tbl">
+        <table>
+          <caption>Phase 1 requirements</caption>
+          <thead><tr><th class="num">ID</th><th>Requirement</th></tr></thead>
+          <tbody>
+            <tr><td class="num">FR-01</td><td>Phase 1 exposes exactly two creation routes: template and start from scratch.</td></tr>
+            <tr><td class="num">FR-02</td><td>Templates create editable inactive drafts using the same engine as a scratch build.</td></tr>
+            <tr><td class="num">FR-03</td><td>Start from scratch uses one global block catalogue.</td></tr>
+            <tr><td class="num">FR-04</td><td>All fixed stages expose identical shared core block identifiers and actions.</td></tr>
+            <tr><td class="num">FR-05</td><td>Stage compatibility may add quote-specific triggers and rules, but never removes or renames the shared core.</td></tr>
+            <tr><td class="num">FR-06</td><td>Protected quote progression stays outside editable actions.</td></tr>
+            <tr><td class="num">FR-07</td><td>Every Automation has All Companies or selected-company scope.</td></tr>
+            <tr><td class="num">FR-08</td><td>Scope is visible in the builder, map and list, comparison, publish and history.</td></tr>
+            <tr><td class="num">FR-09</td><td>Saving a draft never alters the active published version.</td></tr>
+            <tr><td class="num">FR-10</td><td>A test runs on a safe snapshot without changing live CRM data.</td></tr>
+            <tr><td class="num">FR-11</td><td>Publish is permitted without a current test unless validation finds a blocking conflict.</td></tr>
+            <tr><td class="num">FR-12</td><td>Publish atomically replaces the live snapshot and records a version.</td></tr>
+            <tr><td class="num">FR-13</td><td>Runtime executes only active, published, stage-matched and company-matched Automations.</td></tr>
+            <tr><td class="num">FR-14</td><td>Multi-quote aggregation uses the documented precedence and the relevant-quote test in §7.</td></tr>
+            <tr><td class="num">FR-15</td><td>Won is never downgraded by remaining quotes; all-cancelled becomes Archived, not Lost.</td></tr>
+            <tr><td class="num">FR-16</td><td>Sent engagement uses the documented eligible-quote denominator.</td></tr>
+            <tr><td class="num">FR-17</td><td>The required-work gate lists all unfinished requirements and resumes the original operation.</td></tr>
+            <tr><td class="num">FR-18</td><td>Requested-file-received binds to a real named file request.</td></tr>
+            <tr><td class="num">FR-19</td><td>Automation runtime is idempotent and fully audited.</td></tr>
+            <tr><td class="num">FR-20</td><td>Created notes, meetings, next actions and file requests are visible on the relevant Deal surfaces.</td></tr>
+            <tr><td class="num">FR-21</td><td>Zero-Automation pipelines and stages remain accessible and offer Create Automation.</td></tr>
+            <tr><td class="num">FR-22</td><td>Phase 2 custom stages use the identical core library regardless of placement.</td></tr>
+            <tr><td class="num">FR-23</td><td>Forecast, weighted probability and forecast-specific filters and sorts stay outside Phase 1.</td></tr>
+            <tr><td class="num">FR-24</td><td>A Lead is a first-class object with fixed states — open, archived, discarded, converted — and never holds a quote.</td></tr>
+            <tr><td class="num">FR-25</td><td>Lead creation runs duplicate matching and lets the user attach to an existing customer rather than creating one.</td></tr>
+            <tr><td class="num">FR-26</td><td>Conversion creates exactly one Deal, in Qualified, and marks the Lead converted and read-only.</td></tr>
+            <tr><td class="num">FR-27</td><td>Deal value derives from the primary quote in each scope group; options within a group never sum, separate groups do.</td></tr>
+            <tr><td class="num">FR-28</td><td>Accepting a quote accepts its scope group and system-rejects siblings, which remain in the audit trail.</td></tr>
+            <tr><td class="num">FR-29</td><td>The account boundary is resolved and asserted at event ingest, before company and stage matching, because queued runs have no user session.</td></tr>
+            <tr><td class="num">FR-30</td><td>Company-level visibility is delivered as a new scoping tier for Leads, Deals and Automations.</td></tr>
+            <tr><td class="num">FR-31</td><td>A scheduler is delivered as a Phase 1 dependency for all date and elapsed-time triggers, including template waits.</td></tr>
+            <tr><td class="num">FR-32</td><td>Where a Zoho CRM link is active, Deal behaviour follows the coexistence contract in §15.</td></tr>
+            <tr><td class="num">FR-33</td><td>Automation versioning is delivered as new persistence with its own rollback path, not as interface state.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 20 ==================== -->
+    <section id="s20">
+      <div class="eyebrow"><span class="n">Section 20</span></div>
+      <h2>Acceptance criteria</h2>
+
+      <h3>Automation builder</h3>
+      <ol>
+        <li>A user can open every pipeline shown in Deals from the Automation pipeline chooser.</li>
+        <li>A pipeline with zero Automations opens to an empty state and Create Automation.</li>
+        <li>The user first chooses a fixed stage, then template or start from scratch.</li>
+        <li>Company scope is required and defaults to All Companies.</li>
+        <li>All seven stages show the same shared core block identifiers and actions.</li>
+        <li>Only genuinely compatible quote-specific triggers and rules are added per stage.</li>
+        <li>A customer cannot add a generic action that writes a protected stage.</li>
+        <li>Saving a draft leaves the live Automation running unchanged.</li>
+        <li>A test creates no live CRM data, and the timeline supports Play, Step, Reset and Speed.</li>
+        <li>Publish remains available when a test is missing or outdated, provided validation is clean.</li>
+        <li>Before-and-after shows actual changed outcomes and suppresses duplicate no-change views.</li>
+        <li>Runtime ignores drafts, test drafts, inactive and out-of-scope Automations.</li>
+      </ol>
+
+      <h3>Resolver and Deal</h3>
+      <ol start="13">
+        <li>The multi-quote resolver follows the declared precedence, including backward recalculation and its audit entry.</li>
+        <li>All-cancelled becomes Archived; expired remains derived; neither is a stage.</li>
+        <li>The sent Deal card shows the correct viewed-of-sent denominator.</li>
+        <li>A sample quote, a template quote and an archived quote never derive a Deal stage.</li>
+        <li>A family whose latest revision is not the active one derives no stage from that revision.</li>
+        <li>A post-Won change order updates Deal value without changing the stage.</li>
+        <li>Accepting one quote in a scope group system-rejects its siblings and they remain visible in audit.</li>
+        <li>Separate scope groups sum; options inside one group do not.</li>
+      </ol>
+
+      <h3>Lead</h3>
+      <ol start="21">
+        <li>Creating a Lead creates or links exactly one customer, and duplicate candidates are always offered.</li>
+        <li>Converting a Lead creates exactly one Deal, in Qualified.</li>
+        <li>A converted Lead is read-only and remains in history.</li>
+        <li>Discarding a Lead requires a reason.</li>
+        <li>A quote cannot be attached to a Lead by any route.</li>
+      </ol>
+
+      <h3>Runtime and audit</h3>
+      <ol start="26">
+        <li>A requested-file-received trigger cannot be saved without a valid named request.</li>
+        <li>The required-work dialog lists all blockers, keeps Continue disabled and resumes the exact original operation.</li>
+        <li>An Automation-created meeting or follow-up appears on the Deal card and in activity, as well as history.</li>
+        <li>Replaying the same event creates no duplicate notes, meetings, next actions or file requests.</li>
+        <li>An event carrying another account's identifiers is rejected at ingest.</li>
+        <li>An Automation never executes for a Deal whose owning company is outside the published scope.</li>
+        <li>No forecast, weighted probability or forecast-specific filter or sort ships in Phase 1.</li>
+      </ol>
+
+      <div class="panel">
+        <div class="cap">Automated coverage required</div>
+        <p>Criteria 13 to 20 and 29 to 31 must be covered by automated tests rather than manual checks. The precedence ladder, the relevant-quote test, backward recalculation, scope-group resolution, idempotency and the account boundary are the least safe logic in the release to leave to a manual pass.</p>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ==================== 21 ==================== -->
+    <section id="s21">
+      <div class="eyebrow"><span class="n">Section 21</span></div>
+      <h2>Risks and sign-off</h2>
+
+      <div class="tbl">
+        <table>
+          <caption>Risk register</caption>
+          <thead><tr><th>Risk</th><th style="width:5rem">Severity</th><th>Response</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Two pipelines disagree.</strong> Zoho-connected customers see a different stage in each system.</td><td>High</td><td>Settle D2 before build; hold Deals back for those organisations.</td></tr>
+            <tr><td><strong>The customer list doubles.</strong> A prospect record is created for every enquiry, including dead ones.</td><td>High</td><td>Duplicate matching is mandatory at Lead creation, not advisory. Report on prospect records that never convert.</td></tr>
+            <tr><td><strong>Two incompatible stage models ship.</strong> The prototype implements five stages; this document commits to seven.</td><td>High</td><td>§13 conflict register signed off before build starts.</td></tr>
+            <tr><td><strong>Templates that cannot fire.</strong> Several templates and four core triggers depend on a scheduler that does not exist.</td><td>High</td><td>FR-31 makes the scheduler an explicit Phase 1 dependency.</td></tr>
+            <tr><td><strong>Nobody uses the timeline.</strong> We ship a CRM whose core surface is ignored, as today's is.</td><td>Medium</td><td>D3 research before build; measure note-creation rate as a launch metric.</td></tr>
+            <tr><td><strong>Everything becomes a dialog box.</strong> The product's habit is the pop-up; a CRM needs one-click capture.</td><td>Medium</td><td>Inline capture is a stated design requirement for the Lead inbox and Deal card.</td></tr>
+            <tr><td><strong>The builder is bigger than it looks.</strong> A visual rules canvas is a new interface class for this team.</td><td>Medium</td><td>Design it before estimating it.</td></tr>
+            <tr><td><strong>Scope groups arrive late.</strong> Value roll-up is rebuilt after launch.</td><td>Medium</td><td>Resolve C8 now; the value model in §8 depends on it.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Sign-off</h3>
+      <div class="tbl">
+        <table>
+          <caption>Required confirmations</caption>
+          <thead><tr><th>Owner</th><th>Confirms</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Product</strong></td><td>The conflict register (§13). Lead model and duplicate control. Scope groups. D1, D5, D6, D7.</td></tr>
+            <tr><td><strong>CTO / Engineering</strong></td><td>One global catalogue. Resolver order and precedence. Account-boundary contract (FR-29). Idempotency and audit. Versioning as new persistence (FR-33). Scheduler dependency (FR-31). D2.</td></tr>
+            <tr><td><strong>Design</strong></td><td>Two-route creation screen. Lead inbox and conversion with duplicate candidates. Required-work dialog. Sent engagement card. The inline-capture commitment.</td></tr>
+            <tr><td><strong>WeQuote domain owner</strong></td><td>Current quote status, trading name, review, send, accept, expiry and cancellation behaviour.</td></tr>
+            <tr><td><strong>Data / Integrations</strong></td><td>Zoho coexistence (§15). Inbound sync field ownership. Owning-company backfill.</td></tr>
+            <tr><td><strong>Roadmap owner</strong></td><td>Forecast stays in Phase 2; fully custom pipelines stay in Phase 3.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flag">
+        <div class="flag__t">Recommended order of work</div>
+        <p>Settle §13 and decisions D1 to D3 before any build starts. All three are answerable by a decision rather than by engineering, and all three are expensive to discover late. Everything else in this document can proceed in parallel.</p>
+      </div>
+    </section>
+
+    <footer class="colo">
+      <div><em>Document</em><span>CRM Automation PRD</span></div>
+      <div><em>Version</em><span>3 · Consolidated</span></div>
+      <div><em>Supersedes</em><span>Automation Roadmap v1 · Phase 1 CRM PRD</span></div>
+      <div><em>Next step</em><span>§13 conflicts, then D1–D3</span></div>
+    </footer>
+
+  </main>
+</div>
