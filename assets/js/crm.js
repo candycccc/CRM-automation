@@ -5782,6 +5782,18 @@
     showView('deal');
   }
 
+  // Quote Editor uses this public bridge to return to the actual linked Deal
+  // instead of dropping the user on the generic Pipeline board.
+  window.openCrmDealByName = function openCrmDealByName(dealName) {
+    const deal = CRM_DEALS.find(item => item.t === dealName);
+    if (!deal) {
+      showView('crm');
+      return false;
+    }
+    openDealPage(deal, findPipelineCardForDeal(deal));
+    return true;
+  };
+
   function ddTodayIso() {
     const now = new Date();
     const offset = now.getTimezoneOffset();
@@ -9603,7 +9615,7 @@
       qtShowSnackbar('This Quote is no longer available.', 'blocked');
       return;
     }
-    const params = new URLSearchParams({
+    const context = {
       mode,
       deal: ddDeal.t,
       contact: ddDeal.contact || ORG_CUSTOMERS[ddDeal.c] || ddDeal.c,
@@ -9612,9 +9624,13 @@
       name: target.quote.desc || 'Untitled',
       value: String(target.revision.value || 0),
       status: QUOTE_STATUS_LABEL[target.quote.status] || target.quote.status || 'Draft'
-    });
-    window.open('./quote-workspace.html?' + params.toString(), '_blank', 'noopener');
+    };
     closeQuoteCreatedModal();
+    if (typeof window.openQuoteFromCrmContext === 'function') {
+      window.openQuoteFromCrmContext(context);
+      return;
+    }
+    showView('quotes');
   }
 
   function openQuoteEditorNewTab(qi, revN) { qtOpenWorkspace('editor', qi, revN); }
