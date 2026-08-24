@@ -214,7 +214,7 @@ main { min-width: 0; }
 section { padding-top: 3rem; scroll-margin-top: 1rem; }
 
 .eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: .625rem; font-size: .625rem; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); margin-bottom: .625rem; }
-.eyebrow .n { color: var(--brand); font-weight: 600; }
+.eyebrow .n { color: var(--ink-3); font-weight: 600; }
 
 h2 { margin: 0 0 .875rem; font-size: clamp(1.4375rem, 2.8vw, 1.875rem); line-height: 1.14; letter-spacing: -.018em; font-weight: 700; max-width: 32ch; text-wrap: balance; }
 h3 { margin: 2rem 0 .5rem; font-size: 1.0625rem; font-weight: 700; line-height: 1.3; letter-spacing: -.006em; max-width: 40ch; text-wrap: balance; }
@@ -523,13 +523,14 @@ html { scroll-behavior: smooth; }
       <li><a href="#a5"><span>A5</span><span>Lead lifecycle</span></a></li>
       <li><a href="#a6"><span>A6</span><span>Quote event to Deal stage</span></a></li>
       <li><a href="#a7"><span>A7</span><span>Alternatives, change orders and…</span></a></li>
-      <li><a href="#a8"><span>A8</span><span>Company access and Automation…</span></a></li>
+      <li><a href="#a8"><span>A8</span><span>Company access and Automation s…</span></a></li>
       <li><a href="#a9"><span>A9</span><span>Recipes, and the creation journey</span></a></li>
       <li><a href="#a10"><span>A10</span><span>What an Automation is made of</span></a></li>
       <li><a href="#a11"><span>A11</span><span>Draft, test, validate, publish</span></a></li>
       <li><a href="#a12"><span>A12</span><span>Required-work gate and file req…</span></a></li>
       <li><a href="#a13"><span>A13</span><span>Open decisions</span></a></li>
-      <li><a href="#a14"><span>A14</span><span>Risks and sign-off</span></a></li>
+      <li><a href="#a14"><span>A14</span><span>Delivery checklist</span></a></li>
+      <li><a href="#a15"><span>A15</span><span>Risks and sign-off</span></a></li>
       <li class="grp">PART B &middot; Developer appendix</li>
       <li><a href="#b1"><span>B1</span><span>Block library contract</span></a></li>
       <li><a href="#b2"><span>B2</span><span>Functional requirements</span></a></li>
@@ -1666,7 +1667,94 @@ html { scroll-behavior: smooth; }
 
     <hr class="rule">
 <section id="a14">
-      <div class="eyebrow"><span class="n">A14</span></div>
+      <div class="eyebrow"><span class="n">A14</span><span class="pill pill--now">Phase 1 committed</span></div>
+      <h2>Delivery checklist</h2>
+      <p class="lede">Acceptance criteria prove the software behaves. This list proves a release is safe to ship. They are different questions, and a release can pass the first while failing the second.</p>
+
+      <p>Each release has its own gate. An item marked <strong>blocking</strong> stops the release; an item marked <strong>track</strong> must have a named owner and a date, but does not hold the door.</p>
+
+      <p>Owners here are roles, not people &mdash; the named individual, the current status, the target date and the evidence live in the QA workbook, because a published page cannot be filled in. This section defines the gate; the workbook tracks it.</p>
+
+      <h3>Phase 1A &mdash; CRM foundation</h3>
+      <div class="tbl">
+        <table>
+          <caption>Gate for Phase 1A</caption>
+          <thead><tr><th style="width:9rem">Area</th><th>Item</th><th style="width:8rem">Owner</th><th style="width:5.5rem">Gate</th></tr></thead>
+          <tbody>
+            <tr><td rowspan="6"><strong>Decisions closed</strong></td><td>D1 &mdash; do Deals move backwards? Until this is answered, FR-24 is not committed scope.</td><td>Product</td><td class="res">Blocking</td></tr>
+            <tr><td>D2 &mdash; Zoho coexistence. Deals stay switched off for Zoho-connected organisations until agreed.</td><td>Product + CTO</td><td class="res">Blocking</td></tr>
+            <tr><td>D4 &mdash; is the CRM company the existing Trading Name, or a new record?</td><td>Product + Eng</td><td class="res">Blocking</td></tr>
+            <tr><td>D5 &mdash; do over-quota quotes and sales orders count toward a Deal stage?</td><td>Product</td><td class="res">Blocking</td></tr>
+            <tr><td>D6 &mdash; does raising a change order follow the quote review path?</td><td>Product</td><td class="res">Blocking</td></tr>
+            <tr><td>D3 &mdash; why is today's activity timeline unused? Research complete, findings applied to the design.</td><td>Product + Design</td><td class="res">Blocking</td></tr>
+            <tr><td rowspan="5"><strong>Data</strong></td><td>Quote stage history extended to record the review stages it currently cannot.</td><td>Data</td><td class="res">Blocking</td></tr>
+            <tr><td>Activity timeline carries an organisation column, filled in for existing rows.</td><td>Data</td><td class="res">Blocking</td></tr>
+            <tr><td>Owning company assigned to existing quotes that have none.</td><td>Data</td><td class="res">Blocking</td></tr>
+            <tr><td>Ruling recorded on whether Deals are created for existing quotes, or only for new work.</td><td>Product + Eng</td><td class="res">Blocking</td></tr>
+            <tr><td>Default Lead states and disqualify reasons seeded per organisation.</td><td>Data</td><td class="res">Track</td></tr>
+            <tr><td rowspan="5"><strong>Build</strong></td><td>Stage logic derives every stage; no screen lets a person set one.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td>Phase 1A creates no note, task, file request or notification unprompted (FR-41).</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td>Company-level visibility shipped as a real permission tier, not a filter.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td>Account is established and checked when an event arrives, not from a signed-in session.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td>Alternative groups, change orders, signed value and the four margin figures all present.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td rowspan="4"><strong>Tests</strong></td><td>All eight precedence rules, each proven in isolation.</td><td>QA</td><td class="res">Blocking</td></tr>
+            <tr><td>Each of the seven quote-inclusion clauses proven to exclude.</td><td>QA</td><td class="res">Blocking</td></tr>
+            <tr><td>Both revision flags tested in all four combinations.</td><td>QA</td><td class="res">Blocking</td></tr>
+            <tr><td>An event carrying another account's identifiers is rejected.</td><td>QA</td><td class="res">Blocking</td></tr>
+            <tr><td rowspan="2"><strong>Flags</strong></td><td>Site Ready custom stage hidden until Phase 2.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td>Commit Forecast and Stage-weighted views hidden until Phase 2.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td rowspan="2"><strong>Handoff</strong></td><td>Conflict register (&sect;C1) signed off, every row resolved or explicitly deferred.</td><td>Product</td><td class="res">Blocking</td></tr>
+            <tr><td>Margin definition written down: what each of the four figures includes.</td><td>Product</td><td class="res">Track</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Phase 1B &mdash; managed recipes</h3>
+      <div class="tbl">
+        <table>
+          <caption>Gate for Phase 1B</caption>
+          <thead><tr><th style="width:9rem">Area</th><th>Item</th><th style="width:8rem">Owner</th><th style="width:5.5rem">Gate</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Decisions</strong></td><td>D7 &mdash; whose approval threshold applies on a high-value quote.</td><td>Product</td><td class="res">Blocking</td></tr>
+            <tr><td rowspan="4"><strong>Build</strong></td><td>One shared description of a flow, with versions stored server-side. Browser storage does not satisfy this.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td>Recipe settings can be changed without opening the canvas.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td>Every recipe carries a company scope, visible everywhere it is listed.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td>Timed recipes have a real work queue: persistence, worker, working days, timezone, cancellation when a record leaves the stage.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td rowspan="3"><strong>Tests</strong></td><td>Replaying the same event creates nothing twice, for every action type.</td><td>QA</td><td class="res">Blocking</td></tr>
+            <tr><td>Work already in flight finishes on the version it started with.</td><td>QA</td><td class="res">Blocking</td></tr>
+            <tr><td>Only one change order can be open per quote.</td><td>QA</td><td class="res">Blocking</td></tr>
+            <tr><td rowspan="2"><strong>Handoff</strong></td><td>All twelve recipes are defined and configurable. A timed recipe cannot be switched on until the production work queue exists.</td><td>Product</td><td class="res">Blocking</td></tr>
+            <tr><td>Event-driven recipes ship first. Timed recipes stay unavailable, not merely inactive, until the queue lands.</td><td>Engineering</td><td class="res">Track</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Phase 1C &mdash; advanced builder</h3>
+      <div class="tbl">
+        <table>
+          <caption>Gate for Phase 1C</caption>
+          <thead><tr><th style="width:9rem">Area</th><th>Item</th><th style="width:8rem">Owner</th><th style="width:5.5rem">Gate</th></tr></thead>
+          <tbody>
+            <tr><td rowspan="3"><strong>Build</strong></td><td>The block list is built from one shared source. No per-stage hard-coded lists, and placement never used as a permission key (FR-33).</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td>Draft, optional test and publish, with publishing blocked only by a real conflict.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td>Required-work gate collects every outstanding item and resumes the exact original action.</td><td>Engineering</td><td class="res">Blocking</td></tr>
+            <tr><td rowspan="2"><strong>Tests</strong></td><td>The shared core block list is identical in all seven protected stages. Stage-specific quote events and rules appear only where they can genuinely occur.</td><td>QA</td><td class="res">Blocking</td></tr>
+            <tr><td>A draft or test never changes the live version.</td><td>QA</td><td class="res">Blocking</td></tr>
+            <tr><td><strong>Handoff</strong></td><td>"Open as an editable copy" documented as one-way, with no promise of returning to the simple form.</td><td>Design</td><td class="res">Track</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flag">
+        <div class="flag__t">The two items most likely to be skipped</div>
+        <p>The <strong>activity timeline research</strong> (D3) and the <strong>organisation column backfill</strong> both look like preparation rather than product, so both tend to slide. The first decides whether anyone uses the CRM; the second is the only thing keeping one customer's notes out of another customer's timeline. Neither is optional.</p>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <section id="a15">
+      <div class="eyebrow"><span class="n">A15</span></div>
       <h2>Risks and sign-off</h2>
 
       <div class="tbl">
@@ -1676,7 +1764,7 @@ html { scroll-behavior: smooth; }
           <tbody>
             <tr><td><strong>Two pipelines disagree.</strong> Zoho-connected customers see a different stage in each system.</td><td>High</td><td>Settle D2 before build; hold Deals back for those organisations.</td></tr>
             <tr><td><strong>The customer list doubles.</strong> A prospect record is created for every enquiry, including dead ones.</td><td>High</td><td>Duplicate matching is mandatory at Lead creation, not advisory. Report on prospect records that never convert.</td></tr>
-            <tr><td><strong>Two incompatible stage models ship.</strong> The prototype implements five stages; this document commits to seven.</td><td>High</td><td>§C1 conflict register signed off before build starts.</td></tr>
+            <tr><td><strong>Two incompatible stage models ship.</strong> Earlier specifications use a five-stage model while this document commits to seven. The build and the prototype must follow one signed-off model.</td><td>High</td><td>§C1 conflict register signed off before build starts.</td></tr>
             <tr><td><strong>Recipes that cannot fire.</strong> Two recipes and four core triggers need timed work. Scheduled jobs exist in production, but no Automation work queue does.</td><td>High</td><td>FR-38. Ship event-driven recipes first; the queue gates only the timed ones.</td></tr>
             <tr><td><strong>The phase boundary is already leaking.</strong> A custom stage and a forecast view are built and demonstrable inside a release that excludes both.</td><td>High</td><td>D9. Decide per feature: document into Phase 1, or hide behind a flag until its phase.</td></tr>
             <tr><td><strong>Undocumented capability ships silently.</strong> Margin, lead owning company, lead temperature labels and the flow level all exist without a requirement.</td><td>Medium</td><td>C11–C16 adopted into the specification before build, so nothing ships unwritten.</td></tr>
@@ -1818,57 +1906,83 @@ html { scroll-behavior: smooth; }
       <div class="eyebrow"><span class="n">B3</span></div>
       <h2>Acceptance criteria</h2>
 
+            <div class="panel">
+        <div class="cap">Why these carry prefixes</div>
+        <p>Each criterion has a fixed identifier that never moves. Positional numbering breaks the moment a criterion is inserted, and the QA workbook traces every test back to these IDs.</p>
+      </div>
+
       <h3>Automation builder</h3>
-      <ol>
-        <li>A user can open every pipeline shown in Deals from the Automation pipeline chooser.</li>
-        <li>A pipeline with zero Automations opens to an empty state and Create Automation.</li>
-        <li>The user first chooses a fixed stage, then template or start from scratch.</li>
-        <li>Company scope is required and defaults to All Companies.</li>
-        <li>All seven stages show the same shared core block identifiers and actions.</li>
-        <li>Only genuinely compatible quote-specific triggers and rules are added per stage.</li>
-        <li>A customer cannot add a generic action that writes a protected stage.</li>
-        <li>Saving a draft leaves the live Automation running unchanged.</li>
-        <li>A test creates no live CRM data, and the timeline supports Play, Step, Reset and Speed.</li>
-        <li>Publish remains available when a test is missing or outdated, provided validation is clean.</li>
-        <li>Before-and-after shows actual changed outcomes and suppresses duplicate no-change views.</li>
-        <li>Runtime ignores drafts, test drafts, inactive and out-of-scope Automations.</li>
-      </ol>
-
+      <div class="tbl">
+        <table>
+          <caption>Automation builder</caption>
+          <thead><tr><th style="width:8.5rem">ID</th><th>Criterion</th></tr></thead>
+          <tbody>
+            <tr><td class="num">AC-BLD-01</td><td>A user can open every pipeline shown in Deals from the Automation pipeline chooser.</td></tr>
+            <tr><td class="num">AC-BLD-02</td><td>A pipeline with zero Automations opens to an empty state and Create Automation.</td></tr>
+            <tr><td class="num">AC-BLD-03</td><td>The user first chooses a fixed stage, then template or start from scratch.</td></tr>
+            <tr><td class="num">AC-BLD-04</td><td>Company scope is required and defaults to All Companies.</td></tr>
+            <tr><td class="num">AC-BLD-05</td><td>All seven stages show the same shared core block identifiers and actions.</td></tr>
+            <tr><td class="num">AC-BLD-06</td><td>Only genuinely compatible quote-specific triggers and rules are added per stage.</td></tr>
+            <tr><td class="num">AC-BLD-07</td><td>A customer cannot add a generic action that writes a protected stage.</td></tr>
+            <tr><td class="num">AC-BLD-08</td><td>Saving a draft leaves the live Automation running unchanged.</td></tr>
+            <tr><td class="num">AC-BLD-09</td><td>A test creates no live CRM data, and the timeline supports Play, Step, Reset and Speed.</td></tr>
+            <tr><td class="num">AC-BLD-10</td><td>Publish remains available when a test is missing or outdated, provided validation is clean.</td></tr>
+            <tr><td class="num">AC-BLD-11</td><td>Before-and-after shows actual changed outcomes and suppresses duplicate no-change views.</td></tr>
+            <tr><td class="num">AC-BLD-12</td><td>Runtime ignores drafts, test drafts, inactive and out-of-scope Automations.</td></tr>
+          </tbody>
+        </table>
+      </div>
       <h3>Resolver and Deal</h3>
-      <ol start="13">
-        <li>The multi-quote resolver follows the declared precedence, including backward recalculation and its audit entry.</li>
-        <li>All-cancelled becomes Archived; expired remains derived; neither is a stage.</li>
-        <li>The sent Deal card shows the correct viewed-of-sent denominator.</li>
-        <li>A sample quote, a template quote and an archived quote never derive a Deal stage.</li>
-        <li>A family whose latest revision is not the active one derives no stage from that revision.</li>
-        <li>A post-Won change order updates Deal value without changing the stage.</li>
-        <li>Accepting one quote in an alternative group system-rejects its siblings and they remain visible in audit.</li>
-        <li>Separate groups and independent quotes sum; quotes inside one group do not.</li>
-        <li>A second change order cannot be raised while one is in flight on the same quote.</li>
-        <li>A signed change order changes the signed value and leaves the Deal stage untouched.</li>
-      </ol>
-
+      <div class="tbl">
+        <table>
+          <caption>Resolver and Deal</caption>
+          <thead><tr><th style="width:8.5rem">ID</th><th>Criterion</th></tr></thead>
+          <tbody>
+            <tr><td class="num">AC-DEAL-01</td><td>The multi-quote resolver follows the declared precedence, including backward recalculation and its audit entry.</td></tr>
+            <tr><td class="num">AC-DEAL-02</td><td>All-cancelled becomes Archived; expired remains derived; neither is a stage.</td></tr>
+            <tr><td class="num">AC-DEAL-03</td><td>The sent Deal card shows the correct viewed-of-sent denominator.</td></tr>
+            <tr><td class="num">AC-DEAL-04</td><td>A sample quote, a template quote and an archived quote never derive a Deal stage.</td></tr>
+            <tr><td class="num">AC-DEAL-05</td><td>A family whose latest revision is not the active one derives no stage from that revision.</td></tr>
+            <tr><td class="num">AC-DEAL-06</td><td>A post-Won change order updates Deal value without changing the stage.</td></tr>
+            <tr><td class="num">AC-DEAL-07</td><td>Accepting one quote in an alternative group system-rejects its siblings and they remain visible in audit.</td></tr>
+            <tr><td class="num">AC-DEAL-08</td><td>Separate groups and independent quotes sum; quotes inside one group do not.</td></tr>
+            <tr><td class="num">AC-DEAL-09</td><td>A second change order cannot be raised while one is in flight on the same quote.</td></tr>
+            <tr><td class="num">AC-DEAL-10</td><td>A signed change order changes the signed value and leaves the Deal stage untouched.</td></tr>
+          </tbody>
+        </table>
+      </div>
       <h3>Lead</h3>
-      <ol start="21">
-        <li>Creating a Lead creates or links exactly one customer, and duplicate candidates are always offered.</li>
-        <li>Converting a Lead creates exactly one Deal, in Qualified.</li>
-        <li>A converted Lead is read-only and remains in history.</li>
-        <li>Discarding a Lead requires a reason.</li>
-        <li>A quote cannot be attached to a Lead by any route.</li>
-      </ol>
-
+      <div class="tbl">
+        <table>
+          <caption>Lead</caption>
+          <thead><tr><th style="width:8.5rem">ID</th><th>Criterion</th></tr></thead>
+          <tbody>
+            <tr><td class="num">AC-LEAD-01</td><td>Creating a Lead creates or links exactly one customer, and duplicate candidates are always offered.</td></tr>
+            <tr><td class="num">AC-LEAD-02</td><td>Converting a Lead creates exactly one Deal, in Qualified.</td></tr>
+            <tr><td class="num">AC-LEAD-03</td><td>A converted Lead is read-only and remains in history.</td></tr>
+            <tr><td class="num">AC-LEAD-04</td><td>Discarding a Lead requires a reason.</td></tr>
+            <tr><td class="num">AC-LEAD-05</td><td>A quote cannot be attached to a Lead by any route.</td></tr>
+          </tbody>
+        </table>
+      </div>
       <h3>What happens when one runs</h3>
-      <ol start="26">
-        <li>A requested-file-received trigger cannot be saved without a valid named request.</li>
-        <li>The required-work dialog lists all blockers, keeps Continue disabled and resumes the exact original operation.</li>
-        <li>An Automation-created meeting or follow-up appears on the Deal card and in activity, as well as history.</li>
-        <li>Replaying the same event creates no duplicate notes, meetings, next actions or file requests.</li>
-        <li>An event carrying another account's identifiers is rejected at ingest.</li>
-        <li>An Automation never executes for a Deal whose owning company is outside the published scope.</li>
-        <li>No forecast, weighted probability or forecast-specific filter or sort ships in Phase 1.</li>
-      </ol>
+      <div class="tbl">
+        <table>
+          <caption>What happens when one runs</caption>
+          <thead><tr><th style="width:8.5rem">ID</th><th>Criterion</th></tr></thead>
+          <tbody>
+            <tr><td class="num">AC-RUN-01</td><td>A requested-file-received trigger cannot be saved without a valid named request.</td></tr>
+            <tr><td class="num">AC-RUN-02</td><td>The required-work dialog lists all blockers, keeps Continue disabled and resumes the exact original operation.</td></tr>
+            <tr><td class="num">AC-RUN-03</td><td>An Automation-created meeting or follow-up appears on the Deal card and in activity, as well as history.</td></tr>
+            <tr><td class="num">AC-RUN-04</td><td>Replaying the same event creates no duplicate notes, meetings, next actions or file requests.</td></tr>
+            <tr><td class="num">AC-RUN-05</td><td>An event carrying another account's identifiers is rejected at ingest.</td></tr>
+            <tr><td class="num">AC-RUN-06</td><td>An Automation never executes for a Deal whose owning company is outside the published scope.</td></tr>
+            <tr><td class="num">AC-RUN-07</td><td>No forecast, weighted probability or forecast-specific filter or sort ships in Phase 1.</td></tr>
+          </tbody>
+        </table>
+      </div>
 
-      <div class="panel">
+<div class="panel">
         <div class="cap">Automated coverage required</div>
         <p>Criteria 13 to 20 and 29 to 31 must be covered by automated tests rather than manual checks. The precedence ladder, the relevant-quote test, backward recalculation, alternative-group resolution, change-order arithmetic, idempotency and the account boundary are the least safe logic in the release to leave to a manual pass.</p>
       </div>
