@@ -2887,6 +2887,54 @@
   }
 }
 
+/* The settings area follows the current canvas selection. Clicking or dragging
+   on blank canvas releases the left track; selecting a workflow card restores
+   it. The right-hand Flow summary remains visible throughout. */
+#viewAutomation.aut-builder-mode .aut-shell.is-builder {
+  transition: grid-template-columns .2s ease;
+}
+#viewAutomation.aut-builder-mode .aut-shell.is-builder.is-left-pane-collapsed,
+#viewAutomation.aut-builder-mode .aut-shell.is-builder.is-left-pane-collapsed:not(.has-block-library) {
+  grid-template-columns: 0 minmax(420px,1fr) 300px !important;
+}
+#viewAutomation.aut-builder-mode .aut-shell.is-builder > :is(.aut-block-library,.aut-inspector) {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity .16s ease, transform .2s ease, visibility 0s linear 0s;
+}
+#viewAutomation.aut-builder-mode .aut-shell.is-builder.is-left-pane-collapsed > :is(.aut-block-library,.aut-inspector) {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  border-right-color: transparent;
+  transform: translateX(-12px);
+  transition: opacity .12s ease, transform .2s ease, visibility 0s linear .2s;
+}
+#viewAutomation.aut-builder-mode .aut-shell.is-builder.is-left-pane-collapsed .aut-node.selected {
+  outline: 0;
+  border-color: #C9D2DE;
+}
+#viewAutomation.aut-builder-mode .aut-shell.is-builder.is-left-pane-collapsed .aut-node.selected.trigger { border-top-color:#7C3AED; }
+#viewAutomation.aut-builder-mode .aut-shell.is-builder.is-left-pane-collapsed .aut-node.selected.wait { border-top-color:#B58128; }
+#viewAutomation.aut-builder-mode .aut-shell.is-builder.is-left-pane-collapsed .aut-node.selected.condition { border-top-color:#2450FF; }
+#viewAutomation.aut-builder-mode .aut-shell.is-builder.is-left-pane-collapsed .aut-node.selected.action { border-top-color:#1E8539; }
+#viewAutomation.aut-builder-mode .aut-shell.is-builder.is-left-pane-collapsed .aut-editable-node-wrap.active .aut-connection-port {
+  opacity: 0;
+  pointer-events: none;
+}
+@media (max-width: 980px) {
+  #viewAutomation.aut-builder-mode .aut-shell.is-builder.is-left-pane-collapsed,
+  #viewAutomation.aut-builder-mode .aut-shell.is-builder.is-left-pane-collapsed:not(.has-block-library) {
+    grid-template-columns: 0 minmax(440px,1fr) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #viewAutomation.aut-builder-mode .aut-shell.is-builder,
+  #viewAutomation.aut-builder-mode .aut-shell.is-builder > :is(.aut-block-library,.aut-inspector) {
+    transition: none !important;
+  }
+}
+
 /* Weight is part of the hierarchy too. The previous screen used bold text in
    almost every row, which made the whole Automation area feel oversized. */
 #viewAutomation :is(h1,h2,h3,h4,h5,h6,strong,b) {

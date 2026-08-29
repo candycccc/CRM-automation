@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quote Automation Scope: Templates, Custom Stages and Pipelines</title>
+  <title>Quote Automation Scope: What Each Level Includes</title>
   <style>
     html, body { margin: 0; min-height: 100%; background: #ffffff; }
     body { font-family: Inter, Geist, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -41,11 +41,13 @@
     #wq-template-scratch-scope *::before,
     #wq-template-scratch-scope *::after { box-sizing: inherit; }
 
+    #wq-template-scratch-scope h1,
     #wq-template-scratch-scope h2,
     #wq-template-scratch-scope h3,
     #wq-template-scratch-scope h4,
     #wq-template-scratch-scope p { margin-top: 0; color: var(--wq-ink); }
 
+    #wq-template-scratch-scope h1 { margin-bottom: .35rem; font-size: 2rem; line-height: 1.15; }
     #wq-template-scratch-scope h2 { margin-bottom: .35rem; font-size: 1.7rem; line-height: 1.2; }
     #wq-template-scratch-scope h3 { margin-bottom: .35rem; font-size: 1.2rem; line-height: 1.3; }
     #wq-template-scratch-scope h4 { margin-bottom: .25rem; font-size: 1rem; line-height: 1.35; }
@@ -450,34 +452,42 @@
 
     #wq-template-scratch-scope .wq-level-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: .8rem;
+      gap: 1rem;
     }
 
     #wq-template-scratch-scope .wq-level-card {
       min-width: 0;
-      padding: .9rem;
-      background: var(--wq-blue-soft);
-      border: 1px solid #cdd8ff;
-      border-radius: .7rem;
+      padding: 1rem;
+      background: var(--wq-bg);
+      border: 1px solid var(--wq-line);
+      border-left: 4px solid var(--wq-blue);
+      border-radius: .75rem;
     }
 
     #wq-template-scratch-scope .wq-level-card:nth-child(2) {
-      background: var(--wq-green-soft);
-      border-color: #c9e7d7;
+      border-left-color: var(--wq-green);
     }
 
     #wq-template-scratch-scope .wq-level-card:nth-child(3) {
-      background: var(--wq-amber-soft);
-      border-color: #ead5a7;
+      border-left-color: var(--wq-amber);
     }
 
     #wq-template-scratch-scope .wq-level-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: .8rem;
+      flex-wrap: wrap;
+    }
+
+    #wq-template-scratch-scope .wq-level-title {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr);
       align-items: start;
-      gap: .65rem;
-      margin-bottom: .55rem;
+      gap: .7rem;
+      min-width: 0;
+      max-width: 62rem;
     }
 
     #wq-template-scratch-scope .wq-level-number {
@@ -493,7 +503,16 @@
 
     #wq-template-scratch-scope .wq-level-card:nth-child(2) .wq-level-number { background: var(--wq-green); }
     #wq-template-scratch-scope .wq-level-card:nth-child(3) .wq-level-number { background: var(--wq-amber); }
+    #wq-template-scratch-scope .wq-level-card h3 { margin-bottom: .2rem; font-size: 1.3rem; }
     #wq-template-scratch-scope .wq-level-card p { margin-bottom: .55rem; color: var(--wq-muted); }
+
+    #wq-template-scratch-scope .wq-level-statuses {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: .4rem;
+      flex-wrap: wrap;
+    }
 
     #wq-template-scratch-scope .wq-level-metrics {
       display: grid;
@@ -510,13 +529,72 @@
 
     #wq-template-scratch-scope .wq-level-status {
       display: inline-flex;
-      margin-top: .2rem;
       padding: .2rem .5rem;
       border-radius: 999px;
       color: var(--wq-ink);
-      background: rgba(255,255,255,.75);
+      background: var(--wq-soft);
+      border: 1px solid var(--wq-line);
       font-size: .74rem;
       font-weight: 800;
+    }
+
+    #wq-template-scratch-scope .wq-level-subgrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .75rem;
+    }
+
+    #wq-template-scratch-scope .wq-level-subgrid.is-spaced { margin-top: .75rem; }
+
+    #wq-template-scratch-scope .wq-level-subcard {
+      min-width: 0;
+      padding: .8rem;
+      background: var(--wq-bg);
+      border: 1px solid var(--wq-line);
+      border-radius: .6rem;
+    }
+
+    #wq-template-scratch-scope .wq-level-subcard h4 { margin-bottom: .35rem; }
+    #wq-template-scratch-scope .wq-level-subcard .wq-level-metrics { margin-top: .5rem; }
+
+    #wq-template-scratch-scope .wq-level-kicker {
+      display: block;
+      margin-bottom: .2rem;
+      font-size: .7rem;
+      font-weight: 800;
+      letter-spacing: .055em;
+      text-transform: uppercase;
+      color: var(--wq-muted);
+    }
+
+    #wq-template-scratch-scope .wq-context-rail,
+    #wq-template-scratch-scope .wq-gap-rail {
+      display: flex;
+      gap: .4rem;
+      margin-top: .75rem;
+      padding-top: .75rem;
+      border-top: 1px solid var(--wq-line);
+      flex-wrap: wrap;
+    }
+
+    #wq-template-scratch-scope .wq-context-rail span,
+    #wq-template-scratch-scope .wq-gap-rail span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 1.9rem;
+      padding: .3rem .55rem;
+      color: var(--wq-ink);
+      background: var(--wq-soft);
+      border: 1px solid var(--wq-line);
+      border-radius: .45rem;
+      font-size: .78rem;
+      font-weight: 700;
+    }
+
+    #wq-template-scratch-scope .wq-gap-rail span {
+      color: var(--wq-green);
+      background: var(--wq-green-soft);
+      border-color: #c9e7d7;
     }
 
     #wq-template-scratch-scope .wq-rule-contract {
@@ -660,7 +738,8 @@
     @media (max-width: 820px) {
       #wq-template-scratch-scope .wq-compare-grid,
       #wq-template-scratch-scope .wq-template-cards,
-      #wq-template-scratch-scope .wq-level-grid { grid-template-columns: 1fr; }
+      #wq-template-scratch-scope .wq-level-grid,
+      #wq-template-scratch-scope .wq-level-subgrid { grid-template-columns: 1fr; }
       #wq-template-scratch-scope .wq-field-types,
       #wq-template-scratch-scope .wq-math-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       #wq-template-scratch-scope .wq-catalogue-grid { grid-template-columns: 1fr; }
@@ -669,6 +748,7 @@
 
     @media (max-width: 640px) {
       #wq-template-scratch-scope { padding: .8rem; }
+      #wq-template-scratch-scope h1 { font-size: 1.65rem; }
 
       #wq-template-scratch-scope .wq-compare-grid,
       #wq-template-scratch-scope .wq-field-types,
@@ -696,47 +776,102 @@
 
   <header class="wq-viz-head">
     <div>
-      <h2>Quote Automation Scope: Templates, Custom Stages and Pipelines</h2>
-      <p>The scope has three levels and five product cases. This map separates what is already countable in the current Quote lifecycle from the extra choices introduced by Custom Stages and new Pipelines.</p>
+      <h1>Quote Automation Scope — What each level includes</h1>
+      <p>Existing Quote contexts, customer-added Stages and New / Custom Pipelines are separate product surfaces. The containers below show what belongs inside each one.</p>
     </div>
     <span class="viz-badge">3 scope levels · 5 product cases</span>
   </header>
 
-  <div class="wq-branch-note wq-prototype-note" role="note"><i aria-hidden="true"></i><div><strong>Prototype exception — excluded from the formal counts</strong><p>The prototype source retains <strong>Add Quote Label</strong> for In Progress, In Review, Passed Review and Sent, but the current UI keeps it disabled as Pending decision. It is not one of the approved 14 shared Actions, so it is not included in the 16 Action types, 100 Action placements, 1,300 compatibility decisions or 15,238 simple shapes until the product contract decides whether it stays.</p></div></div>
-
-  <div class="wq-branch-note wq-count-note" role="note"><i aria-hidden="true"></i><div><strong>Counting boundary — do not turn 15,238 into a grand total</strong><p>The <strong>15,238</strong> figure belongs only to the current prototype’s curated matrix of <strong>33 Start placements</strong> across seven existing Quote contexts. The Version 9 shared-core target implies <strong>76 target Start placements</strong> in those same contexts. The running Custom-Stage prototype also exposes a different Trigger/Action inventory from the Guide contract shown below. Until Product and Engineering reconcile those sources, Levels 2 and 3 must not be added to 15,238 as if all three used one final matrix.</p></div></div>
-
   <section class="wq-level-overview" aria-labelledby="wq-level-overview-title">
-    <h3 id="wq-level-overview-title">The three scope levels</h3>
-    <p>Level 1 contains two routes inside the existing Quote lifecycle. Level 2 inserts customer-defined Stages into that lifecycle. Level 3 creates a separate Pipeline, either with or without the Quote lifecycle.</p>
+    <h2 id="wq-level-overview-title">Scope map — three different product boundaries</h2>
+    <p>Read the containers from top to bottom. Level 1 stays inside the existing Quote Pipeline. Level 2 changes that Pipeline by inserting Custom Stages. Level 3 creates a separate New / Custom Pipeline.</p>
     <div class="wq-level-grid">
       <article class="wq-level-card">
-        <div class="wq-level-card-head"><span class="wq-level-number">1</span><div><h4>Existing Quote lifecycle</h4><p>Seven existing Quote contexts, with two ways to create an Automation.</p></div></div>
-        <ul class="wq-level-metrics">
-          <li><strong>Case 1A · Start from scratch</strong><br>Current comparison: 15,238 deliberately simple shapes.</li>
-          <li><strong>Case 1B · 12 Templates</strong><br>12 fixed recipes and 63 editable setting instances.</li>
-        </ul>
-        <span class="wq-level-status">Finite baseline comparison</span>
+        <header class="wq-level-card-head">
+          <div class="wq-level-title"><span class="wq-level-number">1</span><div><span class="wq-level-kicker">Existing Quote Pipeline</span><h3>Automations in the seven existing Quote contexts</h3><p>Every existing context offers two separate creation routes. The chosen context stays fixed.</p></div></div>
+          <div class="wq-level-statuses"><span class="wq-level-status">Current product direction</span><span class="wq-level-status">Finite baseline</span></div>
+        </header>
+        <div class="wq-level-subgrid">
+          <section class="wq-level-subcard">
+            <span class="wq-level-kicker">Case 1A · Custom</span>
+            <h4>Start from scratch</h4>
+            <p>Choose one compatible Starts when event, then add compatible Rules, Waits and Actions to a Custom draft.</p>
+            <ul class="wq-level-metrics">
+              <li><strong>16 formal Action types · 100 allowed placements</strong></li>
+              <li><strong>33 Starts placements · 15,238 simple shapes</strong> are current-prototype comparison figures, not the Version 9 grand total.</li>
+            </ul>
+          </section>
+          <section class="wq-level-subcard">
+            <span class="wq-level-kicker">Case 1B · Managed</span>
+            <h4>12 approved Templates</h4>
+            <p>WeQuote fixes the Starts when, Rule, branches, Wait position, Action type and order. Users change only the approved values.</p>
+            <ul class="wq-level-metrics">
+              <li><strong>12 fixed recipes</strong></li>
+              <li><strong>63 editable setting instances · 14 field types</strong></li>
+            </ul>
+          </section>
+        </div>
+        <div class="wq-context-rail" aria-label="Seven existing Quote contexts"><span>Qualified</span><span>In Progress</span><span>In Review</span><span>Passed Review</span><span>Sent</span><span>Won</span><span>Lost</span></div>
       </article>
       <article class="wq-level-card">
-        <div class="wq-level-card-head"><span class="wq-level-number">2</span><div><h4>Custom Stages inside the Quote lifecycle</h4><p>A Stage may sit in any of five allowed lifecycle gaps. Its choices depend on the gap.</p></div></div>
-        <ul class="wq-level-metrics">
-          <li><strong>10–13 Starts when</strong> shown per inserted Stage</li>
-          <li><strong>13–16 Rule cards</strong> and <strong>14–15 Action types</strong> before compatibility removes unsafe choices</li>
-          <li>The first two gaps each add one guarded Create Quote Action.</li>
-        </ul>
-        <span class="wq-level-status">Count per Stage, not one grand total</span>
+        <header class="wq-level-card-head">
+          <div class="wq-level-title"><span class="wq-level-number">2</span><div><span class="wq-level-kicker">Same Quote Pipeline · added structure</span><h3>Custom Stages inside the Quote lifecycle</h3><p>Users may insert one or more named Stages into five allowed lifecycle gaps. Each inserted Stage receives its own gap-compatible Custom Automation surface.</p></div></div>
+          <div class="wq-level-statuses"><span class="wq-level-status">Separately tracked</span><span class="wq-level-status">No approved Stage cap</span></div>
+        </header>
+        <div class="wq-gap-rail" aria-label="Five allowed Custom Stage gap types"><span>Qualified → [Custom Stage 1…n] → In Progress</span><span>In Progress → [Custom Stage 1…n] → In Review</span><span>In Review → [Custom Stage 1…n] → Passed Review</span><span>Passed Review → [Custom Stage 1…n] → Sent</span><span>Sent → [Custom Stage 1…n] → Won / Lost</span></div>
+        <div class="wq-level-subgrid is-spaced">
+          <section class="wq-level-subcard">
+            <span class="wq-level-kicker">What each inserted Stage receives</span>
+            <h4>Gap-compatible Custom Automation choices</h4>
+            <ul class="wq-level-metrics">
+              <li><strong>10–13 Starts when</strong> and <strong>13–16 Rule cards</strong>, depending on the gap</li>
+              <li><strong>14 shared Actions</strong>; only the first two gaps may add one guarded Create Quote Action</li>
+              <li>Waits, Yes / No paths and multiple compatible Actions remain available.</li>
+            </ul>
+          </section>
+          <section class="wq-level-subcard">
+            <span class="wq-level-kicker">Boundary</span>
+            <h4>The lifecycle still controls what is safe</h4>
+            <p>Protected Quote contexts keep their identity and automatic Quote-driven movement. A Custom Stage gets only the Quote choices safe in its gap.</p>
+            <p><strong>The existing 12-Template pack is not automatically copied into a Custom Stage.</strong> Any additional managed Template pack is a separate product decision.</p>
+          </section>
+        </div>
       </article>
       <article class="wq-level-card">
-        <div class="wq-level-card-head"><span class="wq-level-number">3</span><div><h4>New Pipeline</h4><p>Two different models must be designed and tested separately.</p></div></div>
-        <ul class="wq-level-metrics">
-          <li><strong>Case 3A · Quote-connected</strong><br>Repeats the protected Quote contexts and the same five Custom-Stage gaps.</li>
-          <li><strong>Case 3B · Standalone</strong><br>User-defined working Stages with Deal/CRM choices only.</li>
-        </ul>
-        <span class="wq-level-status">No finite total until limits are set</span>
+        <header class="wq-level-card-head">
+          <div class="wq-level-title"><span class="wq-level-number">3</span><div><span class="wq-level-kicker">New product boundary</span><h3>New / Custom Pipeline</h3><p>This is what the scope map means by a Custom Pipeline. It contains one of two different Pipeline models; they must not be merged into one compatibility count.</p></div></div>
+          <div class="wq-level-statuses"><span class="wq-level-status">Review proposal</span><span class="wq-level-status">Not confirmed Phase 1</span><span class="wq-level-status">Variable total</span></div>
+        </header>
+        <div class="wq-level-subgrid">
+          <section class="wq-level-subcard">
+            <span class="wq-level-kicker">Case 3A · WITH Quote lifecycle</span>
+            <h4>Another Quote-connected Pipeline</h4>
+            <ul class="wq-level-metrics">
+              <li>Retains the <strong>seven protected / derived Quote contexts</strong> and Quote-driven movement.</li>
+              <li>Allows its own Custom Stages in the <strong>same five lifecycle gap types</strong>.</li>
+              <li>Uses compatible Quote and Deal Automation choices; multi-Quote safeguards still apply.</li>
+              <li>Pipeline creation, migration, permissions, reporting and deletion safeguards need separate contracts.</li>
+            </ul>
+          </section>
+          <section class="wq-level-subcard">
+            <span class="wq-level-kicker">Case 3B · WITHOUT Quote lifecycle</span>
+            <h4>Standalone Pipeline</h4>
+            <ul class="wq-level-metrics">
+              <li>User defines the Pipeline name and working Stage names / order.</li>
+              <li>Per working Stage: <strong>10 target Starts · 11 Rule families · up to 14 shared Deal / CRM Actions</strong>.</li>
+              <li><strong>No Quote-specific Starts, Rules, Create Quote Actions or automatic Quote lifecycle movement.</strong></li>
+              <li>Won and Lost keep their protected result meanings.</li>
+            </ul>
+          </section>
+        </div>
+        <div class="wq-context-rail" aria-label="New Pipeline scope boundary"><span>No approved Pipeline cap</span><span>No approved Stage cap</span><span>Any new Template pack is a separate decision</span></div>
       </article>
     </div>
   </section>
+
+  <div class="wq-branch-note wq-count-note" role="note"><i aria-hidden="true"></i><div><strong>Counting boundary — do not turn 15,238 into a grand total</strong><p>The <strong>15,238</strong> figure belongs only to the current prototype’s curated matrix of <strong>33 Start placements</strong> across seven existing Quote contexts. The Version 9 shared-core target implies <strong>76 target Start placements</strong> in those same contexts. The running Custom-Stage prototype also exposes a different Trigger/Action inventory from the Guide contract shown below. Until Product and Engineering reconcile those sources, Levels 2 and 3 must not be added to 15,238 as if all three used one final matrix.</p></div></div>
+
+  <div class="wq-branch-note wq-prototype-note" role="note"><i aria-hidden="true"></i><div><strong>Prototype exception — excluded from the formal counts</strong><p>The prototype source retains <strong>Add Quote Label</strong> for In Progress, In Review, Passed Review and Sent, but the current UI keeps it disabled as Pending decision. It is not one of the approved 14 shared Actions, so it is not included in the 16 Action types, 100 Action placements, 1,300 compatibility decisions or 15,238 simple shapes until the product contract decides whether it stays.</p></div></div>
 
   <div class="wq-compare-grid">
     <section class="card wq-panel wq-scratch" aria-labelledby="wq-scratch-title">
@@ -749,7 +884,7 @@
       </header>
 
       <div class="wq-flow" role="img" aria-label="A configurable Start-from-scratch flow with selectable Starts when, Rules, paths, Waits and Actions">
-        <span class="wq-flow-step"><i aria-hidden="true"></i><strong>Choose a start</strong><small class="text-muted">18 types in the formal catalogue</small></span>
+        <span class="wq-flow-step"><i aria-hidden="true"></i><strong>Choose a start</strong><small class="text-muted">18 types in the current prototype comparison</small></span>
         <i class="wq-flow-arrow" data-lucide="arrow-right" aria-hidden="true"></i>
         <span class="wq-flow-step"><i aria-hidden="true"></i><strong>Add Rules and Waits</strong><small class="text-muted">Configure the Yes and No paths</small></span>
         <i class="wq-flow-arrow" data-lucide="arrow-right" aria-hidden="true"></i>
@@ -759,8 +894,8 @@
       <ul class="wq-fact-list">
         <li><i aria-hidden="true"></i><span><strong>33 start placements</strong> across the seven Quote contexts</span></li>
         <li><i aria-hidden="true"></i><span><strong>16 formal Action types and 100 allowed Action placements</strong></span></li>
-        <li><i aria-hidden="true"></i><span><strong>1,300 compatibility decisions</strong> before runtime and branch testing</span></li>
-        <li><i aria-hidden="true"></i><span><strong>15,238 simple shapes</strong> before multiple steps, Waits and deeper branches</span></li>
+        <li><i aria-hidden="true"></i><span><strong>1,300 current-prototype compatibility decisions</strong> before runtime and branch testing</span></li>
+        <li><i aria-hidden="true"></i><span><strong>15,238 current-prototype simple shapes</strong> before multiple steps, Waits and deeper branches</span></li>
       </ul>
     </section>
 
@@ -856,7 +991,7 @@
 
   <section class="wq-breakdown" aria-labelledby="wq-breakdown-title">
     <h3 id="wq-breakdown-title">How the numbers are calculated</h3>
-    <p class="wq-section-intro">The Version 9 route order is Start from scratch first and Templates second. The detailed evidence below is grouped as A and B for readability: Template settings follow the approved pack, while Start-from-scratch counts describe the formal seven-context compatibility matrix. A placement means a choice is available in one specific Quote context.</p>
+    <p class="wq-section-intro">The Version 9 route order is Start from scratch first and Templates second. The detailed evidence below is grouped as A and B for readability: Template settings follow the approved pack, while the Start-from-scratch figures describe the current prototype's curated seven-context comparison matrix. A placement means a choice is available in one specific Quote context.</p>
 
     <div class="wq-calc-block">
       <div class="wq-calc-title"><span>A</span><div><h4>What each Template contains → 63 editable setting instances</h4><p class="wq-muted">Every card below separates the fixed workflow from the values a user is allowed to change.</p></div></div>
@@ -921,7 +1056,7 @@
     </div>
 
     <div class="wq-calc-block scratch">
-      <div class="wq-calc-title"><span>B</span><div><h4>Start from scratch → choices must be checked in every Quote context</h4><p class="wq-muted">The same Starts when or Action is not automatically safe everywhere.</p></div></div>
+      <div class="wq-calc-title"><span>B</span><div><h4>Start from scratch → current prototype choices checked in every Quote context</h4><p class="wq-muted">The same Starts when or Action is not automatically safe everywhere. These figures are evidence for comparison, not the Version 9 target grand total.</p></div></div>
       <div class="table-responsive">
         <table class="table table-sm" aria-label="Start-from-scratch combinations by Quote context">
           <thead><tr><th>Quote context</th><th class="text-end">Start placements</th><th class="text-end">Action placements</th><th class="text-end">Allowed Start × Rule pairs</th><th class="text-end">Simple shapes</th></tr></thead>
@@ -948,7 +1083,7 @@
 
       <div class="wq-catalogue-grid">
         <section class="wq-catalogue" aria-labelledby="wq-start-catalogue">
-          <h4 id="wq-start-catalogue">The 18 Starts when types</h4>
+          <h4 id="wq-start-catalogue">The 18 Starts when types used in the current prototype comparison</h4>
           <ol>
             <li>Deal enters Qualified</li><li>Deal Owner changes</li><li>Meeting or Site Visit changes</li><li>File is added to Deal</li><li>Deal Next Action becomes due</li><li>Expected Close Date is coming up</li><li>First Quote is created</li><li>Another Quote option is added</li><li>Related Quote is edited</li><li>Note follow-up time is reached</li><li>Quote is submitted for review</li><li>Quote Review Note changes</li><li>Quote becomes Passed Review</li><li>Quote is Sent</li><li>Customer views a Sent Quote</li><li>Quote expiry is coming up</li><li>Quote is accepted</li><li>Deal becomes Lost</li>
           </ol>
@@ -963,15 +1098,15 @@
     </div>
   </section>
 
-  <div class="wq-big-contrast" aria-label="Twelve fixed Template shapes compared with fifteen thousand two hundred and thirty-eight simple Start-from-scratch shapes">
+  <div class="wq-big-contrast" aria-label="Twelve fixed Template shapes compared with fifteen thousand two hundred and thirty-eight current-prototype simple Start-from-scratch shapes">
     <span class="wq-big-number"><strong>12</strong><span>fixed Template shapes</span></span>
     <strong class="wq-versus">versus</strong>
-    <span class="wq-big-number scratch"><strong class="tabular-nums">15,238</strong><span>simple Start-from-scratch shapes in the formal matrix</span></span>
+    <span class="wq-big-number scratch"><strong class="tabular-nums">15,238</strong><span>simple Start-from-scratch shapes in the current prototype matrix</span></span>
   </div>
 
   <section class="wq-scope-detail" aria-labelledby="wq-custom-stage-title">
     <h3 id="wq-custom-stage-title">Level 2 detail · Custom Stages inside the existing Quote lifecycle</h3>
-    <p>A Custom Stage is not a copy of one generic picker. It inherits the shared Deal choices and then adds only the Quote choices that are safe in its lifecycle gap. Waits, Yes/No paths and multiple Actions can still expand the flow after these first picker choices.</p>
+    <p><strong>Status: separately tracked.</strong> A Custom Stage is not a copy of one generic picker. The Guide scenario below starts with shared Deal choices and then adds only the Quote choices safe in its lifecycle gap. Waits, Yes/No paths and multiple Actions can still expand the flow after these first picker choices.</p>
     <div class="table-responsive">
       <table class="table table-sm" aria-label="Custom Stage picker choices by Quote lifecycle gap">
         <thead><tr><th>Allowed lifecycle gap</th><th class="text-end">Starts when shown</th><th class="text-end">Rule cards shown</th><th class="text-end">Allowed Start × Rule card pairs</th><th class="text-end">Maximum candidate Actions</th><th>Guarded Quote Action</th><th class="text-end">Simple Guide-card shapes</th></tr></thead>
@@ -990,8 +1125,8 @@
   </section>
 
   <section class="wq-scope-detail" aria-labelledby="wq-pipeline-title">
-    <h3 id="wq-pipeline-title">Level 3 detail · A new Pipeline has two separate product cases</h3>
-    <p>“New Pipeline” is not one more Stage. It adds Pipeline and Stage management, routing, Deal migration, permissions, deletion safeguards and a new compatibility surface.</p>
+    <h3 id="wq-pipeline-title">Level 3 detail · A New / Custom Pipeline has two separate product cases</h3>
+    <p><strong>Status: review proposal, not confirmed Phase 1.</strong> A New / Custom Pipeline is not one more Stage. It adds Pipeline and Stage management, routing, Deal migration, permissions, deletion safeguards and a new compatibility surface.</p>
     <div class="wq-pipeline-grid">
       <article class="wq-pipeline-card">
         <h4>Case 3A · Another Quote-connected Pipeline</h4>
@@ -1001,7 +1136,7 @@
       <article class="wq-pipeline-card">
         <h4>Case 3B · Standalone Pipeline</h4>
         <p>Each user-defined working Stage has <strong>10 Starts</strong> (9 shared + Stage entry), <strong>11 Rule families</strong> and up to <strong>14 shared Deal Actions</strong>. Quote-specific Starts, Rules and Actions are not shown.</p>
-        <p><strong>For m working Stages:</strong> 10m Start placements, 11m Rule-family placements and 14m Action placements.</p>
+        <p><strong>Target formula for m working Stages:</strong> 10m Start placements, 11m Rule-family placements and 14m Action placements.</p>
       </article>
     </div>
     <div class="wq-branch-note wq-count-note"><i aria-hidden="true"></i><div><strong>There is no single approved grand total for Levels 2 and 3</strong><p>Users may add more than one Custom Stage in a gap, and no maximum number of Pipelines or Stages has been agreed. Product must first set those limits and publish the per-gap compatibility matrix. Until then, the honest answer is: <strong>3 scope levels, 5 product cases, exact Level 1 counts, per-Stage Level 2 counts and a variable Level 3 total.</strong></p></div></div>
