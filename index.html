@@ -3,18 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>WeQuote Platform CRM</title>
+<script>
+  try {
+    if (localStorage.getItem('wequote-needs-attention-widget-enabled-v1') === 'false') {
+      document.documentElement.classList.add('attention-widget-pref-disabled');
+    }
+  } catch (_) {}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="./assets/css/crm.css?v=125">
+  <link rel="stylesheet" href="./assets/css/crm.css?v=134">
   <link rel="stylesheet" href="./assets/compat/variation-grouping-parity.css?v=3">
   <link rel="stylesheet" href="./assets/compat/variation-grouping-parity-v4.css?v=11">
   <link rel="stylesheet" href="./assets/compat/quote-first-co-trainline.css?v=4">
   <link rel="stylesheet" href="./assets/css/compatibility.css?v=1">
-  <link rel="stylesheet" href="./assets/css/automation.css?v=117">
+  <link rel="stylesheet" href="./assets/css/automation.css?v=146">
   <link rel="stylesheet" href="./assets/css/quote-demo.css?v=8">
+  <link rel="stylesheet" href="./assets/css/phase1-handoff.css?v=3">
+  <link rel="stylesheet" href="./assets/css/full-roadmap.css?v=2">
+  <link rel="stylesheet" href="./assets/css/focus-widget.css?v=61">
+  <link rel="stylesheet" href="./assets/css/my-notes.css?v=11">
+  <link rel="stylesheet" href="./assets/css/custom-dashboard.css?v=2">
 </head>
 <body>
 
@@ -110,7 +125,7 @@
         <div class="acc-subs">
           <div class="sub-row"><span class="dot"></span><div class="sub-item" onclick="showView('crm')"><span class="txt">Deals</span><span class="badge99 dim">99</span></div></div>
           <div class="sub-row"><span class="dot"></span><div class="sub-item" onclick="showView('leads')"><span class="txt">Leads</span></div></div>
-          <div class="sub-row"><span class="dot"></span><div class="sub-item" onclick="showView('automation')"><span class="txt">Automations</span></div></div>
+          <div class="sub-row"><span class="dot"></span><button class="sub-item aut-nav-action" type="button" onclick="showView('automation')"><span class="txt">Automations</span></button></div>
         </div>
       </div>
       <div class="acc">
@@ -343,7 +358,7 @@
             </div>
             <div class="am-col am-links">
               <span class="lnk">Settings</span>
-              <span class="am-customise" onclick="openCustomise(event)"><i class="fai">&#xf1de;</i> Customise sidebar</span>
+              <span class="am-customise" onclick="openCustomise(event)"><i class="fai">&#xf1de;</i> Customise workspace</span>
               <span class="lnk">Sign out</span>
             </div>
           </div>
@@ -359,6 +374,7 @@
     <div class="topbar">
       <div class="topbar-row">
         <div class="aut-topbar-title-group">
+          <button class="aut-map-back-logo" type="button" id="autMapBackLogo" aria-label="Back to Quote Pipeline Automations" title="Back to Quote Pipeline Automations"><span class="aut-editor-brand-logo" id="autMapBrandLogo" aria-hidden="true"></span></button>
           <span class="title" id="pageTitle">Dashboard</span>
           <span class="aut-topbar-context" id="autTopbarContext" hidden></span>
         </div>
@@ -368,8 +384,9 @@
               <button type="button" class="active" data-aut-group-view="map" role="tab" aria-selected="true"><i class="fai">&#xf279;</i> Map</button>
               <button type="button" data-aut-group-view="list" role="tab" aria-selected="false"><i class="fai">&#xf03a;</i> List</button>
             </div>
+            <button class="aut-btn small aut-try-flow-button" type="button" id="autTryQuoteFlow"><i class="fai">&#xf0c3;</i> Practice a flow</button>
             <button class="aut-btn primary small" type="button" id="autPipelineCreateAutomation"><i class="fai">&#xf067;</i> Create automation</button>
-            <button class="aut-pipeline-runtime is-running" type="button" id="autPipelinePauseResume" aria-label="Automations running. Pause user Automations"><i class="fai">&#xf04c;</i><span><strong>Running</strong><small>Pause automations</small></span></button>
+            <button class="aut-pipeline-runtime is-running" type="button" id="autPipelinePauseResume" aria-label="Automations running. Pause user Automations" title="Pause user Automations"><i class="fai">&#xf04c;</i><span><strong>Running</strong></span></button>
           </div>
           <span class="btn-help"><i class="fai">&#xf059;</i> Need Help?</span>
           <div class="dd-watching-wrap" id="ddWatching" style="display:none;">
@@ -379,6 +396,8 @@
             <div class="dd-watching-menu" id="ddWatchingMenu" role="menu" aria-label="Deal watchers"></div>
           </div>
           <span class="search-pill" id="topSearchPill"><i class="fai">&#xf002;</i> Global Search</span>
+          <button class="aut-btn small aut-try-flow-button" type="button" id="autTryQuoteFlowGroup" hidden><i class="fai">&#xf0c3;</i> Practice a flow</button>
+          <button class="aut-btn primary small aut-global-create-automation" type="button" id="autCreateAutomationGroup" hidden><i class="fai">&#xf067;</i> Create Automation</button>
           <button class="dd-wonbtn" id="ddWonBtn" style="display:none;" onclick="ddMarkWon()"><i class="fai">&#xf521;</i> Mark as Won</button>
           <div class="dd-kebab-wrap" id="ddKebabWrap" style="display:none;">
             <button class="dd-kebab" id="ddKebab" type="button" aria-label="More deal actions" aria-haspopup="menu" aria-expanded="false" onclick="toggleDdKebab(event)"><i class="fai">&#xf141;</i></button>
@@ -452,7 +471,7 @@
         </article>
 
         <article class="db2-card db2-pipeline-card">
-          <header><h2>Pipeline Overview</h2><a href="#" onclick="showView('crm'); setCrmSubview('crmforecast'); return false;">View Commit Forecast <i class="fai">&#xf061;</i></a></header>
+          <header><h2>Pipeline Overview</h2></header>
           <div class="db2-pipeline-kpis">
             <div><span>Value in Pipeline <b class="db2-info" data-tip="Open protected Quote-lifecycle Stages only. Won is excluded.">i</b></span><strong>£221,582</strong><small>7 open Deals</small></div>
             <div><span>Committed <b class="db2-info" data-tip="Open Deals the owner has committed to closing this year.">i</b></span><strong class="purple">£152,000</strong><small>5 committed Deals</small></div>
@@ -496,21 +515,48 @@
     <!-- Tabs row -->
     <div class="tabs-row">
       <div class="tabs-left">
-        <div class="tab active">Dealer Overview</div>
-        <div class="tab">Supplier sales</div>
-        <div class="tab">Supplier overview</div>
+        <div class="tab active" role="button" tabindex="0" data-dashboard-tab="my">My Dashboard</div>
+        <div class="tab" role="button" tabindex="0" data-dashboard-tab="dealer">Dealer Overview</div>
+        <div class="tab" role="button" tabindex="0" data-dashboard-tab="supplier-sales">Supplier sales</div>
+        <div class="tab" role="button" tabindex="0" data-dashboard-tab="supplier-overview">Supplier overview</div>
       </div>
       <div class="tabs-right">
-        <button class="btn-compare">Add Comparisons <i class="fai">&#x2b;</i></button>
-        <div class="date-control">
-          <span class="chip">Last 28 days</span>
-          <span class="range">29 May 2026 &ndash; 26 Jun 2026</span>
-          <i class="fai">&#xf0d7;</i>
+        <div class="mydb-tab-actions" data-dashboard-actions="my">
+          <span class="mydb-saved-state"><i class="fa-solid fa-check" aria-hidden="true"></i> Saved for you</span>
+          <button class="mydb-customise-button" id="myDashboardCustomise" type="button"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Customise dashboard</button>
+        </div>
+        <div class="mydb-standard-actions" data-dashboard-actions="standard" hidden>
+          <button class="btn-compare">Add Comparisons <i class="fai">&#x2b;</i></button>
+          <div class="date-control">
+            <span class="chip">Last 28 days</span>
+            <span class="range">29 May 2026 &ndash; 26 Jun 2026</span>
+            <i class="fai">&#xf0d7;</i>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="grid">
+    <section class="mydb-panel" id="myDashboardPanel" aria-labelledby="myDashboardHeading">
+      <header class="mydb-welcome">
+        <div class="mydb-greeting">
+          <span class="mydb-eyebrow" id="myDashboardDateLabel">THURSDAY, 27 AUGUST</span>
+          <h2 id="myDashboardHeading">Good morning, Candy</h2>
+          <p>Your work, priorities and recent records in one place.</p>
+        </div>
+        <div class="mydb-week-summary" aria-label="This week's summary">
+          <span class="mydb-week-filter">My week <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
+          <span><i class="fa-solid fa-circle-check" aria-hidden="true"></i> 3 tasks completed</span>
+          <span><i class="fa-solid fa-user-group" aria-hidden="true"></i> 4 shared records</span>
+        </div>
+      </header>
+      <div class="mydb-customise-note" id="myDashboardCustomiseNote" hidden>
+        <span><i class="fa-solid fa-grip" aria-hidden="true"></i> Drag Widgets to reorder them. Choose a size or remove anything you do not need.</span>
+        <button type="button" id="myDashboardDone">Done</button>
+      </div>
+      <div class="mydb-grid" id="myDashboardGrid" aria-live="polite"></div>
+    </section>
+
+    <div class="grid mydb-standard-panel" id="standardDashboardPanel" hidden>
 
       <!-- Overview -->
       <div class="card ov-card">
@@ -762,13 +808,11 @@
           <div class="crm-view-switcher" aria-label="Deal views">
             <div class="crm-view-tab active" role="button" tabindex="0" data-crm-view="pipeline"><svg class="crm-pipeline-icon" width="13" height="13" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true" focusable="false"><rect x="1" y="2" width="4" height="14" rx="2"></rect><rect x="7" y="2" width="4" height="10" rx="2"></rect><rect x="13" y="2" width="4" height="15" rx="2"></rect></svg> Pipeline</div>
             <div class="crm-view-tab" role="button" tabindex="0" data-crm-view="table"><i class="fai">&#xf0ce;</i> Table</div>
-            <div class="crm-view-tab" role="button" tabindex="0" data-crm-view="forecast"><i class="fai">&#xf201;</i> Stage-weighted (Legacy)</div>
-            <div class="crm-view-tab" role="button" tabindex="0" data-crm-view="crmforecast"><i class="fai">&#xf080;</i> Commit Forecast</div>
             <div class="crm-view-tab" role="button" tabindex="0" data-crm-view="archive"><i class="fai">&#xf187;</i> Archive</div>
           </div>
-          <button class="crm-automation-status is-on" id="crmAutomationStatus" type="button" aria-label="Open Automations for the current Pipeline">
+          <button class="crm-automation-status is-off" id="crmAutomationStatus" type="button" aria-label="Open Automations for the current Pipeline">
             <i class="fai" aria-hidden="true">&#xf0e7;</i>
-            <span><small id="crmAutomationStatusLabel">Automation Active</small><strong id="crmAutomationStatusName">Standard Sales Process</strong></span>
+            <span><small id="crmAutomationStatusLabel">Automation Inactive</small><strong id="crmAutomationStatusName">No Active Automation</strong></span>
             <i class="fai crm-automation-status-arrow" aria-hidden="true">&#xf054;</i>
           </button>
           <div class="crm-archive-tools" aria-label="Archive controls">
@@ -792,7 +836,7 @@
           </label>
           <div class="pipeline-selector" id="pipelineSelector">
             <button type="button" class="pipe-chip" id="pipelineSelectorButton" aria-haspopup="listbox" aria-expanded="false">
-              <span id="pipelineSelectorLabel">Sales Pipeline</span>
+              <span id="pipelineSelectorLabel">Quote Pipeline</span>
               <i class="fai caret">&#xf0d7;</i>
             </button>
             <div class="pipeline-selector-menu" id="pipelineSelectorMenu" role="dialog" aria-label="Choose pipeline">
@@ -802,7 +846,7 @@
               </label>
               <div class="pipeline-selector-options" id="pipelineSelectorOptions" role="listbox"></div>
               <div class="pipeline-selector-footer">
-                <button type="button" class="pipeline-create-trigger" id="pipelineCreateTrigger">
+                <button type="button" class="pipeline-create-trigger" id="pipelineCreateTrigger" hidden aria-hidden="true" tabindex="-1">
                   <i class="fai" aria-hidden="true">&#x2b;</i><span>Create new pipeline</span>
                 </button>
               </div>
@@ -851,7 +895,7 @@
               <button type="button" class="pipeline-sort-option" role="menuitemradio" aria-checked="false" data-sort="alpha"><i class="fai">&#xf15d;</i><span>Alphabetical order</span><i class="fai pipeline-sort-check">&#xf00c;</i></button>
             </div>
           </div>
-          <button type="button" class="pipeline-manage-button" id="pipelineManageButton" aria-pressed="false" aria-label="Manage pipeline stages" title="Manage pipeline stages" data-tooltip="Manage pipeline stages"><i class="fai">&#xf303;</i></button>
+          <button type="button" class="pipeline-manage-button" id="pipelineManageButton" hidden aria-hidden="true" tabindex="-1" aria-pressed="false" aria-label="Manage pipeline stages" title="Manage pipeline stages" data-tooltip="Manage pipeline stages"><i class="fai">&#xf303;</i></button>
         </div>
       </div>
       <section class="crm-table-view" id="crmTableView" aria-label="Deals table" hidden>
@@ -982,7 +1026,7 @@
 
         <div class="crm-v2-filters" aria-label="CRM Forecast filters">
           <label><span>Financial year</span><select id="crmV2Year"><option value="2026">FY 2026</option></select></label>
-          <label><span>Pipeline</span><select id="crmV2Pipeline"><option value="sales-pipeline">Sales Pipeline</option></select></label>
+          <label><span>Pipeline</span><select id="crmV2Pipeline"><option value="sales-pipeline">Quote Pipeline</option></select></label>
           <label><span>Owner / team</span><select id="crmV2Owner"><option value="all">All owners</option></select></label>
           <label><span>Deal stage</span><select id="crmV2Stage"><option value="all">All stages</option></select></label>
           <label><span>Forecast category</span><select id="crmV2Category"><option value="all">All categories</option><option value="commit">Commit</option><option value="best">Best case</option><option value="omitted">Omitted</option><option value="won">Won</option></select></label>
@@ -1064,8 +1108,8 @@
         </div>
       </div>
       <div class="crm-quote-lifecycle-linkbar" id="crmQuoteLifecycleLinkbar">
-        <span class="crm-quote-lifecycle-title"><i class="fai">&#xf023;</i><strong>Quote-driven Sales Pipeline</strong><small>Deal Stage is system-derived from related Quote events</small></span>
-        <span class="crm-quote-lifecycle-flow"><b>Qualified</b><i>First Quote created</i><b>In Progress</b><i>Review status</i><b>In Review / Passed Review</b><i>Quote sent</i><b>Sent</b><i>Accepted / no viable Quote</i><b>Won / Lost</b></span>
+        <span class="crm-quote-lifecycle-title"><i class="fai">&#xf023;</i><strong>Quote Pipeline controlled by Quote Status</strong><small>WeQuote updates the Deal Stage when related Quotes change</small></span>
+        <span class="crm-quote-lifecycle-flow"><b>Qualified</b><i>First Quote created</i><b>In Progress</b><i>Review status</i><b>In Review / Passed Review</b><i>Quote sent</i><b>Sent</b><i>Accepted / no Quote can still be accepted</i><b>Won / Lost</b></span>
         <span class="crm-quote-lifecycle-archive"><i class="fai">&#xf187;</i> All related Quotes Cancelled → <b>Archive status</b>, not a Stage</span>
       </div>
       <div class="pipeline" id="pipeline"></div>
@@ -1174,7 +1218,7 @@
       <div class="cs-modal meeting-edit-modal" role="dialog" aria-modal="true" aria-labelledby="ddEditMeetingHeading">
         <div class="cs-head meeting-edit-head">
           <div>
-            <span class="dd-composer-eyebrow">Scheduled meeting</span>
+            <span class="dd-composer-eyebrow" id="ddEditMeetingEyebrow">Scheduled meeting</span>
             <h2 id="ddEditMeetingHeading">Edit meeting</h2>
           </div>
           <button type="button" class="cs-close fai" onclick="closeMeetingEditDialog()" aria-label="Close">&#xf00d;</button>
@@ -1231,7 +1275,7 @@
         </div>
         <div class="meeting-edit-actions">
           <button type="button" class="cs-btn ghost" onclick="closeMeetingEditDialog()">Cancel</button>
-          <button type="button" class="cs-btn primary" onclick="saveDealMeetingEdit()"><i class="fai">&#xf0c7;</i> Save changes</button>
+          <button type="button" class="cs-btn primary" id="ddEditMeetingSave" onclick="saveDealMeetingEdit()"><i class="fai">&#xf0c7;</i> Save changes</button>
         </div>
       </div>
     </div>
@@ -1255,22 +1299,22 @@
           <h2 id="pipelineCreateTitle">Create new pipeline</h2>
           <button type="button" class="cs-close fai" onclick="closePipelineCreateDialog()" aria-label="Close">&#xf00d;</button>
         </div>
-        <p class="pipeline-create-copy">Choose whether this Pipeline should stay connected to the protected Quotation lifecycle.</p>
+        <p class="pipeline-create-copy">Choose whether this Pipeline should include the protected Quote lifecycle.</p>
         <div class="stage-create-field wqd-field">
           <label class="wqd-field-label" for="pipelineCreateName">Pipeline name</label>
           <input id="pipelineCreateName" type="text" maxlength="48" autocomplete="off" placeholder="e.g. Commercial Pipeline">
         </div>
         <fieldset class="pipeline-create-types" id="pipelineCreateTypes">
-          <legend>What will this Pipeline be used for?</legend>
+          <legend>Use the Quote lifecycle?</legend>
           <label class="pipeline-create-type selected">
             <input id="pipelineTypeQuoteConnected" type="radio" name="pipelineCreateType" value="quote-connected" checked>
-            <span><b>Sales with Quotations</b><small>Recommended · Quote events keep protected Deal milestones in sync.</small></span>
-            <em>CONNECTED</em>
+            <span><b>Yes, include the Quote lifecycle</b><small>Protected Quote milestones are included. You can add Custom Stages between them.</small></span>
+            <em>YES</em>
           </label>
           <label class="pipeline-create-type">
             <input id="pipelineTypeStandalone" type="radio" name="pipelineCreateType" value="standalone">
-            <span><b>Track another process</b><small>Fully configurable operational Stages without Quote lifecycle syncing.</small></span>
-            <em>STANDALONE</em>
+            <span><b>No, create a standalone Pipeline</b><small>Start with an independent Pipeline and create your own Stages.</small></span>
+            <em>NO</em>
           </label>
         </fieldset>
         <div class="pipeline-template-card">
@@ -1342,10 +1386,10 @@
     <div class="cs-overlay" id="pipelineSaveOverlay">
       <div class="cs-modal stage-delete-modal" role="dialog" aria-modal="true" aria-labelledby="pipelineSaveTitle">
         <div class="cs-head">
-          <h2 id="pipelineSaveTitle">Save changes to Sales Pipeline?</h2>
+          <h2 id="pipelineSaveTitle">Save changes to Quote Pipeline?</h2>
           <button type="button" class="cs-close fai" onclick="closePipelineSaveDialog()" aria-label="Close">&#xf00d;</button>
         </div>
-        <p class="stage-delete-copy" id="pipelineSaveCopy">These changes will update the existing pipeline stages for every Deal using this Sales Pipeline.</p>
+        <p class="stage-delete-copy" id="pipelineSaveCopy">These changes will update the existing pipeline stages for every Deal using this Quote Pipeline.</p>
         <div class="pipeline-save-comparison" id="pipelineSaveComparison"></div>
         <div class="pipeline-save-warning">
           <i class="fai">&#xf05a;</i>
@@ -1383,7 +1427,7 @@
           <h2 id="stageCreateTitle">Add pipeline stage</h2>
           <button type="button" class="cs-close fai" onclick="closeStageCreateDialog()" aria-label="Close">&#xf00d;</button>
         </div>
-        <p class="stage-create-copy">Set how this Stage appears. In a Quote-connected Pipeline, choose the lifecycle segment it belongs to.</p>
+        <p class="stage-create-copy">Set how this Stage looks. In a Quote Pipeline, choose where it sits. Its position decides which Starts when, Rule and Action choices are available.</p>
         <div class="stage-create-field wqd-field">
           <label class="wqd-field-label" for="stageCreateName">Stage name</label>
           <input id="stageCreateName" type="text" maxlength="32" autocomplete="off" placeholder="e.g. Negotiation">
@@ -1396,12 +1440,12 @@
           </div>
           <div class="stage-create-system-rule" id="stageCreateSystemRule">
             <i class="fai" aria-hidden="true">&#xf023;</i>
-            <span><small>SYSTEM PROGRESSION</small><strong id="stageCreateSystemRuleText"></strong><em>No extra transition rule is required.</em></span>
+            <span><small>QUOTE STAGE MOVEMENT</small><strong id="stageCreateSystemRuleText"></strong><em>WeQuote still moves the Deal through Quote Stages automatically.</em></span>
           </div>
         </div>
         <div class="stage-create-system-rule stage-create-automation-library" id="stageCreateAutomationLibrary">
           <i class="fai">&#xf0e7;</i>
-          <span><small id="stageCreateAutomationEyebrow">AUTOMATION LIBRARY</small><strong id="stageCreateAutomationTitle">Shared Stage library</strong><em id="stageCreateAutomationText">Choose a Start event, Rules and Actions after creating this Stage.</em></span>
+          <span><small id="stageCreateAutomationEyebrow">AUTOMATION CHOICES</small><strong id="stageCreateAutomationTitle">Automation choices for this Stage</strong><em id="stageCreateAutomationText">After you add the Stage, choose Starts when, an optional Rule, and an Action.</em></span>
         </div>
         <div class="stage-create-field">
           <span class="stage-editor-label">Icon</span>
@@ -1661,7 +1705,7 @@
             </div>
           </div>
 
-          <div class="dd-focus-head">Needs your attention <i class="fai">&#xf078;</i></div>
+          <div class="dd-focus-head">Needs Your Attention <i class="fai">&#xf078;</i></div>
           <div id="dd-focus"></div>
 
           <div class="dd-hist-head">
@@ -1799,7 +1843,7 @@
         <div>
           <span class="aut-page-context" id="autPageContext">CRM / Automations</span>
           <h1 id="autPageTitle">CRM Automations</h1>
-          <p id="autPageSubtitle">Choose a Pipeline, then create and manage complete Automation setups for it.</p>
+          <p id="autPageSubtitle">Choose a Pipeline to manage its Automations. Pipelines are created and managed in Deals.</p>
         </div>
         <div class="aut-page-actions" hidden style="display:none">
           <button class="aut-btn" type="button" id="autRunDemo" hidden><i class="fai">&#xf04b;</i> Run end-to-end Boss Demo</button>
@@ -1807,67 +1851,34 @@
         </div>
       </div>
 
-      <section class="aut-pipeline-hub" id="autPipelineHub" aria-labelledby="autPipelineHubTitle">
-        <div class="aut-pipeline-hub-head">
-          <div><span class="aut-pipeline-eyebrow">Automation overview</span><h2 id="autPipelineHubTitle">Choose a Pipeline</h2><p>Every Pipeline is shown, including Pipelines with zero Automations. Select where you want to create or manage Automation.</p></div>
-          <button class="aut-btn" type="button" id="autCreatePipeline" hidden style="display:none"><i class="fai">&#xf067;</i> Create Pipeline</button>
-        </div>
+      <section class="aut-pipeline-hub" id="autPipelineHub" aria-label="Quote Pipeline Automations">
+        <header class="aut-pipeline-list-title aut-pipeline-hub-title">
+          <div><h1>Automations</h1><p>Choose a Pipeline. Then create an Automation for one of its Stages.</p></div>
+        </header>
         <div class="aut-pipeline-table" id="autPipelineTable" role="table" aria-label="CRM pipelines and automation counts">
           <div class="aut-pipeline-table-head" role="row"><span role="columnheader">Pipeline</span><span role="columnheader">Lifecycle</span><span role="columnheader">Automations</span><span aria-hidden="true"></span></div>
           <button class="aut-pipeline-row primary" type="button" role="row" data-aut-pipeline-open="sales-pipeline">
-            <span class="aut-pipeline-name" role="cell"><i class="fai">&#xf0ae;</i><span><strong>Sales Pipeline</strong><small>Related Quote lifecycle · protected Deal stages and outcomes</small></span></span>
-            <span class="aut-pipeline-life" role="cell"><b>Qualified</b><i>→</i><b class="custom">Site Ready</b><i>→</i><b>In Progress</b><i>→</i><b>In Review</b><i>→</i><b>Passed Review</b><i>→</i><b>Sent</b><i>→</i><b class="outcome">Won</b><i>→</i><b class="outcome">Lost</b></span>
-            <span class="aut-pipeline-count" role="cell"><strong>3</strong><small>1 active · 2 inactive</small></span>
-            <span class="aut-pipeline-open" aria-hidden="true">Open <i class="fai">&#xf054;</i></span>
-          </button>
-          <button class="aut-pipeline-row" type="button" role="row" data-aut-pipeline-open="quote-pipeline">
-            <span class="aut-pipeline-name" role="cell"><i class="fai">&#xf0ae;</i><span><strong>Quote Pipeline</strong><small>Related Quote lifecycle · protected Deal stages and outcomes</small></span></span>
+            <span class="aut-pipeline-name" role="cell"><i class="fai">&#xf0ae;</i><span><strong>Quote Pipeline</strong><small>Deal Stages update automatically from related Quotes</small></span></span>
             <span class="aut-pipeline-life" role="cell"><b>Qualified</b><i>→</i><b>In Progress</b><i>→</i><b>In Review</b><i>→</i><b>Passed Review</b><i>→</i><b>Sent</b><i>→</i><b class="outcome">Won</b><i>→</i><b class="outcome">Lost</b></span>
             <span class="aut-pipeline-count zero" role="cell"><strong>0</strong><small>No Automations</small></span>
-            <span class="aut-pipeline-open" aria-hidden="true">Set up <i class="fai">&#xf054;</i></span>
+            <span class="aut-pipeline-open" aria-hidden="true">Open <i class="fai">&#xf054;</i></span>
           </button>
-        </div>
-        <div class="aut-model-legend">
-          <span><b>Pipeline</b> protected business lifecycle</span><i class="fai">&#xf061;</i><span><b>Automation</b> one complete setup for that Pipeline</span><i class="fai">&#xf061;</i><span><b>Flows</b> independent business outcomes inside it</span><i class="fai">&#xf061;</i><span><b>Steps &amp; rules</b> trigger, condition, wait, action, end</span>
         </div>
       </section>
 
       <section class="aut-group-hub" id="autPipelineGroups" aria-labelledby="autPipelineGroupsTitle" hidden>
-        <div class="aut-group-head">
-          <div class="aut-pipeline-detail-title"><button class="aut-icon-back" type="button" id="autGroupBackToPipelines" aria-label="Back to all Pipelines"><i class="fai">&#xf060;</i></button><div><span class="aut-pipeline-eyebrow" id="autPipelineGroupsEyebrow">Sales Pipeline / Automations</span><h2 id="autPipelineGroupsTitle">Automations for Sales Pipeline</h2><p id="autPipelineGroupsCopy">Each Automation below is a complete setup for <strong>Sales Pipeline</strong>. Only one can be Active and receive new events at a time.</p></div></div>
-          <button class="aut-btn primary" type="button" id="autCreateAutomationGroup"><i class="fai">&#xf067;</i> Create Automation for Sales Pipeline</button>
+        <div class="aut-group-head aut-group-head-title-only">
+          <h2 id="autPipelineGroupsTitle">Automations for Quote Pipeline</h2>
         </div>
-        <div class="aut-group-rule" id="autPipelineGroupsRule"><span><i class="fai">&#xf023;</i><strong>Pipeline: Sales Pipeline</strong></span><span>Protected Quote lifecycle always stays on</span><span><strong>One Automation Active at a time</strong></span></div>
-        <div class="aut-status-guide" aria-label="Automation status definitions"><span class="active"><b>Active</b> receives new Pipeline events now</span><span class="inactive"><b>Inactive</b> receives no new Pipeline events</span></div>
-        <div class="aut-group-decision-guide"><i class="fai">&#xf0eb;</i><span><strong>Before switching:</strong> Preview the sales-policy fit, affected open Deals and Before / After result. Existing runs keep their original Automation.</span></div>
-        <div class="aut-group-tabs" role="tablist" aria-label="Filter Sales Pipeline Automations">
-          <button type="button" class="active" data-aut-group-filter="all">All <b>3</b></button>
-          <button type="button" data-aut-group-filter="active">Active <b>1</b></button>
-          <button type="button" data-aut-group-filter="inactive">Inactive <b>2</b></button>
+        <div class="aut-group-tabs" role="tablist" aria-label="Filter Quote Pipeline Automations">
+          <button type="button" class="active" data-aut-group-filter="all">All <b>0</b></button>
+          <button type="button" data-aut-group-filter="active">Active <b>0</b></button>
+          <button type="button" data-aut-group-filter="inactive">Inactive <b>0</b></button>
         </div>
-        <div class="aut-group-toolbar"><label><i class="fai">&#xf002;</i><input type="search" id="autGroupSearch" placeholder="Search Sales Pipeline Automations" autocomplete="off"></label><span><b id="autGroupVisibleCount">3</b> Automations in Sales Pipeline</span></div>
-        <div class="aut-group-columns" aria-hidden="true"><span>Automation and status</span><span>Automation readiness</span><span>Created</span><span>Last updated</span><span>Preview · Edit · Active</span></div>
-        <div class="aut-group-list" id="autGroupList">
-          <article class="aut-group-row" data-aut-group-row="standard" data-status="active">
-            <div class="aut-group-main"><div class="aut-group-icon"><i class="fai">&#xf0ae;</i></div><div><div class="aut-group-title"><strong>Standard Sales Process</strong><span class="active">Active</span></div><p>Default journey for regular residential and commercial Deals.</p><div class="aut-group-fit"><span>Everyday Deals</span><span>Normal review</span><span>Follow up after 7 days</span></div></div></div>
-            <div class="aut-group-counts"><div class="aut-group-metric total"><strong>10</strong><span>Automations</span></div><div class="aut-group-metric on"><strong>9</strong><span>Ready</span></div><div class="aut-group-metric off"><strong>0</strong><span>Inactive</span></div><div class="aut-group-metric draft"><strong>1</strong><span>Needs setup</span></div></div>
-            <div class="aut-group-audit"><strong>Lee Roche</strong><span>12 Aug 2026</span><small>Creator</small></div><div class="aut-group-audit"><strong>Lee Roche</strong><span>Today · 10:42</span><small>Last edited by</small></div>
-            <div class="aut-group-actions"><button class="aut-group-preview" type="button" data-aut-group-preview="standard"><i class="fai">&#xf06e;</i> Preview</button><button class="aut-group-open" type="button" data-aut-group-open="standard"><i class="fai">&#xf303;</i> Edit</button><button class="aut-group-toggle" type="button" role="switch" aria-checked="true" aria-label="Turn off Standard Sales Process" data-aut-group-toggle="standard"><span></span></button></div>
-          </article>
-          <article class="aut-group-row" data-aut-group-row="high-value" data-status="inactive">
-            <div class="aut-group-main"><div class="aut-group-icon high-value"><i class="fai">&#xf3ed;</i></div><div><div class="aut-group-title"><strong>High-value Sales Process</strong><span>Inactive</span></div><p>Adds value gates, margin checks and senior approval for larger Deals.</p><div class="aut-group-fit"><span>£25K+ Deals</span><span>&gt;15% discount approval</span><span>Follow up after 3 days</span></div></div></div>
-            <div class="aut-group-counts"><div class="aut-group-metric total"><strong>10</strong><span>Automations</span></div><div class="aut-group-metric on"><strong>10</strong><span>Ready</span></div><div class="aut-group-metric off"><strong>0</strong><span>Inactive</span></div><div class="aut-group-metric draft"><strong>0</strong><span>Needs setup</span></div></div>
-            <div class="aut-group-audit"><strong>Jeff Mitchel</strong><span>15 Aug 2026</span><small>Creator</small></div><div class="aut-group-audit"><strong>Alex Osei</strong><span>Yesterday · 14:08</span><small>Last edited by</small></div>
-            <div class="aut-group-actions"><button class="aut-group-preview" type="button" data-aut-group-preview="high-value"><i class="fai">&#xf06e;</i> Preview</button><button class="aut-group-open" type="button" data-aut-group-open="high-value"><i class="fai">&#xf303;</i> Edit</button><button class="aut-group-toggle" type="button" role="switch" aria-checked="false" aria-label="Turn on High-value Sales Process" data-aut-group-toggle="high-value"><span></span></button></div>
-          </article>
-          <article class="aut-group-row" data-aut-group-row="simplified" data-status="inactive">
-            <div class="aut-group-main"><div class="aut-group-icon draft"><i class="fai">&#xf15c;</i></div><div><div class="aut-group-title"><strong>Simplified Sales Process</strong><span>Inactive</span></div><p>A lighter journey for fast-turnaround Quotes; not currently receiving new events.</p><div class="aut-group-fit"><span>Fast Quotes</span><span>No internal review</span><span>Follow up after 5 days</span></div></div></div>
-            <div class="aut-group-counts"><div class="aut-group-metric total"><strong>10</strong><span>Automations</span></div><div class="aut-group-metric on"><strong>6</strong><span>Ready</span></div><div class="aut-group-metric off"><strong>3</strong><span>Inactive</span></div><div class="aut-group-metric draft"><strong>1</strong><span>Needs setup</span></div></div>
-            <div class="aut-group-audit"><strong>Lee Roche</strong><span>19 Aug 2026</span><small>Creator</small></div><div class="aut-group-audit"><strong>Lee Roche</strong><span>3 days ago · 09:15</span><small>Last edited by</small></div>
-            <div class="aut-group-actions"><button class="aut-group-preview" type="button" data-aut-group-preview="simplified"><i class="fai">&#xf06e;</i> Preview</button><button class="aut-group-open" type="button" data-aut-group-open="simplified"><i class="fai">&#xf303;</i> Edit</button><button class="aut-group-toggle" type="button" role="switch" aria-checked="false" aria-label="Turn on Simplified Sales Process" data-aut-group-toggle="simplified"><span></span></button></div>
-          </article>
-        </div>
-        <div class="aut-group-empty" id="autGroupEmpty" hidden><i class="fai">&#xf002;</i><strong id="autGroupEmptyTitle">No matching Automations</strong><span id="autGroupEmptyCopy">Try another search or status filter.</span><button class="aut-btn primary" type="button" id="autGroupEmptyCreate" hidden><i class="fai">&#xf067;</i> Create first Automation</button></div>
+        <div class="aut-group-toolbar"><label><i class="fai">&#xf002;</i><input type="search" id="autGroupSearch" placeholder="Search Quote Pipeline Automations" autocomplete="off"></label><span><b id="autGroupVisibleCount">0</b> Automation setups in Quote Pipeline</span></div>
+        <div class="aut-group-columns" aria-hidden="true"><span>Automation and status</span><span>Setup summary</span><span>Created</span><span>Last updated</span><span>Preview · Edit · Active</span></div>
+        <div class="aut-group-list" id="autGroupList"></div>
+        <div class="aut-group-empty" id="autGroupEmpty"><i class="fai">&#xf0e7;</i><strong id="autGroupEmptyTitle">No Automations yet</strong><span id="autGroupEmptyCopy">Use a Template or build a Custom Automation.</span><button class="aut-btn primary" type="button" id="autGroupEmptyCreate"><i class="fai">&#xf067;</i> Create first Automation</button></div>
       </section>
 
       <div class="aut-group-preview-overlay" id="autGroupPreviewOverlay" hidden>
@@ -1875,18 +1886,18 @@
           <header><div><span class="aut-pipeline-eyebrow">Preview before changing the Active Automation</span><h2 id="autGroupPreviewTitle">Switch the Active Automation?</h2><p id="autGroupPreviewCopy">Review the Before / After behaviour first.</p></div><button type="button" id="autGroupPreviewClose" aria-label="Close">×</button></header>
           <div class="aut-group-preview-body">
             <div class="aut-group-compare">
-              <article><small>BEFORE · CURRENT ACTIVE</small><strong id="autGroupBeforeName">Standard Sales Process</strong><div id="autGroupBeforeStages" class="aut-group-stage-strip"></div><ul id="autGroupBeforeRules"></ul></article>
+              <article><small>BEFORE · CURRENT ACTIVE</small><strong id="autGroupBeforeName">No Active Automation</strong><div id="autGroupBeforeStages" class="aut-group-stage-strip"></div><ul id="autGroupBeforeRules"></ul></article>
               <i class="fai">&#xf061;</i>
-              <article class="after"><small>AFTER CHANGE</small><strong id="autGroupAfterName">High-value Sales Process</strong><div id="autGroupAfterStages" class="aut-group-stage-strip"></div><ul id="autGroupAfterRules"></ul></article>
+              <article class="after"><small>AFTER CHANGE</small><strong id="autGroupAfterName">Selected Automation</strong><div id="autGroupAfterStages" class="aut-group-stage-strip"></div><ul id="autGroupAfterRules"></ul></article>
             </div>
             <div class="aut-group-summary" id="autGroupSummary"></div>
             <section class="aut-switch-map-comparison" aria-labelledby="autSwitchMapTitle">
               <header class="aut-switch-map-section-head">
-                <div><span class="aut-pipeline-eyebrow">Interactive Pipeline comparison</span><h3 id="autSwitchMapTitle">Before and After maps</h3><p>Drag the blue frame inside either minimap to inspect that complete Pipeline. Preview only — no CRM data is changed.</p></div>
-                <span class="aut-switch-map-safe"><i class="fai">&#xf023;</i> Protected transitions stay on</span>
+                <div><span class="aut-pipeline-eyebrow">Compare the Pipeline before and after</span><h3 id="autSwitchMapTitle">Before and After maps</h3><p>Drag the blue frame inside either small map to move around the full Pipeline. Preview only. Nothing changes here.</p></div>
+                <span class="aut-switch-map-safe"><i class="fai">&#xf023;</i> WeQuote still updates Quote Stages</span>
               </header>
               <article class="aut-switch-map-panel before" data-aut-switch-map="before">
-                <header><div><small>BEFORE · CURRENT ACTIVE</small><strong id="autGroupBeforeMapName">Standard Sales Process</strong></div><span id="autGroupBeforeMapState">Active now</span></header>
+                <header><div><small>BEFORE · CURRENT ACTIVE</small><strong id="autGroupBeforeMapName">No Active Automation</strong></div><span id="autGroupBeforeMapState">Inactive</span></header>
                 <div class="aut-switch-map-viewport" id="autGroupBeforeMapViewport" tabindex="0" aria-label="Before Pipeline map, controlled by the minimap below">
                   <div class="aut-switch-map-canvas" id="autGroupBeforeMap"></div>
                 </div>
@@ -1896,7 +1907,7 @@
                 </div>
               </article>
               <article class="aut-switch-map-panel after" data-aut-switch-map="after">
-                <header><div><small>AFTER CHANGE</small><strong id="autGroupAfterMapName">No Active Automation</strong></div><span id="autGroupAfterMapState">New events become manual</span></header>
+                <header><div><small>AFTER CHANGE</small><strong id="autGroupAfterMapName">No Active Automation</strong></div><span id="autGroupAfterMapState">No Automation will run for new activity</span></header>
                 <div class="aut-switch-map-viewport" id="autGroupAfterMapViewport" tabindex="0" aria-label="After Pipeline map, controlled by the minimap below">
                   <div class="aut-switch-map-canvas" id="autGroupAfterMap"></div>
                 </div>
@@ -1906,9 +1917,9 @@
                 </div>
               </article>
             </section>
-            <div class="aut-group-sales-impact"><header><span><i class="fai">&#xf201;</i><strong>Impact on current Sales Pipeline</strong></span><small>Preview estimate based on current open Deals · no records are changed</small></header><div id="autGroupSalesImpact"></div></div>
-            <div class="aut-group-simulated"><strong>Simulated switch timeline</strong><div><span>09:00</span><p><b>Existing runs keep their original Automation</b><small>They finish against the version that enrolled them.</small></p></div><div><span>09:01</span><p><b>Active Automation switches atomically</b><small>The old Automation stops accepting new events before the new one starts.</small></p></div><div><span>09:02</span><p><b>New Pipeline events use the new Automation</b><small>Protected Quote lifecycle transitions remain unchanged.</small></p></div></div>
-            <div class="aut-group-protected-note"><i class="fai">&#xf023;</i><span><strong>Pipeline safety:</strong> turning off every Automation does not turn off Qualified → In Progress, Won, Lost or Archived logic. Users can still progress Deals manually.</span></div>
+            <div class="aut-group-sales-impact"><header><span><i class="fai">&#xf201;</i><strong>Impact on current Quote Pipeline</strong></span><small>Preview estimate based on current open Deals · no records are changed</small></header><div id="autGroupSalesImpact"></div></div>
+            <div class="aut-group-simulated"><strong>What happens when you switch</strong><div><span>1</span><p><b>Automations already in progress keep using their current version</b><small>They finish using the version that started them.</small></p></div><div><span>2</span><p><b>The selected version becomes active in one step</b><small>The old version stops taking new activity before the new one starts.</small></p></div><div><span>3</span><p><b>New matching activity uses the newly active version</b><small>WeQuote still updates Deal Stages from Quote activity.</small></p></div></div>
+            <div class="aut-group-protected-note"><i class="fai">&#xf023;</i><span><strong>Deal Stages still work:</strong> turning off every Automation does not stop WeQuote from updating Qualified, In Progress, Won, Lost or Archived.</span></div>
           </div>
           <footer><button class="aut-btn" type="button" id="autGroupPreviewCancel">Cancel</button><button class="aut-btn" type="button" id="autGroupPreviewTest"><i class="fai">&#xf0c3;</i> Test sample Deal</button><button class="aut-btn primary" type="button" id="autGroupPreviewConfirm">Activate this Automation</button></footer>
         </section>
@@ -1917,19 +1928,19 @@
       <div class="aut-group-inspect-overlay" id="autGroupInspectOverlay" hidden>
         <section class="aut-group-inspect-dialog" role="dialog" aria-modal="true" aria-labelledby="autGroupInspectTitle">
           <header>
-            <div><span class="aut-pipeline-eyebrow">Sales Pipeline / Automation preview</span><div class="aut-group-inspect-title"><h2 id="autGroupInspectTitle">Standard Sales Process</h2><span class="active" id="autGroupInspectStatus">Active</span></div><p>Read-only preview of this complete Sales Pipeline Automation.</p></div>
+            <div><span class="aut-pipeline-eyebrow">Quote Pipeline / Automation preview</span><div class="aut-group-inspect-title"><h2 id="autGroupInspectTitle">Automation preview</h2><span class="active" id="autGroupInspectStatus">Inactive</span></div><p>Preview only. Nothing can be changed here.</p></div>
             <div class="aut-group-inspect-header-actions"><div class="aut-group-inspect-switch"><span id="autGroupInspectSwitchCopy">Active · receiving new events</span><button class="aut-group-toggle" type="button" id="autGroupInspectToggle" role="switch" aria-checked="true" aria-label="Turn off this Automation"><span></span></button></div><button type="button" id="autGroupInspectClose" aria-label="Close Automation Preview">×</button></div>
           </header>
           <div class="aut-group-inspect-body">
             <aside class="aut-group-inspect-summary">
               <div><span class="aut-pipeline-eyebrow">Automation purpose</span><h3 id="autGroupInspectPurpose">Default journey for regular residential and commercial Deals.</h3><p id="autGroupInspectPolicy">Normal approval and seven-day follow-up policy.</p></div>
               <div class="aut-group-inspect-metrics" id="autGroupInspectMetrics"></div>
-              <div class="aut-group-inspect-fit"><strong>Sales policy fit</strong><div id="autGroupInspectFit"></div></div>
+              <div class="aut-group-inspect-fit"><strong>Best for</strong><div id="autGroupInspectFit"></div></div>
               <div class="aut-group-inspect-impact"><strong>Estimated impact</strong><div id="autGroupInspectImpact"></div></div>
-              <div class="aut-group-inspect-safety"><i class="fai">&#xf023;</i><span><b>Protected lifecycle stays on.</b> This Automation assists the work around Stage transitions; it does not own them.</span></div>
+              <div class="aut-group-inspect-safety"><i class="fai">&#xf023;</i><span><b>WeQuote still updates Deal Stages from Quote activity.</b> This Automation only handles the work around those changes.</span></div>
             </aside>
-            <section class="aut-group-inspect-canvas" aria-label="Read-only Sales Pipeline Automation map">
-              <div class="aut-group-inspect-canvas-head"><span><i class="fai">&#xf279;</i><b>Complete Pipeline preview</b></span><div class="aut-group-inspect-zoom"><button type="button" data-aut-inspect-preset="35">35% · Overview</button><button type="button" data-aut-inspect-preset="60" class="active">60% · Automations</button><button type="button" data-aut-inspect-preset="100">100% · Rules</button><button type="button" id="autGroupInspectZoomOut" aria-label="Zoom out">−</button><output id="autGroupInspectZoomValue">60%</output><button type="button" id="autGroupInspectZoomIn" aria-label="Zoom in">＋</button></div></div>
+            <section class="aut-group-inspect-canvas" aria-label="Read-only Quote Pipeline Automation map">
+              <div class="aut-group-inspect-canvas-head"><span><i class="fai">&#xf279;</i><b>Complete Pipeline preview</b></span><div class="aut-group-inspect-zoom"><button type="button" id="autGroupInspectZoomOut" aria-label="Zoom out">−</button><output id="autGroupInspectZoomValue">100%</output><button type="button" id="autGroupInspectZoomIn" aria-label="Zoom in">＋</button></div></div>
               <div class="aut-group-inspect-map" id="autGroupInspectMap"></div>
               <div class="aut-group-inspect-legend"><span><i class="automation"></i>Automation</span><span><i class="transition"></i>Protected transition</span><span><i class="outcome"></i>Won / Lost outcome</span></div>
             </section>
@@ -1940,36 +1951,68 @@
 
       <section class="aut-pipeline-detail" id="autPipelineDetail" data-mode="view" aria-labelledby="autPipelineDetailTitle" hidden>
         <div class="aut-pipeline-detail-head">
-          <div class="aut-pipeline-detail-title"><button class="aut-icon-back" type="button" id="autPipelineBack" aria-label="Back to Sales Pipeline Automations"><i class="fai">&#xf060;</i></button><div><span class="aut-pipeline-eyebrow">Sales Pipeline / Automation</span><div class="aut-group-map-title"><h2 id="autPipelineDetailTitle">Standard Sales Process</h2><span class="active" id="autGroupMapStatus">Active</span></div><p>Complete Pipeline setup · any accepted Quote wins; no viable Quote remaining loses; all related Quotes cancelled archives the Deal.</p></div></div>
+          <div class="aut-pipeline-detail-title"><button class="aut-icon-back" type="button" id="autPipelineBack" aria-label="Back to Quote Pipeline Automations"><i class="fai">&#xf060;</i></button><div><span class="aut-pipeline-eyebrow">Quote Pipeline / Automation</span><div class="aut-group-map-title"><h2 id="autPipelineDetailTitle">Quote Pipeline Automation</h2><span class="active" id="autGroupMapStatus">Inactive</span></div><p>See the full setup. An accepted Quote wins the Deal. If no Quote can still be accepted, the Deal becomes Lost. If every Quote is cancelled, the Deal is Archived.</p></div></div>
         </div>
         <div class="aut-group-edit-banner" id="autGroupEditBanner" hidden><i class="fai">&#xf15c;</i><span><strong>Unpublished changes</strong> · the Active Automation keeps running until these changes are saved and turned on.</span></div>
 
         <section class="aut-pipeline-zero-state" id="autPipelineZeroState" aria-labelledby="autPipelineZeroTitle" hidden>
           <span class="aut-pipeline-zero-icon" aria-hidden="true"><i class="fai">&#xf0e7;</i></span>
           <div class="aut-pipeline-zero-content">
-            <small>0 AUTOMATIONS · READY TO CUSTOMISE</small>
+            <small>READY TO CUSTOMISE</small>
             <h3 id="autPipelineZeroTitle">Create the first Automation</h3>
-            <p id="autPipelineZeroCopy">Choose a Pipeline Stage, then start with a template or build the Automation from scratch.</p>
+            <p id="autPipelineZeroCopy">Choose a Pipeline Stage, then use a Template or build a Custom Automation.</p>
             <div class="aut-pipeline-zero-library" aria-label="Available workflow blocks">
               <span class="starts"><i class="fai">&#xf11e;</i><b>Starts when</b><em>Stage entry, activity, files, owner or close date</em></span>
               <span class="rules"><i class="fai">&#xf126;</i><b>Rules</b><em>Required work, labels, interests, value or activity</em></span>
               <span class="actions"><i class="fai">&#xf0ae;</i><b>Actions</b><em>Owner, Next Action, notes, files, labels or Stage moves</em></span>
             </div>
           </div>
-          <button class="aut-btn primary aut-pipeline-zero-create" type="button" id="autPipelineZeroCreate"><i class="fai">&#xf067;</i> Create first automation</button>
+          <button class="aut-btn primary aut-pipeline-zero-create" type="button" id="autPipelineZeroCreate"><i class="fai">&#xf067;</i> Create first Automation</button>
         </section>
 
-        <div class="aut-map-frame" id="autSemanticMap" data-aut-group-view-panel="map" data-level="medium">
-          <div class="aut-map-toolbar">
-            <div class="aut-map-presets" aria-label="Automation Map quick views">
-              <button type="button" data-aut-map-preset="35" aria-pressed="false">35% · Overview</button>
-              <button type="button" data-aut-map-preset="60" aria-pressed="true">60% · Automations</button>
-              <button type="button" data-aut-map-preset="100" aria-pressed="false">100% · Rules</button>
+        <aside class="aut-context-template-sidebar" id="autContextTemplateSidebar" aria-labelledby="autContextTemplateTitle" hidden>
+          <header>
+            <div class="aut-context-template-title-row">
+              <div>
+                <span>PIPELINE SETUP</span>
+                <h2 id="autContextTemplateTitle">Add automation</h2>
+              </div>
+              <button type="button" id="autContextTemplateClose" aria-label="Close Add automation panel" title="Close panel"><i class="fai">&#xf00d;</i></button>
             </div>
-            <span class="aut-map-mode" id="autMapMode">Automations · Active / Inactive status</span>
-            <div class="aut-map-controls"><button type="button" data-aut-map-zoom="out" aria-label="Zoom out">−</button><output id="autMapZoom" aria-live="polite">60%</output><button type="button" data-aut-map-zoom="in" aria-label="Zoom in">＋</button></div>
-            <div class="aut-map-options"><button type="button" id="autMapMore" aria-label="Pipeline Automation options">•••</button><div class="aut-map-options-menu" id="autMapOptionsMenu" hidden><button type="button" id="autMapPauseAll">Pause all user Automations</button><span>Protected Quotation lifecycle and system-derived Quote statuses continue running.</span></div></div>
-          </div>
+            <div class="aut-context-mode-tabs" role="tablist" aria-label="Automation start mode">
+              <button class="active" type="button" role="tab" aria-selected="true" data-aut-context-mode="templates">Templates</button>
+              <button type="button" role="tab" aria-selected="false" data-aut-context-mode="custom">Custom</button>
+            </div>
+          </header>
+          <label class="aut-context-template-stage" for="autContextTemplateStage">
+            <span>Select Pipeline Stage</span>
+            <select id="autContextTemplateStage">
+              <option>Qualified</option><option>In Progress</option><option>In Review</option><option>Passed Review</option><option>Sent</option><option>Won</option><option>Lost</option>
+            </select>
+          </label>
+          <div class="aut-context-template-list" id="autContextTemplateList" aria-live="polite"></div>
+          <p class="aut-context-template-help"><i class="fai">&#xf05a;</i><span>Select a Pipeline Stage to see matching Templates.</span></p>
+
+          <section class="aut-context-custom-panel" id="autContextCustomPanel" aria-labelledby="autContextCustomTitle" hidden>
+            <header>
+              <div>
+                <span class="aut-context-custom-eyebrow">Custom Automation</span>
+                <h2 id="autContextCustomTitle">Choose Starts when</h2>
+                <p>Choose the change or date that starts this Automation.</p>
+              </div>
+              <div class="aut-context-custom-progress" aria-label="Builder steps">
+                <strong>Starts when</strong><i>→</i><span>Wait (optional)</span><i>→</i><span>Rule (optional)</span><i>→</i><span>Action</span>
+              </div>
+            </header>
+            <div class="aut-context-custom-body">
+              <div class="aut-context-custom-stage" id="autContextCustomStage"></div>
+              <div class="aut-context-custom-trigger-list" id="autContextCustomTriggerList" aria-live="polite"></div>
+              <div class="aut-context-custom-tip"><i class="fai">&#xf05a;</i><span>The Pipeline stays visible while you choose. After you choose Starts when, WeQuote opens the Builder.</span></div>
+            </div>
+          </section>
+        </aside>
+
+        <div class="aut-map-frame" id="autSemanticMap" data-aut-group-view-panel="map" data-level="medium">
           <div class="aut-map-canvas" id="autMapCanvas">
             <div class="aut-map-board" id="autMapBoard">
               <article class="aut-map-lead">
@@ -1977,7 +2020,7 @@
               </article>
               <div class="aut-map-transition entry" aria-label="Pipeline entry event: Convert to Deal confirmed">
                 <div class="aut-map-transition-card">
-                  <small><i class="fai">&#xf023;</i> ENTRY EVENT · PROTECTED</small>
+                  <small><i class="fai">&#xf023;</i> STARTS HERE · SET BY WEQUOTE</small>
                   <strong>Convert to Deal confirmed</strong>
                   <span class="aut-map-transition-result">Deal is created at Qualified</span>
                 </div>
@@ -1986,86 +2029,87 @@
                 <span class="aut-map-role">STARTS HERE</span><header><small>STAGE 1</small><strong>Qualified</strong></header><span class="aut-map-count">2 Automations</span><span class="aut-map-status">2 Active</span>
                 <div class="aut-map-stage-gate"><small>CONDITIONAL GATE</small><strong>Complete required follow-up Note</strong><span>Created by Automation · Mentions Deal owner · Site Visit and customer/site readiness</span></div>
                 <div class="aut-map-automations">
-                  <div class="aut-map-automation"><div><button type="button" data-aut-map-concept="first-action" data-aut-map-title="Qualified first Next Action">First Next Action</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>One clear Deal Focus task</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> Deal enters Qualified</b><b class="condition"><span>RULE</span> No open Deal Next Action exists</b><b class="yes"><span>YES</span> Set Deal Next Action · Deal owner · due in 1 working day</b><b class="no"><span>NO</span> Keep the existing Next Action · end safely</b></div></div>
-                  <div class="aut-map-automation"><div><button type="button" data-aut-map-concept="inactivity" data-aut-map-title="Qualified inactivity reminder">Inactivity reminder</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Seven-day inactivity follow-up</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> Deal remains in Qualified</b><b class="wait"><span>WAIT</span> 7 working days</b><b class="condition"><span>IF</span> Deal is still Qualified AND has no recent sales activity</b><b class="yes"><span>YES</span> Create Note + mention Deal owner · follow up next working day</b><b class="no"><span>NO</span> Nothing is created · end safely</b></div></div>
+                  <div class="aut-map-automation"><div><button type="button" data-aut-map-concept="first-action" data-aut-map-title="Qualified first Next Action">First Next Action</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>One clear Deal Focus task</span><div class="aut-map-rules"><b class="when"><span>STARTS WHEN</span> Deal enters Qualified</b><b class="condition"><span>RULE</span> Does the Deal already have an open Next Action?</b><b class="yes"><span>IF NO</span> Set a Next Action for the Deal owner · due in 1 working day</b><b class="no"><span>IF YES</span> Keep the existing Next Action</b></div></div>
+                  <div class="aut-map-automation"><div><button type="button" data-aut-map-concept="inactivity" data-aut-map-title="Qualified inactivity reminder">Inactivity reminder</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Seven-day inactivity follow-up</span><div class="aut-map-rules"><b class="when"><span>STARTS WHEN</span> Deal remains in Qualified</b><b class="wait"><span>WAIT</span> 7 working days</b><b class="condition"><span>RULE</span> Is the Deal still Qualified with no recent activity?</b><b class="yes"><span>IF YES</span> Create a Note · mention Deal owner · follow up next working day</b><b class="no"><span>IF NO</span> Stop this path</b></div></div>
                 </div>
               </article>
               <div class="aut-map-transition" aria-label="Moves when the first related Quote is created">
                 <div class="aut-map-transition-card">
-                  <small>MOVES WHEN · QUOTE LIFECYCLE</small>
-                  <strong>First related Quote is created</strong>
+                  <small>MOVES AUTOMATICALLY WHEN</small>
+                  <strong>The first Quote is created</strong>
                   <span class="aut-map-transition-result">Quote Status and Deal Stage become In Progress</span>
                 </div>
               </div>
-              <article class="aut-map-stage"><header><small>STAGE 2</small><strong>In Progress</strong></header><span class="aut-map-count">1 Automation</span><span class="aut-map-status">1 Active</span><div class="aut-map-stage-result"><small>SYSTEM-DERIVED RESULT</small><strong>First related Quote now exists</strong><span>Quote Status = In Progress · Deal Stage = In Progress</span></div><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="quote-build" data-aut-map-title="Quote build &amp; SOW checks">Quote build &amp; SOW checks</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Quote and Scope of Work readiness</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> Quote is created or edited in In Progress</b><b class="condition"><span>IF</span> Required pricing, product or SOW information is missing</b><b class="yes"><span>YES</span> Create Note + mention Quote owner · follow up today</b><b class="no"><span>NO</span> Quote stays ready for its next action · end safely</b></div></div></div></article>
+              <article class="aut-map-stage"><header><small>STAGE 2</small><strong>In Progress</strong></header><span class="aut-map-count">1 Automation</span><span class="aut-map-status">1 Active</span><div class="aut-map-stage-result"><small>UPDATED AUTOMATICALLY</small><strong>The Deal now has a Quote</strong><span>Quote Status = In Progress · Deal Stage = In Progress</span></div><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="quote-build" data-aut-map-title="Quote and Scope of Work checks">Quote and Scope of Work checks</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Check whether the Quote is ready</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> A Quote is created or edited in In Progress</b><b class="condition"><span>IF</span> Required pricing, product or Scope of Work information is missing</b><b class="yes"><span>YES</span> Create Note + mention Quote owner · follow up today</b><b class="no"><span>NO</span> The Quote is ready · stop this path</b></div></div></div></article>
               <div class="aut-map-transition conditional" aria-label="Moves when the Quote is submitted for internal review">
                 <div class="aut-map-transition-card">
-                  <small>MOVES WHEN · QUOTE LIFECYCLE · REVIEW ORGS</small>
+                  <small>MOVES AUTOMATICALLY WHEN</small>
                   <strong>Quote is submitted for review</strong>
                   <span class="aut-map-transition-result">Quote Status and Deal Stage become In Review</span>
                 </div>
               </div>
-              <article class="aut-map-stage conditional"><header><small>CONDITIONAL</small><strong>In Review</strong></header><span class="aut-map-count">1 Automation</span><span class="aut-map-status">1 Active</span><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="internal-review" data-aut-map-title="Technical &amp; Internal Review">Technical &amp; Internal Review</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Technical review coordination</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> Quote is submitted for internal review</b><b class="condition"><span>RULE</span> No open technical review Note exists</b><b class="yes"><span>YES</span> Create Note + mention one reviewer · follow up today</b><b class="no"><span>NO</span> Keep the existing Note or end safely</b></div></div></div></article>
+              <article class="aut-map-stage conditional"><header><small>CONDITIONAL</small><strong>In Review</strong></header><span class="aut-map-count">1 Automation</span><span class="aut-map-status">1 Active</span><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="internal-review" data-aut-map-title="Technical &amp; Internal Review">Technical &amp; Internal Review</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Technical review coordination</span><div class="aut-map-rules"><b class="when"><span>STARTS WHEN</span> Quote is submitted for internal review</b><b class="condition"><span>RULE</span> Is a technical review Note already open?</b><b class="yes"><span>IF NO</span> Create a Note · mention one reviewer · follow up today</b><b class="no"><span>IF YES</span> Keep the existing Note</b></div></div></div></article>
               <div class="aut-map-transition conditional" aria-label="Moves when internal review passes">
                 <div class="aut-map-transition-card">
-                  <small>MOVES WHEN · QUOTE LIFECYCLE · REVIEW ORGS</small>
+                  <small>MOVES AUTOMATICALLY WHEN</small>
                   <strong>Internal review passes</strong>
                   <span class="aut-map-transition-result">Quote Status and Deal Stage become Passed Review</span>
                 </div>
               </div>
-              <article class="aut-map-stage conditional"><span class="aut-map-role">CONTINUES HERE</span><header><small>CONDITIONAL</small><strong>Passed Review</strong></header><span class="aut-map-count">2 Automations</span><span class="aut-map-status">1 Active · 1 Needs setup</span><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="ready-send" data-aut-map-title="Ready-to-send check">Ready-to-send check</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Customer-ready content check</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> Quote becomes Passed Review</b><b class="condition"><span>IF</span> Review passed AND Quote is viable and complete</b><b class="yes"><span>YES</span> Create Note + mention Quote owner · ready to send</b><b class="no"><span>NO</span> Create Note + mention Quote owner · needs attention</b></div></div><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="high-value" data-aut-map-title="High-value approval">High-value approval</button><button type="button" data-aut-map-toggle data-state="draft">Needs setup</button></div><span>Final commercial approval</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> Quote reaches Passed Review</b><b class="condition"><span>IF</span> Value is over £25,000 OR discount is over 15%</b><b class="yes"><span>YES</span> Create Note + mention one approver · follow up today</b><b class="no"><span>NO</span> Continue normally</b></div></div></div></article>
+              <article class="aut-map-stage conditional"><span class="aut-map-role">CONTINUES HERE</span><header><small>CONDITIONAL</small><strong>Passed Review</strong></header><span class="aut-map-count">2 Automations</span><span class="aut-map-status">1 Active · 1 Needs setup</span><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="ready-send" data-aut-map-title="Ready-to-send check">Ready-to-send check</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Customer-ready content check</span><div class="aut-map-rules"><b class="when"><span>STARTS WHEN</span> Quote becomes Passed Review</b><b class="condition"><span>RULE</span> Has review passed, and is the Quote complete and still usable?</b><b class="yes"><span>IF YES</span> Create a Note · mention Quote owner · ready to send</b><b class="no"><span>IF NO</span> Create a Note · mention Quote owner · needs attention</b></div></div><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="high-value" data-aut-map-title="High-value approval">High-value approval</button><button type="button" data-aut-map-toggle data-state="draft">Needs setup</button></div><span>Final commercial approval</span><div class="aut-map-rules"><b class="when"><span>STARTS WHEN</span> Quote reaches Passed Review</b><b class="condition"><span>RULE</span> Is value over £25,000, or discount over 15%?</b><b class="yes"><span>IF YES</span> Create a Note · mention one approver · follow up today</b><b class="no"><span>IF NO</span> Continue normally</b></div></div></div></article>
               <div class="aut-map-transition" aria-label="Moves when the Quote is sent">
                 <div class="aut-map-transition-card">
-                  <small>MOVES WHEN · QUOTE LIFECYCLE</small>
+                  <small>MOVES AUTOMATICALLY WHEN</small>
                   <strong>Quote is sent</strong>
                   <span class="aut-map-transition-result">Quote Status and Deal Stage become Sent</span>
                   <em>Without Quote Review, In Progress can move directly here.</em>
                 </div>
               </div>
-              <article class="aut-map-stage"><header><small>STAGE 5</small><strong>Sent</strong></header><span class="aut-map-count">2 Automations</span><span class="aut-map-status">2 Active</span><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="sent-follow-up" data-aut-map-title="Sent Quote follow-up">Sent Quote follow-up</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Customer follow-up after sending</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> Quote is sent to the customer</b><b class="wait"><span>WAIT</span> 3 working days</b><b class="condition"><span>IF</span> Quote is still Sent AND has not Expired</b><b class="yes"><span>YES</span> Create Note + mention Deal owner · follow up today</b><b class="no"><span>NO</span> Nothing is created · end safely</b></div></div><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="expiry-reminder" data-aut-map-title="Expiry reminder">Expiry reminder</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Upcoming expiry warning</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> Sent Quote is 3 days from expiry</b><b class="condition"><span>IF</span> Quote is still Sent AND remains viable</b><b class="yes"><span>YES</span> Create Note + mention Deal owner · follow up today</b><b class="no"><span>NO</span> Nothing is created · end safely</b></div></div></div></article>
+              <article class="aut-map-stage"><header><small>STAGE 5</small><strong>Sent</strong></header><span class="aut-map-count">2 Automations</span><span class="aut-map-status">2 Active</span><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="sent-follow-up" data-aut-map-title="Sent Quote follow-up">Sent Quote follow-up</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Customer follow-up after sending</span><div class="aut-map-rules"><b class="when"><span>STARTS WHEN</span> Quote is sent to the customer</b><b class="wait"><span>WAIT</span> 3 working days</b><b class="condition"><span>RULE</span> Is the Quote still Sent and not Expired?</b><b class="yes"><span>IF YES</span> Create a Note · mention Deal owner · follow up today</b><b class="no"><span>IF NO</span> Stop this path</b></div></div><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="expiry-reminder" data-aut-map-title="Expiry reminder">Expiry reminder</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Upcoming expiry warning</span><div class="aut-map-rules"><b class="when"><span>STARTS WHEN</span> Sent Quote is 3 days from expiry</b><b class="condition"><span>RULE</span> Is the Quote still Sent and able to be accepted?</b><b class="yes"><span>IF YES</span> Create a Note · mention Deal owner · follow up today</b><b class="no"><span>IF NO</span> Stop this path</b></div></div></div></article>
               <section class="aut-map-outcome-split" aria-label="Deal outcome branches to Won or Lost">
                 <div class="aut-map-outcome-path won">
-                  <div class="aut-map-transition won" aria-label="Moves to Won when any relevant Quote is accepted">
+                  <div class="aut-map-transition won" aria-label="Moves to Won when a Quote is accepted">
                     <div class="aut-map-transition-card">
-                      <small>DERIVED DEAL OUTCOME</small>
-                      <strong>Any relevant Quote is accepted</strong>
-                      <span class="aut-map-transition-result">Quote Status = Accepted · Derived Deal outcome = Won</span>
+                      <small>DEAL RESULT · UPDATED AUTOMATICALLY</small>
+                      <strong>A Quote is accepted</strong>
+                      <span class="aut-map-transition-result">Quote Status = Accepted · Deal becomes Won</span>
                       <em>One accepted Quote wins the Deal, even when sibling Quotes still exist.</em>
                     </div>
                   </div>
-                  <article class="aut-map-stage won"><header><small>DERIVED DEAL OUTCOME</small><strong>Won</strong></header><span class="aut-map-count">1 Automation</span><span class="aut-map-status">1 Active</span><div class="aut-map-stage-result"><small>SYSTEM-DERIVED RESULT</small><strong>Winning Quote recorded</strong><span>Deal value comes from the accepted Quote</span></div><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="accepted-handoff" data-aut-map-title="Won Deal handoff">Won Deal handoff</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Accepted-work handoff</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> Any related Quote is Accepted and Deal becomes Won</b><b class="condition"><span>IF</span> Deposit is required by Deal or organisation rule</b><b class="yes"><span>YES</span> Create Note + mention one Finance person</b><b class="no"><span>NO</span> Create Note + mention Deal owner</b></div></div></div></article>
+                  <article class="aut-map-stage won"><header><small>DEAL RESULT · UPDATED AUTOMATICALLY</small><strong>Won</strong></header><span class="aut-map-count">1 Automation</span><span class="aut-map-status">1 Active</span><div class="aut-map-stage-result"><small>UPDATED AUTOMATICALLY</small><strong>Winning Quote recorded</strong><span>Deal value comes from the accepted Quote</span></div><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="accepted-handoff" data-aut-map-title="Won Deal handoff">Won Deal handoff</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Hand over the accepted work</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> A related Quote is Accepted and the Deal becomes Won</b><b class="condition"><span>IF</span> A deposit is required</b><b class="yes"><span>YES</span> Create Note + mention one Finance person</b><b class="no"><span>NO</span> Create Note + mention Deal owner</b></div></div></div></article>
                 </div>
                 <div class="aut-map-outcome-path lost">
-                  <div class="aut-map-transition lost" aria-label="Moves to Lost when no viable relevant Quote remains">
+                  <div class="aut-map-transition lost" aria-label="Moves to Lost when no Quote can still be accepted">
                     <div class="aut-map-transition-card">
-                      <small>DERIVED DEAL OUTCOME</small>
-                      <strong>No viable relevant Quote remains</strong>
-                      <span class="aut-map-transition-result">No viable related Quote remains · Derived Deal outcome = Lost</span>
-                      <em>All-cancelled is handled separately as Archived status. One failed Quote cannot lose the Deal while another remains viable.</em>
+                      <small>DEAL RESULT · UPDATED AUTOMATICALLY</small>
+                      <strong>No Quote can still be accepted</strong>
+                      <span class="aut-map-transition-result">Deal becomes Lost</span>
+                      <em>If every Quote is Cancelled, the Deal is Archived instead. One unsuccessful Quote does not make the Deal Lost while another can still be accepted.</em>
                     </div>
                   </div>
-                  <article class="aut-map-stage lost"><header><small>DERIVED DEAL OUTCOME</small><strong>Lost</strong></header><span class="aut-map-count">1 Automation</span><span class="aut-map-status">1 Active</span><div class="aut-map-stage-result"><small>SYSTEM-DERIVED RESULT</small><strong>No winning Quote</strong><span>Loss reason remains auditable on the Deal</span></div><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="commercial-complete" data-aut-map-title="Lost Deal follow-up">Lost Deal follow-up</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Loss-reason follow-up</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> Deal becomes Lost because no viable Quote remains</b><b class="condition"><span>IF</span> Loss reason is missing</b><b class="yes"><span>YES</span> Create Note + mention Deal owner to record the reason</b><b class="no"><span>NO</span> Keep recorded reason · end safely</b></div></div></div></article>
+                  <article class="aut-map-stage lost"><header><small>DEAL RESULT · UPDATED AUTOMATICALLY</small><strong>Lost</strong></header><span class="aut-map-count">1 Automation</span><span class="aut-map-status">1 Active</span><div class="aut-map-stage-result"><small>UPDATED AUTOMATICALLY</small><strong>No winning Quote</strong><span>The Deal keeps its loss reason</span></div><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="commercial-complete" data-aut-map-title="Lost Deal follow-up">Lost Deal follow-up</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Follow up on the loss reason</span><div class="aut-map-rules"><b class="when"><span>WHEN</span> The Deal becomes Lost</b><b class="condition"><span>IF</span> The loss reason is missing</b><b class="yes"><span>YES</span> Create Note + mention Deal owner to record the reason</b><b class="no"><span>NO</span> Keep the recorded reason · stop this path</b></div></div></div></article>
                 </div>
                 <aside class="aut-map-archive-status" aria-label="Archived is a Deal status, not a Pipeline stage">
                   <small>DEAL STATUS · NOT A STAGE</small>
                   <strong>Archived</strong>
                   <span>All related Quotes are Cancelled</span>
-                  <em>Hide from the active Pipeline · retain the last Deal Stage and full audit history</em>
+                  <em>Hide from the active Pipeline · keep the last Deal Stage and full history</em>
                 </aside>
               </section>
             </div>
-            <div class="aut-map-hint">Drag to pan · pinch to zoom continuously · labels remain readable when zoomed out</div>
+            <div class="aut-map-hint">Drag to move around · use − and + to zoom</div>
           </div>
-          <div class="aut-lifecycle-exceptions"><span><i class="fai">&#xf05a;</i><b>Protected related-Quote lifecycle</b></span><span><strong>Won</strong> = any relevant Quote Accepted</span><span><strong>Lost</strong> = no viable Quote, excluding all-cancelled</span><span><strong>Archived status</strong> = all related Quotes Cancelled</span><span><strong>Expired</strong> is derived from Sent + expiry date</span></div>
+          <div class="aut-map-controls" aria-label="Map zoom controls"><button type="button" data-aut-map-zoom="out" aria-label="Zoom out">−</button><output id="autMapZoom" aria-live="polite">100%</output><button type="button" data-aut-map-zoom="in" aria-label="Zoom in">＋</button></div>
+          <div class="aut-lifecycle-exceptions"><span><i class="fai">&#xf05a;</i><b>Deal Stage follows related Quotes automatically</b></span><span><strong>Won</strong> = a Quote is Accepted</span><span><strong>Lost</strong> = no Quote can still be accepted</span><span><strong>Archived</strong> = all related Quotes are Cancelled</span><span><strong>Expired</strong> = a Sent Quote passes its expiry date</span></div>
         </div>
 
-        <section class="aut-group-list-view" id="autGroupListView" data-aut-group-view-panel="list" aria-label="Sales Pipeline Automation list view" hidden>
-          <div class="aut-group-list-view-head"><div><span class="aut-pipeline-eyebrow">Stage-by-Stage view</span><h3>Automations and protected transitions</h3><p>Automations belong to a Stage. Transition events sit between Stages and are not editable Automation rules.</p></div><div class="aut-group-list-legend"><span><i class="automation"></i>Automation</span><span><i class="transition"></i>Protected transition</span><span><i class="outcome"></i>Outcome</span></div></div>
+        <section class="aut-group-list-view" id="autGroupListView" data-aut-group-view-panel="list" aria-label="Quote Pipeline Automation list view" hidden>
+          <div class="aut-group-list-view-head"><div><span class="aut-pipeline-eyebrow">Stage-by-Stage view</span><h3>Automations and automatic Stage changes</h3><p>Automations belong to a Stage. WeQuote also moves Deals between fixed Quote Stages when related Quotes change.</p></div><div class="aut-group-list-legend"><span><i class="automation"></i>Automation</span><span><i class="transition"></i>Automatic Stage change</span><span><i class="outcome"></i>Deal result</span></div></div>
           <div class="aut-group-trainline" id="autGroupTrainline"></div>
         </section>
 
         <div class="aut-pipeline-workspace" hidden>
-          <aside class="aut-pipeline-automation-list" aria-label="Automations in Sales Pipeline">
+          <aside class="aut-pipeline-automation-list" aria-label="Automations in Quote Pipeline">
             <div class="aut-pipeline-list-head"><span><strong>Automations</strong><small>Independent outcomes in this Pipeline</small></span><b>10</b></div>
             <button class="active" type="button" data-aut-concept="first-action"><span><i class="fai">&#xf007;</i><strong>Qualified owner &amp; first action</strong><small>Qualified · independent Automation</small></span><em class="on">Active</em></button>
             <button type="button" data-aut-concept="inactivity"><span><i class="fai">&#xf017;</i><strong>Qualified inactivity reminder</strong><small>Qualified · independent Automation</small></span><em class="on">Active</em></button>
@@ -2080,11 +2124,11 @@
           </aside>
           <section class="aut-concept-preview" id="autConceptPreview" aria-live="polite">
             <div class="aut-concept-preview-head"><div><span class="aut-pipeline-eyebrow">Selected Automation</span><h3>Qualified owner &amp; first action</h3><p><b>Business outcome:</b> give every newly Qualified opportunity clear ownership and a next action.</p></div><span class="aut-concept-status on">Active</span></div>
-            <div class="aut-concept-scope"><span><small>PIPELINE</small><b>Sales Pipeline</b></span><i class="fai">&#xf061;</i><span><small>STARTS AT</small><b>Qualified</b></span><i class="fai">&#xf061;</i><span><small>ENDS WHEN</small><b>Owner and first activity are ready</b></span></div>
+            <div class="aut-concept-scope"><span><small>PIPELINE</small><b>Quote Pipeline</b></span><i class="fai">&#xf061;</i><span><small>STARTS AT</small><b>Qualified</b></span><i class="fai">&#xf061;</i><span><small>ENDS WHEN</small><b>Owner and first activity are ready</b></span></div>
             <div class="aut-concept-note"><i class="fai">&#xf0eb;</i><span><strong>Important:</strong> Client Proposal &amp; Approval is preserved as a hidden template under review and is not part of the active Pipeline setup.</span></div>
           </section>
         </div>
-        <div class="aut-map-impact-overlay" id="autMapImpactOverlay" hidden><section class="aut-map-impact" role="dialog" aria-modal="true" aria-labelledby="autMapImpactTitle"><header><div><span class="aut-pipeline-eyebrow">Preview impact</span><h3 id="autMapImpactTitle">Turn off Automation?</h3><p id="autMapImpactSubtitle">Review the behaviour change before confirming.</p></div><button type="button" id="autMapImpactClose" aria-label="Close">×</button></header><div class="aut-map-impact-body"><div class="aut-map-impact-compare"><div><small>CURRENT</small><strong id="autMapCurrentTitle">Automation is Active</strong><span id="autMapCurrentCopy">Matching records enrol automatically.</span></div><i class="fai">&#xf061;</i><div class="after"><small>AFTER CHANGE</small><strong id="autMapAfterTitle">Automation is Inactive</strong><span id="autMapAfterCopy">New matching records will not enrol.</span></div></div><p><i class="fai">&#xf023;</i> Protected Pipeline stages and system-derived Quote statuses are unchanged.</p><label id="autMapRunsLabel">Current runs<select id="autMapRuns"><option>Let current runs finish</option><option>Stop current runs now</option></select></label></div><footer><button class="aut-btn" type="button" id="autMapImpactCancel">Cancel</button><button class="aut-btn primary" type="button" id="autMapImpactConfirm">Turn off</button></footer></section></div>
+        <div class="aut-map-impact-overlay" id="autMapImpactOverlay" hidden><section class="aut-map-impact" role="dialog" aria-modal="true" aria-labelledby="autMapImpactTitle"><header><div><span class="aut-pipeline-eyebrow">Preview impact</span><h3 id="autMapImpactTitle">Turn off Automation?</h3><p id="autMapImpactSubtitle">Check what will change before you continue.</p></div><button type="button" id="autMapImpactClose" aria-label="Close">×</button></header><div class="aut-map-impact-body"><div class="aut-map-impact-compare"><div><small>CURRENT</small><strong id="autMapCurrentTitle">Automation is Active</strong><span id="autMapCurrentCopy">New matching activity starts this Automation.</span></div><i class="fai">&#xf061;</i><div class="after"><small>AFTER CHANGE</small><strong id="autMapAfterTitle">Automation is Inactive</strong><span id="autMapAfterCopy">New activity will not start this Automation.</span></div></div><p><i class="fai">&#xf023;</i> WeQuote will still update Deal Stages and Quote Statuses.</p><label id="autMapRunsLabel">Automations already running<select id="autMapRuns"><option>Let them finish</option><option>Stop them now</option></select></label></div><footer><button class="aut-btn" type="button" id="autMapImpactCancel">Cancel</button><button class="aut-btn primary" type="button" id="autMapImpactConfirm">Turn off</button></footer></section></div>
         <div class="aut-map-detail-overlay" id="autMapDetailOverlay" hidden><section class="aut-map-detail" role="dialog" aria-modal="true" aria-labelledby="autMapDetailTitle"><header><div><span class="aut-pipeline-eyebrow">Automation details</span><div class="aut-map-detail-title-row"><h3 id="autMapDetailTitle">Client Proposal &amp; Approval</h3><span class="aut-map-detail-status" id="autMapDetailStatus">Active</span></div><p id="autMapDetailOutcome">What this Automation does.</p></div><button type="button" id="autMapDetailClose" aria-label="Close">×</button></header><div class="aut-map-detail-body" id="autMapDetailBody"></div></section></div>
       </section>
 
@@ -2116,7 +2160,7 @@
           <div class="aut-impact-state aut-impact-map before"><header><b>CURRENT</b><strong>Published version</strong></header><div class="aut-impact-version-flow" id="autImpactBeforeStages"></div><div class="aut-impact-result"><strong id="autImpactBeforeTitle">Current live behaviour</strong><span id="autImpactBeforeCopy">The published Automation continues running.</span></div></div>
           <div class="aut-impact-arrow"><span>Unpublished changes</span><i class="fai">&#xf063;</i></div>
           <div class="aut-impact-state aut-impact-map after" id="autImpactAfter"><header><b>AFTER</b><strong>Draft version</strong></header><div class="aut-impact-version-flow" id="autImpactAfterStages"></div><div class="aut-impact-result"><strong id="autImpactAfterTitle">Saved Draft</strong><span id="autImpactAfterCopy">This version is being tested safely.</span></div></div>
-          <div class="aut-impact-lock"><i class="fai">&#xf023;</i> Pipeline stages and protected transitions stay unchanged</div>
+          <div class="aut-impact-lock"><i class="fai">&#xf023;</i> WeQuote's automatic Quote Stage changes stay unchanged</div>
         </div>
               <div class="aut-journey-timeline" id="autJourneyTimelinePanel" role="tabpanel" aria-label="Simulated event timeline">
           <div class="aut-journey-time-head">
@@ -2127,15 +2171,33 @@
         </div>
         <div class="aut-journey-board-wrap" id="autJourneyScroll">
           <div class="aut-journey-board">
-            <section class="aut-journey-column" data-journey-column="0"><div class="aut-journey-column-head"><span>1 · Qualified</span><i class="fai">&#xf0b1;</i></div><article class="aut-journey-card" data-journey-card="0"><div class="aut-journey-card-top"><span>Deal · D-0348</span><b>Qualified</b></div><h3>Qualification &amp; site readiness</h3><p>Client qualification<br>Site Visit · required site information</p><span class="aut-journey-link">Existing Sales Pipeline stage</span></article></section>
+            <section class="aut-journey-column" data-journey-column="0"><div class="aut-journey-column-head"><span>1 · Qualified</span><i class="fai">&#xf0b1;</i></div><article class="aut-journey-card" data-journey-card="0"><div class="aut-journey-card-top"><span>Deal · D-0348</span><b>Qualified</b></div><h3>Qualification &amp; site readiness</h3><p>Client qualification<br>Site Visit · required site information</p><span class="aut-journey-link">Existing Quote Pipeline stage</span></article></section>
             <section class="aut-journey-column" data-journey-column="1"><div class="aut-journey-column-head"><span>2 · In Progress</span><i class="fai">&#xf15c;</i></div><article class="aut-journey-card quote" data-journey-card="1"><div class="aut-journey-card-top"><span>Deal · D-0348</span><b>In Progress</b></div><h3>Develop Proposal</h3><p>Prepare commercial proposal<br>Internal approval required</p><span class="aut-journey-link">Moves here when first Quote is created</span></article></section>
             <section class="aut-journey-column" data-journey-column="2"><div class="aut-journey-column-head"><span>3 · Sent</span><i class="fai">&#xf1d8;</i></div><article class="aut-journey-card quote" data-journey-card="2"><div class="aut-journey-card-top"><span>Deal · D-0348</span><b>Sent</b></div><h3>Client review</h3><p>Submit Proposal to Client<br>Wait and record client decision</p><span class="aut-journey-link">Moves here after internal approval</span></article></section>
             <section class="aut-journey-column" data-journey-column="3"><div class="aut-journey-column-head"><span>4 · Won</span><i class="fai">&#xf091;</i></div><article class="aut-journey-card project" data-journey-card="3"><div class="aut-journey-card-top"><span>Deal · D-0348</span><b>Won</b></div><h3>Approved commercial outcome</h3><p>Accepted Quote fixes the value<br>Project and Deposit Invoice can follow</p><span class="aut-journey-link">Existing Won outcome stage</span></article></section>
           </div>
         </div>
-        <div class="aut-journey-narration"><i class="fai">&#xf0eb;</i><span id="autJourneyNarration">Press Play journey. The Deal will move through the four existing Sales Pipeline stages without changing CRM data.</span></div>
+        <div class="aut-journey-narration"><i class="fai">&#xf0eb;</i><span id="autJourneyNarration">Press Play journey. The Deal will move through the existing Quote Pipeline stages without changing CRM data.</span></div>
       </section>
       </div>
+      </div>
+
+      <div class="aut-playground-overlay" id="autQuotePlayground" hidden>
+        <section class="aut-playground-dialog" role="dialog" aria-modal="true" aria-labelledby="autPlaygroundTitle">
+          <header class="aut-playground-head">
+            <div>
+              <span class="aut-playground-eyebrow">INTERACTIVE PRACTICE</span>
+              <h2 id="autPlaygroundTitle">Practice Builder</h2>
+              <p>Try a flow without creating an Automation. Nothing here is saved or turned on.</p>
+            </div>
+            <button class="aut-playground-close" type="button" id="autPlaygroundClose" aria-label="Close practice Builder"><i class="fai">&#xf00d;</i></button>
+          </header>
+          <div class="aut-playground-body" id="autPlaygroundBody"></div>
+          <footer class="aut-playground-foot">
+            <span><i class="fai">&#xf05a;</i> Practice only. Quote Stages and existing Automations do not change.</span>
+            <div><button class="aut-btn" type="button" id="autPlaygroundReset"><i class="fai">&#xf2f9;</i> Start again</button><button class="aut-btn primary" type="button" id="autPlaygroundDone">Done</button></div>
+          </footer>
+        </section>
       </div>
 
       <div class="aut-summary"><strong>Start here:</strong><span id="autPlainSummary">Choose a recommended template. Nothing runs until you create a draft and turn it on.</span></div>
@@ -2145,7 +2207,7 @@
           <div class="aut-list-title"><strong>Automations</strong><span class="aut-count">0</span></div>
           <div class="aut-list-section">Your automations</div>
           <div id="autYourAutomations"></div>
-          <div class="aut-list-empty" id="autYourEmpty"><strong>No automations yet</strong><span>Create the first Automation for this Pipeline. Templates appear only when its Quote lifecycle supports them.</span><button class="aut-btn small" type="button" id="autEmptyNewWorkflow">Create automation</button></div>
+          <div class="aut-list-empty" id="autYourEmpty"><strong>No automations yet</strong><span>Use a Template for this Stage, or build a Custom Automation.</span><button class="aut-btn small" type="button" id="autEmptyNewWorkflow">Create automation</button></div>
           <div class="aut-list-section">Recommended templates</div>
           <button class="aut-workflow template" type="button" data-aut-list-template="qualified-owner-first-action"><span class="aut-workflow-line"><span class="aut-workflow-name">Qualified owner &amp; first action</span><span class="aut-object-badge deal">DEAL</span></span><span class="aut-workflow-meta"><span>Qualified</span><span>Use template →</span></span></button>
           <button class="aut-workflow template" type="button" data-aut-list-template="qualified-inactivity"><span class="aut-workflow-line"><span class="aut-workflow-name">Qualified inactivity reminder</span><span class="aut-object-badge deal">DEAL</span></span><span class="aut-workflow-meta"><span>Qualified · Wait 7 days</span><span>Use template →</span></span></button>
@@ -2161,13 +2223,13 @@
         </aside>
 
         <aside class="aut-block-library" id="autBlockLibrary" aria-label="Workflow blocks" hidden>
-          <div class="aut-library-search"><i class="fai">&#xf002;</i><input id="autBlockSearch" type="search" placeholder="Search workflow blocks" aria-label="Search workflow blocks"><kbd>/</kbd></div>
+          <div class="aut-library-search"><i class="fai">&#xf002;</i><input id="autBlockSearch" type="search" placeholder="Search starts, Rules or Actions" aria-label="Search starts, Rules or Actions"><kbd>/</kbd></div>
           <div class="aut-library-tabs" role="tablist" aria-label="Workflow block types">
             <button type="button" role="tab" data-aut-library-tab="trigger"><i class="fai">&#xf0a6;</i><span>Starts when</span></button>
             <button type="button" role="tab" data-aut-library-tab="action" class="active" aria-selected="true"><i class="fai">&#xf0ae;</i><span>Actions</span></button>
             <button type="button" role="tab" data-aut-library-tab="logic"><i class="fai">&#xf126;</i><span>Rule</span></button>
           </div>
-          <p class="aut-library-help" id="autLibraryHelp">Drag a block to a highlighted position, or click to add.</p>
+          <p class="aut-library-help" id="autLibraryHelp">Choose an item to add it. You can also drag it into the flow.</p>
           <div class="aut-library-body" id="autBlockLibraryBody"></div>
           <div class="aut-library-resizer" id="autLibraryResizer" role="separator" aria-label="Resize Workflow blocks panel" aria-orientation="vertical" aria-valuemin="210" aria-valuemax="560" aria-valuenow="224" tabindex="0" title="Drag to resize · Double-click to reset">
             <span aria-hidden="true"></span>
@@ -2177,9 +2239,9 @@
         <section class="aut-builder-empty" id="autBuilderEmpty">
           <span class="aut-builder-empty-icon"><i class="fai">&#xf542;</i></span>
           <h2>Create your first CRM automation</h2>
-          <p>Start with a workflow that uses data and actions already available in this CRM prototype.</p>
+          <p>Build an Automation using the CRM information and Actions shown here.</p>
           <button class="aut-btn primary" type="button" id="autBuilderBrowse">Create automation</button>
-          <small>New Automations start Inactive. They only receive events after you turn them on.</small>
+          <small>New Automations are off until you turn them on.</small>
         </section>
 
         <section class="aut-canvas-panel" id="autCanvasPanel" aria-label="Automation workflow canvas" hidden>
@@ -2202,6 +2264,7 @@
               <button class="aut-btn small" type="button" id="autTestWorkflow"><i class="fai">&#xf0c3;</i> Test automation</button>
               <button class="aut-btn small" type="button" id="autSaveDraft" disabled><i class="fai">&#xf0c7;</i> Save draft</button>
               <button class="aut-btn journey small" type="button" id="autPlaySelectedWorkflow" hidden><i class="fai">&#xf06e;</i> Preview</button>
+              <span class="aut-activation-state" id="autActivationState">Inactive</span>
               <button class="aut-btn primary small" type="button" id="autPublishWorkflow">Activate automation</button>
               <button class="aut-btn small" type="button" id="autExitEditor">Exit editor</button>
             </div>
@@ -2214,7 +2277,11 @@
               <button type="button" id="autBuilderZoomIn" aria-label="Zoom in" title="Zoom in"><i class="fai">&#xf067;</i></button>
               <button type="button" class="aut-builder-zoom-fit" id="autBuilderZoomFit" title="Fit workflow to canvas"><i class="fai">&#xf065;</i><span>Fit</span></button>
             </div>
-            <div class="aut-draft-banner" id="autDraftBanner" hidden><i class="fai">&#xf0c5;</i><span><strong>Template copied</strong><small>Every step is editable. Use + to insert, or select a step to duplicate, move or delete it.</small></span></div>
+            <div class="aut-draft-banner" id="autDraftBanner" hidden><i class="fai">&#xf0c5;</i><span><strong>Template setup</strong><small>This Template keeps its Starts when choice, Rule, If Yes / If No paths, step order and Action types fixed. You can change only the settings shown.</small></span></div>
+            <aside class="aut-activation-coachmark" id="autActivationCoachmark" hidden>
+              <button type="button" data-aut-close-activation-coachmark aria-label="Dismiss activation reminder"><i class="fai">&#xf00d;</i></button>
+              <i class="fai">&#xf0eb;</i><span><strong>Setup complete · saved Inactive</strong><small>Test is optional. Select <b>Activate automation</b> when you want future matching records to use it.</small></span>
+            </aside>
             <div class="aut-flow">
               <button class="aut-node trigger selected" type="button" data-aut-node="trigger">
                 <span class="aut-node-top"><span class="aut-node-icon"><i class="fai">&#xf0a6;</i></span><span><span class="aut-node-kicker">1. STARTS WHEN</span><span class="aut-node-name">New Lead is created</span></span></span>
@@ -2235,7 +2302,7 @@
               <span class="aut-line"></span>
 
               <button class="aut-node condition" type="button" data-aut-node="condition">
-                <span class="aut-node-top"><span class="aut-node-icon"><i class="fai">&#xf126;</i></span><span><span class="aut-node-kicker">3. CHECK</span><span class="aut-node-name">No open first-contact activity exists?</span></span></span>
+                <span class="aut-node-top"><span class="aut-node-icon"><i class="fai">&#xf126;</i></span><span><span class="aut-node-kicker">3. RULE</span><span class="aut-node-name">No open first-contact activity exists?</span></span></span>
                 <span class="aut-node-detail">Checks Lead Activities to prevent duplicates</span>
               </button>
 
@@ -2247,7 +2314,7 @@
                   <button class="aut-add" type="button" data-aut-add="yes-branch" aria-label="Add action to yes branch"><i class="fai">&#xf067;</i></button>
                   <span class="aut-line"></span>
                   <button class="aut-node action" type="button" data-aut-node="action">
-                    <span class="aut-node-top"><span class="aut-node-icon"><i class="fai">&#xf0ae;</i></span><span><span class="aut-node-kicker">4. DO THIS</span><span class="aut-node-name">Create Lead activity</span></span></span>
+                    <span class="aut-node-top"><span class="aut-node-icon"><i class="fai">&#xf0ae;</i></span><span><span class="aut-node-kicker">4. ACTION</span><span class="aut-node-name">Create Lead activity</span></span></span>
                     <span class="aut-node-detail">Call · Lead owner · Due today at 4:00pm</span>
                   </button>
                   <span class="aut-line"></span><span class="aut-end">END</span>
@@ -2262,16 +2329,16 @@
             <div class="aut-step-menu" id="autStepMenu" role="menu" aria-label="Add next automation step" hidden>
               <span class="aut-step-menu-title">Add next step</span>
               <button type="button" role="menuitem" data-aut-step-choice="action"><i class="fai">&#xf0ae;</i><span><strong>Action</strong><small>Do something in CRM</small></span></button>
-              <button type="button" role="menuitem" data-aut-step-choice="condition"><i class="fai">&#xf126;</i><span><strong>Rule</strong><small>Check CRM data and branch Yes / No</small></span></button>
+              <button type="button" role="menuitem" data-aut-step-choice="condition"><i class="fai">&#xf126;</i><span><strong>Rule (optional check)</strong><small>Ask a Yes or No question before WeQuote acts</small></span></button>
               <button type="button" role="menuitem" data-aut-step-choice="wait"><i class="fai">&#xf017;</i><span><strong>Wait</strong><small>Pause before continuing</small></span></button>
-              <button type="button" role="menuitem" data-aut-step-choice="end"><i class="fai">&#xf28d;</i><span><strong>End</strong><small>Stop this branch safely</small></span></button>
+              <button type="button" role="menuitem" data-aut-step-choice="end"><i class="fai">&#xf28d;</i><span><strong>Stop this path</strong><small>Nothing else happens on this path</small></span></button>
             </div>
           </div>
         </section>
 
         <aside class="aut-inspector" id="autInspector" aria-label="Selected automation step settings" hidden>
           <div class="aut-inspector-nav"><button type="button" id="autCloseInspector"><i class="fai">&#xf060;</i><span>Workflow blocks</span></button></div>
-          <div class="aut-inspector-head"><span class="aut-inspector-step" id="autInspectorStep">Step 1</span><h2 id="autInspectorTitle">Enrollment trigger</h2></div>
+          <div class="aut-inspector-head"><span class="aut-inspector-step" id="autInspectorStep">Step 1</span><h2 id="autInspectorTitle">Starts when</h2></div>
           <div class="aut-inspector-body" id="autInspectorBody"></div>
           <div class="aut-inspector-foot" id="autInspectorFoot">
             <button class="aut-btn" type="button" id="autCancelStep">Cancel</button>
@@ -2284,19 +2351,13 @@
             <div class="aut-flow-context" aria-label="Automation context">
               <div class="aut-flow-context-card is-pipeline">
                 <small>PIPELINE</small>
-                <strong id="autEditorPipelineLabel">Sales Pipeline</strong>
+                <strong id="autEditorPipelineLabel">Quote Pipeline</strong>
                 <span>This Automation belongs to this Pipeline</span>
               </div>
               <div class="aut-flow-context-card is-stage">
                 <small>PIPELINE STAGE</small>
-                <strong id="autEditorStageLabel">Site Ready</strong>
+                <strong id="autEditorStageLabel">Qualified</strong>
                 <span>Automation runs in this Stage</span>
-              </div>
-              <div class="aut-flow-context-card is-company">
-                <small>COMPANY SCOPE</small>
-                <strong id="autEditorCompanyScopeLabel">All Companies</strong>
-                <span>Matched from each record's Owning Company</span>
-                <div id="autEditorCompanyScopePills"></div>
               </div>
             </div>
             <section class="aut-inspector-summary" id="autFlowSummary"></section>
@@ -2308,7 +2369,7 @@
       <div class="aut-history-overlay" id="autHistoryOverlay" hidden>
         <aside class="aut-history-drawer" role="dialog" aria-modal="true" aria-labelledby="autHistoryTitle">
           <header class="aut-history-head">
-            <div><span>Automation history</span><h2 id="autHistoryTitle">Change history</h2><p id="autHistoryContext">Sales Pipeline</p></div>
+            <div><span>Automation history</span><h2 id="autHistoryTitle">Change history</h2><p id="autHistoryContext">Quote Pipeline</p></div>
             <button type="button" id="autHistoryClose" aria-label="Close history"><i class="fai">&#xf00d;</i></button>
           </header>
           <div class="aut-history-list" id="autHistoryList"></div>
@@ -2352,35 +2413,37 @@
       <div class="aut-template-overlay" id="autTemplateOverlay" hidden>
         <section class="aut-template-modal" role="dialog" aria-modal="true" aria-labelledby="autTemplateTitle">
           <div class="aut-demo-head">
-            <div><span>New automation</span><h2 id="autTemplateTitle">How would you like to start?</h2><p class="aut-template-copy" id="autTemplateCopy">Use a ready-made workflow or build your own one step at a time.</p></div>
+            <div><span>New automation</span><h2 id="autTemplateTitle">Create automation</h2><p class="aut-template-copy" id="autTemplateCopy">Give this Automation a name and short description.</p></div>
             <button class="aut-demo-close" type="button" id="autTemplateClose" aria-label="Close new automation"><i class="fai">&#xf00d;</i></button>
           </div>
           <div class="aut-template-body">
-            <div class="aut-creator-screen" id="autCreatorHome">
+            <div class="aut-creator-screen" id="autCreatorPipeline" hidden>
+              <div class="aut-creator-pipeline-heading"><span>Step 1</span><h3>Choose a Pipeline</h3><p>The Automation will be assigned to a Stage in this Pipeline.</p></div>
+              <div class="aut-creator-pipeline-list" id="autCreatorPipelineList"></div>
+              <div class="aut-template-note"><i class="fai">&#xf05a;</i><span>Need another Pipeline? Create and manage Pipelines in CRM → Deals.</span></div>
+            </div>
+            <div class="aut-creator-screen" id="autCreatorHome" hidden>
               <div class="aut-creator-entry">
-                <button class="aut-creator-choice" type="button" data-aut-creator="templates"><span class="aut-template-card-icon"><i class="fai">&#xf00a;</i></span><strong>Use a template</strong><span>Start with a supported business outcome for the selected Pipeline Stage.</span><em>Fastest way to start →</em></button>
-                <button class="aut-creator-choice" type="button" data-aut-creator="scratch"><span class="aut-template-card-icon"><i class="fai">&#xf303;</i></span><strong>Start from scratch</strong><span>Choose what starts the automation, then add conditions, waits and actions one step at a time.</span><em>Build a custom workflow →</em></button>
+                <button class="aut-creator-choice" type="button" data-aut-creator="templates"><span class="aut-template-card-icon"><i class="fai">&#xf00a;</i></span><strong>Use a Template</strong><span>Start with a ready-made flow for this Stage.</span><em>Choose a Template →</em></button>
+                <button class="aut-creator-choice" type="button" data-aut-creator="scratch"><span class="aut-template-card-icon"><i class="fai">&#xf303;</i></span><strong>Build a Custom Automation</strong><span>Choose Starts when, add a Rule only if needed, then choose an Action.</span><em>Build your Automation →</em></button>
               </div>
-              <div class="aut-template-note"><i class="fai">&#xf023;</i><span>Templates assist work around the Pipeline. Protected Quote lifecycle transitions, Won, Lost and Archived rules remain managed by WeQuote.</span></div>
+              <div class="aut-template-note"><i class="fai">&#xf023;</i><span>Templates are shown first. A Custom Automation only shows choices that work in the Stage you chose.</span></div>
             </div>
 
             <div class="aut-creator-screen" id="autCreatorTemplates" hidden>
-              <div class="aut-creator-toolbar"><div><button class="aut-creator-back" type="button" data-aut-creator-back="home"><i class="fai">&#xf060;</i> Back</button><button class="aut-btn small" type="button" data-aut-creator="scratch"><i class="fai">&#xf303;</i> Start from scratch</button></div><span class="aut-help">Only workflows supported by the current CRM are shown</span></div>
-              <div class="aut-template-stage-nav" id="autTemplateStageNav" aria-label="Choose a Pipeline Stage"></div>
-              <div class="aut-scratch-only-notice" id="autScratchOnlyNotice" hidden><span><i class="fai">&#xf303;</i></span><div><small>BUILD FROM SCRATCH</small><h3 id="autScratchOnlyTitle">Choose the Stage first</h3><p id="autScratchOnlyCopy">Select the Stage where this Automation belongs. WeQuote will then show its compatible Starts when options, Rules and Actions.</p></div></div>
-              <div class="aut-template-pipeline-map"><strong><i class="fai">&#xf279;</i> Quotation work mapped to Sales Pipeline</strong><div><span><b>Qualified</b> Site Visit &amp; readiness</span><i>→</i><span><b>In Progress</b> Quote build &amp; SOW</span><i>→</i><span><b>In Review</b> Technical Review</span><i>→</i><span><b>Passed Review</b> Ready to send</span></div></div>
-              <div class="aut-template-grid">
-                <div class="aut-template-section-label"><span class="aut-template-stage-title"><em>BEFORE PIPELINE</em><b>Lead</b></span><small>Work with the enquiry before it is converted into a Qualified Deal</small></div>
-                <button class="aut-template-card" type="button" data-aut-template="new-lead-response"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf234;</i></span><span class="aut-object-badge lead">LEAD</span></span><strong>New Lead first contact</strong><span>Assign the new Lead and create the first-contact activity without duplicating open work.</span><span class="aut-template-flow">New Lead → Assign owner → Activity check → First contact</span><span class="aut-template-stage-meta"><b>Starts at</b> New Lead created <i></i><b>Ends when</b> Owner and first-contact activity are ready</span></button>
-                <button class="aut-template-card" type="button" data-aut-template="inactive-lead"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf017;</i></span><span class="aut-object-badge lead">LEAD</span></span><strong>Inactive Lead reminder</strong><span>Create a reminder only when an open Lead has no next activity or existing reminder.</span><span class="aut-template-flow">Lead eligibility scan → Activity check → Reminder</span><span class="aut-template-stage-meta"><b>Starts at</b> Open Lead has no next activity <i></i><b>Ends when</b> Reminder exists or branch stops safely</span></button>
-
+              <div class="aut-creator-toolbar"><div><button class="aut-creator-back" type="button" data-aut-template-cancel><i class="fai">&#xf00d;</i> Cancel</button><button class="aut-btn small" type="button" data-aut-creator="scratch"><i class="fai">&#xf303;</i> Build Custom</button></div><span class="aut-help">Step 1 · Choose the Pipeline Stage</span></div>
+              <div class="aut-template-stage-nav" id="autTemplateStageNav" aria-label="Choose a Quote Pipeline Stage"></div>
+              <div class="aut-scratch-only-notice" id="autStageTemplatePrompt"><span><i class="fai">&#xf279;</i></span><div><small>QUOTE PIPELINE</small><h3>Choose a Stage first</h3><p>Matching fixed Templates will appear after you select the Stage where this Automation belongs.</p></div></div>
+              <div class="aut-scratch-only-notice" id="autScratchOnlyNotice" hidden><span><i class="fai">&#xf303;</i></span><div><small>CUSTOM AUTOMATION</small><h3>Choose the Stage first</h3><p>After you choose the Stage, WeQuote shows how the Automation can start, what it can check, and what it can do.</p></div></div>
+              <div class="aut-template-pipeline-map" hidden><strong><i class="fai">&#xf279;</i> Quotation work mapped to Quote Pipeline</strong><div><span><b>Qualified</b> Site Visit &amp; readiness</span><i>→</i><span><b>In Progress</b> Quote build &amp; SOW</span><i>→</i><span><b>In Review</b> Technical Review</span><i>→</i><span><b>Passed Review</b> Ready to send</span></div></div>
+              <div class="aut-template-grid" id="autPhase1TemplateGrid" hidden>
                 <div class="aut-template-section-label"><span class="aut-template-stage-title"><em>STAGE 1</em><b>Qualified</b></span><small>Prepare the Deal before the first related Quote is created</small></div>
                 <button class="aut-template-card" type="button" data-aut-template="qualified-owner-first-action"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf0ae;</i></span><span class="aut-object-badge deal">DEAL</span></span><strong>Qualified first Next Action</strong><span>Give every newly Qualified Deal one clear Next Action, owner and due date without creating duplicate work.</span><span class="aut-template-flow">Enters Qualified → Next Action check → Set first Next Action</span><span class="aut-template-stage-meta"><b>Starts at</b> Qualified <i></i><b>Ends when</b> One visible Next Action is ready</span></button>
                 <button class="aut-template-card" type="button" data-aut-template="qualified-inactivity"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf017;</i></span><span class="aut-object-badge deal">DEAL</span></span><strong>Qualified inactivity reminder</strong><span>Wait seven working days, then create a Note and mention the Deal owner if the Deal is still inactive.</span><span class="aut-template-flow">Qualified → Wait 7 days → Activity check → Create Note + mention owner</span><span class="aut-template-stage-meta"><b>Starts at</b> Qualified <i></i><b>Ends when</b> Follow-up Note exists or activity is found</span></button>
                 <button class="aut-template-card aut-template-card-featured" type="button" data-aut-template="pre-quote-readiness"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf46c;</i></span><span class="aut-object-badge deal">DEAL</span></span><strong>Site visit &amp; pre-Quote readiness</strong><span>Create a CRM Note, Mention the Deal owner and set a follow-up when Site Visit or customer/site information is incomplete.</span><span class="aut-template-flow">Qualified → Readiness check → Create Note → Mention owner + follow-up → Complete before Quote</span><span class="aut-template-stage-meta"><b>Starts at</b> Qualified <i></i><b>Ends when</b> Required follow-up is complete</span></button>
 
-                <div class="aut-template-section-label" data-aut-custom-template-section><span class="aut-template-stage-title"><em>CUSTOM STAGE</em><b>Custom Stage</b></span><small>Operational Automations for a customer-defined Stage; protected Quote milestones remain unchanged</small></div>
-                <button class="aut-template-card aut-template-card-featured" type="button" data-aut-template="custom-stage-required-files"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf56f;</i></span><span class="aut-object-badge deal">DEAL</span></span><strong>Required files</strong><span>Request plans, drawings or proof documents and make the Action required before the selected protected event.</span><span class="aut-template-flow">Enters Custom Stage → Required file missing? → Request file → Resolve when uploaded</span><span class="aut-template-stage-meta"><b>Starts at</b> Selected Custom Stage <i></i><b>Ends when</b> File is received or already exists</span></button>
+                <div class="aut-template-section-label" data-aut-custom-template-section><span class="aut-template-stage-title"><em>CUSTOM STAGE</em><b>Custom Stage</b></span><small>Operational Automations for a customer-defined Stage</small></div>
+                <button class="aut-template-card aut-template-card-featured" type="button" data-aut-template="custom-stage-required-files"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf56f;</i></span><span class="aut-object-badge deal">DEAL</span></span><strong>Required files</strong><span>Request plans, drawings or proof documents and make the Action required before the selected event.</span><span class="aut-template-flow">Enters Custom Stage → Required file missing? → Request file → Resolve when uploaded</span><span class="aut-template-stage-meta"><b>Starts at</b> Selected Custom Stage <i></i><b>Ends when</b> File is received or already exists</span></button>
                 <button class="aut-template-card" type="button" data-aut-template="custom-stage-next-action"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf0ae;</i></span><span class="aut-object-badge deal">DEAL</span></span><strong>Custom Stage Next Action</strong><span>Set one clear task, owner and due date when a Deal arrives without a Next Action.</span><span class="aut-template-flow">Enters Custom Stage → Next Action missing? → Set Next Action</span><span class="aut-template-stage-meta"><b>Starts at</b> Selected Custom Stage <i></i><b>Ends when</b> Next Action is ready</span></button>
                 <button class="aut-template-card" type="button" data-aut-template="custom-stage-inactivity"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf017;</i></span><span class="aut-object-badge deal">DEAL</span></span><strong>Custom Stage inactivity</strong><span>Wait five days, confirm there is still no activity, then set a follow-up Next Action.</span><span class="aut-template-flow">Enters Custom Stage → Wait 5 days → Activity check → Set Next Action</span><span class="aut-template-stage-meta"><b>Starts at</b> Selected Custom Stage <i></i><b>Ends when</b> Follow-up exists or activity is found</span></button>
 
@@ -2391,34 +2454,29 @@
                 <button class="aut-template-card" type="button" data-aut-template="internal-quote-review"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf24e;</i></span><span class="aut-object-badge quote">QUOTE</span></span><strong>Technical &amp; Internal Review</strong><span>For review-enabled organisations, create a CRM Note and mention one reviewer when a Quote is submitted.</span><span class="aut-template-flow">Submitted for review → Note check → Create Note → Mention reviewer</span><span class="aut-template-stage-meta"><b>Starts at</b> In Review <i></i><b>Ends when</b> Technical review Note exists or already exists</span></button>
 
                 <div class="aut-template-section-label"><span class="aut-template-stage-title"><em>CONDITIONAL</em><b>Passed Review</b></span><small>Approved internally and ready for the final customer-facing check</small></div>
-                <button class="aut-template-card" type="button" data-aut-template="ready-to-send-check"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf058;</i></span><span class="aut-object-badge quote">QUOTE</span></span><strong>Ready-to-send check</strong><span>Confirm the approved Quote is viable, then create a Note and mention the Quote owner.</span><span class="aut-template-flow">Passed Review → Viability/content check → Create Note + mention owner</span><span class="aut-template-stage-meta"><b>Starts at</b> Passed Review <i></i><b>Ends when</b> Ready-to-send Note exists</span></button>
+                <button class="aut-template-card" type="button" data-aut-template="ready-to-send-check"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf058;</i></span><span class="aut-object-badge quote">QUOTE</span></span><strong>Ready-to-send check</strong><span>Confirm the approved Quote can still be sent or accepted, then create a Note and mention the Quote owner.</span><span class="aut-template-flow">Passed Review → Quote ready? → Create Note + mention owner</span><span class="aut-template-stage-meta"><b>Starts at</b> Passed Review <i></i><b>Ends when</b> Ready-to-send Note exists</span></button>
+                <button class="aut-template-card" type="button" data-aut-template="high-value-approval"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf3ed;</i></span><span class="aut-object-badge quote">QUOTE</span></span><strong>High-value approval</strong><span>Create a senior approval Note when the Quote value is over £25,000 or its discount is over 15%.</span><span class="aut-template-flow">Passed Review → Value / discount check → Create approval Note + mention approver</span><span class="aut-template-stage-meta"><b>Starts at</b> Passed Review <i></i><b>Ends when</b> Additional approval is recorded or not required</span></button>
 
-                <div class="aut-template-section-label"><span class="aut-template-stage-title"><em>STAGE 5</em><b>Sent</b></span><small>The customer has received a viable Quote</small></div>
+                <div class="aut-template-section-label"><span class="aut-template-stage-title"><em>STAGE 5</em><b>Sent</b></span><small>The customer has received a Quote that can still be accepted</small></div>
                 <button class="aut-template-card" type="button" data-aut-template="quote-follow-up"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf1d8;</i></span><span class="aut-object-badge quote">QUOTE</span></span><strong>Sent Quote follow-up</strong><span>Create a follow-up Note and mention the Deal owner without duplicating open work.</span><span class="aut-template-flow">Quote Sent → Wait 3 days → Note check → Create Note + mention owner</span><span class="aut-template-stage-meta"><b>Starts at</b> Sent <i></i><b>Ends when</b> Follow-up Note exists or branch stops safely</span></button>
-                <button class="aut-template-card" type="button" data-aut-template="quote-expiry-reminder"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf073;</i></span><span class="aut-object-badge quote">QUOTE</span></span><strong>Quote expiry reminder</strong><span>Create a Note and mention the Deal owner three days before a viable Sent Quote expires.</span><span class="aut-template-flow">Expiry −3 days → Still viable? → Create Note + mention owner</span><span class="aut-template-stage-meta"><b>Starts at</b> Sent, 3 days before expiry <i></i><b>Ends when</b> Follow-up Note exists or Quote is no longer viable</span></button>
+                <button class="aut-template-card" type="button" data-aut-template="quote-expiry-reminder"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf073;</i></span><span class="aut-object-badge quote">QUOTE</span></span><strong>Quote expiry reminder</strong><span>Create a Note and mention the Deal owner three days before a Sent Quote expires.</span><span class="aut-template-flow">Expiry −3 days → Can it still be accepted? → Create Note + mention owner</span><span class="aut-template-stage-meta"><b>Starts at</b> Sent, 3 days before expiry <i></i><b>Ends when</b> Follow-up Note exists or the Quote can no longer be accepted</span></button>
 
-                <div class="aut-template-section-label"><span class="aut-template-stage-title"><em>DERIVED DEAL OUTCOME</em><b>Won</b></span><small>Any relevant Quote is Accepted; WeQuote derives the protected Deal outcome</small></div>
-                <button class="aut-template-card" type="button" data-aut-template="won-deal-handoff"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf091;</i></span><span class="aut-object-badge deal">DEAL</span></span><strong>Won Deal handoff</strong><span>When any relevant Quote is Accepted, create a handoff Note and mention the Deal owner.</span><span class="aut-template-flow">Protected Won → Handoff check → Create Note + mention owner</span><span class="aut-template-stage-meta"><b>Starts at</b> Won <i></i><b>Ends when</b> Handoff Note exists</span></button>
+                <div class="aut-template-section-label"><span class="aut-template-stage-title"><em>DEAL RESULT · UPDATED AUTOMATICALLY</em><b>Won</b></span><small>A Quote is Accepted, so WeQuote marks the Deal as Won</small></div>
+                <button class="aut-template-card" type="button" data-aut-template="won-deal-handoff"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf091;</i></span><span class="aut-object-badge deal">DEAL</span></span><strong>Won Deal handoff</strong><span>When a Quote is Accepted, create a handoff Note and mention the Deal owner.</span><span class="aut-template-flow">Deal becomes Won → Check handoff → Create Note + mention owner</span><span class="aut-template-stage-meta"><b>Starts at</b> Won <i></i><b>Ends when</b> Handoff Note exists</span></button>
                 <button class="aut-template-card" type="button" data-aut-template="quote-invoice"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf571;</i></span><span class="aut-object-badge project">BILLING</span></span><strong>Accepted Quote → Draft Invoice</strong><span>Create a reviewable 30% Draft Invoice from the accepted value; nothing is sent automatically.</span><span class="aut-template-flow">Quote Accepted → Remaining-value check → Draft Invoice</span><span class="aut-template-stage-meta"><b>Starts at</b> Won via Accepted Quote <i></i><b>Ends when</b> Draft Invoice is ready for review</span></button>
 
-                <div class="aut-template-section-label"><span class="aut-template-stage-title"><em>DERIVED DEAL OUTCOME</em><b>Lost</b></span><small>No viable relevant Quote remains; all-cancelled Deals are Archived instead</small></div>
-                <button class="aut-template-card" type="button" data-aut-template="lost-deal-follow-up"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf024;</i></span><span class="aut-object-badge deal">DEAL</span></span><strong>Lost Deal reason follow-up</strong><span>When no viable relevant Quote remains, create a Note and mention the Deal owner if the loss reason is missing.</span><span class="aut-template-flow">Protected Lost → Loss reason check → Create Note + mention owner</span><span class="aut-template-stage-meta"><b>Starts at</b> Lost <i></i><b>Ends when</b> Loss reason or follow-up Note exists</span></button>
+                <div class="aut-template-section-label"><span class="aut-template-stage-title"><em>DEAL RESULT · UPDATED AUTOMATICALLY</em><b>Lost</b></span><small>No Quote can still be accepted; if all are Cancelled, the Deal is Archived instead</small></div>
+                <button class="aut-template-card" type="button" data-aut-template="lost-deal-follow-up"><span class="aut-template-card-head"><span class="aut-template-card-icon"><i class="fai">&#xf024;</i></span><span class="aut-object-badge deal">DEAL</span></span><strong>Lost Deal reason follow-up</strong><span>When the Deal becomes Lost, create a Note and mention the Deal owner if the loss reason is missing.</span><span class="aut-template-flow">Deal becomes Lost → Check loss reason → Create Note + mention owner</span><span class="aut-template-stage-meta"><b>Starts at</b> Lost <i></i><b>Ends when</b> Loss reason or follow-up Note exists</span></button>
                 <div class="aut-template-stage-note"><i class="fai">&#xf187;</i><span><strong>Archived is a Deal status, not a Pipeline stage.</strong> When every related Quote is Cancelled, the Deal is archived by the protected lifecycle and therefore does not appear as another template stage.</span></div>
               </div>
-              <details class="aut-template-review-vault"><summary><span><i class="fai">&#xf070;</i><strong>Templates under review</strong><small>Hidden from Recommended templates · 1 preserved</small></span><b>1</b></summary><article><header><div><span class="aut-template-card-icon"><i class="fai">&#xf24e;</i></span><span><strong>Client Proposal &amp; Approval</strong><small>Preserved · unavailable to apply</small></span></div><em>UNDER REVIEW</em></header><p>This older composite template bundles Site Visit, first Quote creation, SOW, Technical Review and customer approval into one cross-Stage Automation.</p><div class="aut-template-review-map"><span><b>Qualified</b> Site Visit condition</span><i>→</i><span><b>In Progress</b> Quote build + SOW</span><i>→</i><span><b>In Review</b> Technical Review</span><i>→</i><span><b>Passed Review</b> Ready-to-send</span></div><aside><i class="fai">&#xf023;</i><span><strong>Why it is hidden:</strong> the previous version tried to create Site Visit, Scope of Work and Technical Review as extra Pipeline stages. That conflicts with the protected Quote lifecycle. Keep it here until we decide whether it should become a bundle that creates several independent Stage Automations.</span></aside></article></details>
             </div>
 
             <div class="aut-creator-screen" id="autCreatorTemplatePreview" hidden>
               <div id="autTemplatePreviewBody"></div>
             </div>
 
-            <div class="aut-creator-screen" id="autCreatorCompanyScope" hidden>
-              <div class="aut-creator-toolbar"><button class="aut-creator-back" type="button" data-aut-creator-back="templates"><i class="fai">&#xf060;</i> Back to templates</button><span class="aut-help">Advanced · optional enrolment scope</span></div>
-              <div id="autCompanyScopeBody"></div>
-            </div>
-
             <div class="aut-creator-screen" id="autCreatorTriggers" hidden>
-              <div class="aut-creator-toolbar"><button class="aut-creator-back" type="button" data-aut-creator-back="home"><i class="fai">&#xf060;</i> Back</button><span class="aut-help">Step 1 of 2 · Choose a trigger</span></div>
+              <div class="aut-creator-toolbar"><button class="aut-creator-back" type="button" data-aut-creator-back="home"><i class="fai">&#xf060;</i> Back</button><span class="aut-help">Step 1 of 2 · Choose how it starts</span></div>
               <section class="aut-trigger-section"><h3>Suggested</h3><div class="aut-trigger-list">
                 <button class="aut-trigger-card" type="button" data-aut-trigger-choice="new-lead"><i class="fai">&#xf234;</i><span><strong>New Lead is created</strong><span>Assign an owner or create a first-contact Lead activity.</span></span></button>
                 <button class="aut-trigger-card" type="button" data-aut-trigger-choice="deal-stage"><i class="fai">&#xf0ae;</i><span><strong>Deal moves to a stage</strong><span>Follow up when a Deal reaches a selected stage.</span></span></button>
@@ -2432,7 +2490,7 @@
             </div>
 
             <div class="aut-creator-screen" id="autCreatorConfigure" hidden>
-              <div class="aut-creator-toolbar"><button class="aut-creator-back" type="button" data-aut-creator-back="triggers"><i class="fai">&#xf060;</i> Back</button><span class="aut-help">Step 2 of 2 · Configure the trigger</span></div>
+              <div class="aut-creator-toolbar"><button class="aut-creator-back" type="button" data-aut-creator-back="triggers"><i class="fai">&#xf060;</i> Back</button><span class="aut-help">Step 2 of 2 · Choose the start settings</span></div>
               <div id="autTriggerConfigureBody"></div>
             </div>
 
@@ -2607,11 +2665,10 @@
             <div class="wqd-field selectfield pipeline-selectfield" id="df-pipeline-field">
               <label class="wqd-field-label bold">Pipeline</label>
               <select class="wqd-select-plain" id="df-pipeline" hidden aria-hidden="true" tabindex="-1">
-                <option value="quote-pipeline">Quote pipeline</option>
-                <option value="sales-pipeline">Sales Pipeline</option>
+                <option value="sales-pipeline">Quote Pipeline</option>
               </select>
               <button type="button" class="pipeline-select-trigger" id="df-pipeline-trigger" aria-haspopup="listbox" aria-expanded="false" onclick="toggleDfPipelineMenu(event)">
-                <span id="df-pipeline-value">Quote pipeline</span>
+                <span id="df-pipeline-value">Quote Pipeline</span>
                 <i class="fai selectfield-chev" aria-hidden="true">&#xf078;</i>
               </button>
               <div class="pipeline-select-menu" id="df-pipeline-menu" role="listbox" aria-label="Choose pipeline" hidden>
@@ -2621,7 +2678,6 @@
                 </div>
                 <div class="pipeline-select-options" id="df-pipeline-options"></div>
                 <div class="pipeline-select-footer">
-                  <button type="button" class="pipeline-select-add" onclick="addDfPipeline(event)"><i class="fai">&#x2b;</i> Add pipeline</button>
                 </div>
               </div>
             </div>
@@ -3093,11 +3149,11 @@
       <div class="lp-list" id="lead-owner-picker-list" role="listbox"></div>
     </div>
 
-    <!-- Lead detail modal (Figma DS – WeQuote Platform, node 2480-76459) -->
-    <div class="cs-overlay" id="leadDrawer">
+    <!-- Lead detail page. Create Lead remains a dialog; existing Leads open here. -->
+    <div class="cs-overlay lead-detail-page" id="leadDrawer" role="region" aria-label="Lead detail page">
       <div class="cs-modal leaddetail-modal">
         <div class="ldm-navrail">
-          <button class="ldm-navbtn" onclick="closeLeadPanel()" title="Close"><i class="fai">&#xf00d;</i></button>
+          <button class="ldm-navbtn" onclick="closeLeadPanel()" title="Back to Leads" aria-label="Back to Leads"><i class="fai">&#xf060;</i></button>
           <button class="ldm-navbtn" onclick="copyLeadLink()" title="Copy link"><i class="fai">&#xf0c1;</i></button>
           <button class="ldm-navbtn" id="ldp-prev" onclick="navLeadPanel(-1)" title="Previous lead"><i class="fai">&#xf060;</i></button>
           <button class="ldm-navbtn" id="ldp-next" onclick="navLeadPanel(1)" title="Next lead"><i class="fai">&#xf061;</i></button>
@@ -3305,7 +3361,7 @@
               <div class="ldm-focus-empty" id="ldp-focus-empty">No focus items yet</div>
             </div>
 
-            <div class="ldm-histhead"><span>History</span><label><i class="fai">&#xf0b0;</i><select id="leadHistoryFilter" onchange="renderLdpHistory(CRM_LEADS[ldpIdx])"><option value="all">All activity</option><option value="note">Notes</option><option value="activity">Activities</option><option value="file">Files</option></select></label></div>
+            <div class="ldm-histhead"><span>History</span><label><i class="fai">&#xf0b0;</i><select id="leadHistoryFilter" onchange="renderLdpHistory(CRM_LEADS[ldpIdx])"><option value="all">All history</option><option value="task">Tasks</option><option value="meeting">Meetings</option><option value="note">Notes</option><option value="file">Files</option></select></label></div>
             <div class="ldm-histwrap">
               <div class="ldm-hist-list" id="ldp-hist"></div>
             </div>
@@ -3315,42 +3371,589 @@
       </div>
     </div>
 
+    <!-- Reopening a completed Lead item always creates a new follow-up schedule. -->
+    <div class="cs-overlay lead-reopen-overlay" id="leadReopenOverlay" aria-hidden="true" onclick="if(event.target===this)closeLeadReopenDialog()">
+      <section class="cs-modal lead-reopen-modal" role="dialog" aria-modal="true" aria-labelledby="leadReopenHeading" aria-describedby="leadReopenDescription">
+        <div class="cs-head">
+          <div>
+            <span class="lead-reopen-eyebrow">Follow-up required</span>
+            <h2 id="leadReopenHeading">Reopen task</h2>
+          </div>
+          <button type="button" class="cs-close fai" onclick="closeLeadReopenDialog()" aria-label="Cancel reopening">&#xf00d;</button>
+        </div>
+        <p class="cs-desc lead-reopen-copy" id="leadReopenDescription">Choose a new follow-up date and time before this Task is reopened.</p>
+        <div class="lead-reopen-subject" id="leadReopenSubject"></div>
+        <div class="lead-reopen-fields">
+          <label class="lead-reopen-field" for="leadReopenDate"><span>Follow-up date <b aria-hidden="true">*</b></span><input id="leadReopenDate" type="date" required oninput="syncLeadReopenState()"></label>
+          <label class="lead-reopen-field" for="leadReopenTime"><span>Time <b aria-hidden="true">*</b></span><input id="leadReopenTime" type="time" step="900" required oninput="syncLeadReopenState()"></label>
+        </div>
+        <div class="lead-reopen-validation" id="leadReopenValidation" role="alert"></div>
+        <div class="cs-actions">
+          <button type="button" class="cs-btn ghost" onclick="closeLeadReopenDialog()">Cancel</button>
+          <button type="button" class="cs-btn primary" id="leadReopenConfirm" onclick="confirmLeadReopen()" disabled><i class="fai">&#xf2ea;</i> Reopen &amp; schedule</button>
+        </div>
+      </section>
+    </div>
+
     <!-- Deal record modal (PRD §4.3, simplified) — click a deal card to open -->
   </main>
 </div>
+
+<!-- ============ GLOBAL NEEDS YOUR ATTENTION WIDGET ============ -->
+<aside id="wequote-attention-widget" class="is-collapsed" aria-label="Needs Your Attention" data-current-user="Candy" data-can-view-team="true">
+  <div class="attention-dock-resizer" data-attention-dock-resizer role="separator" aria-orientation="vertical" aria-label="Resize Needs Your Attention panel" tabindex="0"></div>
+  <div class="attention-panel">
+    <div class="attention-mini" data-attention-mini data-attention-drag-handle aria-label="Follow-up Dock">
+      <button class="attention-mini-main" data-attention-mini-expand type="button" aria-label="Open medium Dock">
+        <span class="attention-mini-check" aria-hidden="true"><i class="fa-regular fa-note-sticky"></i></span>
+        <strong data-attention-mini-label>1 Follow-up</strong>
+      </button>
+      <button class="attention-mini-create" data-attention-mini-create data-tooltip="Create follow-up" type="button" aria-label="Create follow-up"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+      <button class="attention-mini-more" data-attention-mini-more data-attention-mini-expand type="button" aria-label="Open medium Dock" title="Open medium Dock"><i class="fa-regular fa-window-restore" aria-hidden="true"></i></button>
+    </div>
+
+    <section class="attention-expanded" aria-label="Attention task list">
+      <div class="attention-productivity-topbar" data-attention-drag-handle>
+        <nav class="attention-productivity-tabs" role="tablist" aria-label="Productivity Dock tools">
+          <button class="active" id="attentionDockTabTasks" data-attention-productivity-tab="attention" type="button" role="tab" aria-selected="true" aria-controls="attentionDockPanelTasks">
+            <strong>Needs Your Attention</strong>
+            <span data-attention-tab-summary>5 items</span>
+          </button>
+          <button id="attentionDockTabNote" data-attention-productivity-tab="note" type="button" role="tab" aria-selected="false" aria-controls="attentionDockPanelNote">
+            <strong>My Notes</strong>
+            <span data-my-notes-tab-status>6 notes · private</span>
+          </button>
+        </nav>
+        <div class="attention-window-controls" role="group" aria-label="Window controls">
+          <button class="attention-icon-button attention-dock-toggle" data-attention-dock-toggle type="button" aria-label="Dock to right" title="Dock to right" aria-pressed="false"><i class="fa-solid fa-table-columns" aria-hidden="true"></i></button>
+          <button class="attention-icon-button attention-collapse-button" data-attention-collapse type="button" aria-label="Minimise Dock" title="Minimise Dock" aria-expanded="true"><i class="fa-solid fa-window-minimize" aria-hidden="true"></i></button>
+        </div>
+      </div>
+
+      <div class="attention-productivity-body">
+        <section class="attention-tool-panel attention-tool-panel-tasks active" id="attentionDockPanelTasks" data-attention-productivity-panel="attention" role="tabpanel" aria-labelledby="attentionDockTabTasks">
+          <header class="attention-head" data-attention-drag-handle>
+            <div class="attention-title-wrap">
+              <button class="attention-scope-toggle" data-attention-scope-toggle type="button" aria-haspopup="menu" aria-expanded="false">
+                <span data-attention-scope-title>My attention</span><span class="chevron" aria-hidden="true">▼</span>
+              </button>
+              <div class="attention-subtitle" data-attention-open-summary>5 items · updated just now</div>
+            </div>
+            <button class="attention-create-button" data-attention-create type="button" aria-label="Create follow-up" aria-haspopup="dialog" aria-expanded="false"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Create follow-up</span></button>
+            <div class="attention-scope-menu" data-attention-scope-menu role="menu" hidden>
+              <button class="active" data-attention-scope="my" type="button">My attention</button>
+              <button data-attention-scope="assigned" type="button">Assigned by me</button>
+              <button data-attention-scope="team" type="button">All team</button>
+            </div>
+          </header>
+
+          <div class="attention-status-filter" role="group" aria-label="Filter follow-ups by status">
+            <button class="active" data-attention-status-filter="all" type="button" aria-pressed="true"><span>All</span><b data-attention-status-count="all">0</b></button>
+            <button data-attention-status-filter="open" type="button" aria-pressed="false"><span>Open</span><b data-attention-status-count="open">0</b></button>
+            <button data-attention-status-filter="completed" type="button" aria-pressed="false"><span>Completed</span><b data-attention-status-count="completed">0</b></button>
+          </div>
+
+          <div class="attention-list" data-attention-list></div>
+        </section>
+
+        <section class="attention-tool-panel attention-tool-panel-note my-notes-dock" id="attentionDockPanelNote" data-attention-productivity-panel="note" role="tabpanel" aria-labelledby="attentionDockTabNote" hidden>
+          <header class="my-notes-dock-head" data-attention-drag-handle>
+            <div>
+              <strong>Quick capture</strong>
+              <span>Private notes · autosaved</span>
+            </div>
+            <button class="my-notes-view-all" data-my-notes-open type="button">View all</button>
+          </header>
+          <form class="my-notes-quick-capture" data-my-notes-quick-form>
+            <label class="sr-only" for="myNotesQuickText">Quick note</label>
+            <textarea id="myNotesQuickText" data-my-notes-quick-text rows="2" placeholder="Write anything you want to remember…"></textarea>
+            <div class="my-notes-quick-actions">
+              <button class="my-notes-primary" type="submit"><i class="fa-solid fa-plus" aria-hidden="true"></i> New note</button>
+              <button data-my-notes-dock-upload type="button"><i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i> Upload image/file</button>
+              <select data-my-notes-quick-collection aria-label="Collection"></select>
+            </div>
+          </form>
+          <div class="my-notes-recent-head">
+            <strong>Recent notes</strong>
+            <span data-my-notes-count>0 notes</span>
+          </div>
+          <div class="my-notes-recent" data-my-notes-recent></div>
+          <footer class="my-notes-dock-footer">Private working memory · copy explicitly when a note belongs in a record</footer>
+          <input data-my-notes-dock-file type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" hidden>
+        </section>
+      </div>
+    </section>
+  </div>
+  <button class="attention-medium-resizer" data-attention-medium-resizer type="button" aria-label="Resize medium Dock" title="Drag to resize · Arrow keys also work"></button>
+  <div class="attention-toast" data-attention-toast aria-live="polite"></div>
+</aside>
+
+<!-- Global Needs Your Attention composer: intentionally outside the attention Dock so it can
+     be opened from any WeQuote page without inheriting the Dock's dimensions. -->
+<section class="attention-note-modal-layer" id="wequote-attention-note-modal" data-attention-note-modal hidden aria-hidden="true">
+  <div class="attention-note-modal-backdrop" data-attention-note-backdrop aria-hidden="true"></div>
+  <form class="attention-composer attention-note-composer" data-attention-composer role="dialog" aria-modal="true" aria-label="Create follow-up" novalidate>
+    <div class="attention-composer-head">
+      <div>
+        <strong>Create follow-up</strong>
+        <span data-attention-note-context>Add an action for any WeQuote record</span>
+      </div>
+      <button type="button" data-attention-composer-close aria-label="Close follow-up composer">×</button>
+    </div>
+    <div class="attention-note-field attention-note-related">
+      <span>Related to <small class="attention-note-required" aria-hidden="true">*</small></span>
+      <button class="attention-note-record-trigger" data-attention-note-record-trigger type="button" aria-haspopup="dialog" aria-expanded="false" aria-required="true">
+        <span class="attention-note-record-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <span class="attention-note-record-value" data-attention-note-record-value>Search and select a record…</span>
+        <span class="attention-note-record-action" data-attention-note-record-action>Choose</span>
+      </button>
+    </div>
+    <div class="attention-followup-type-tabs" role="tablist" aria-label="Follow-up type">
+      <button class="active" id="attentionFollowupNoteTab" data-attention-followup-type="note" type="button" role="tab" aria-selected="true" aria-controls="attentionFollowupNotePanel"><i class="fa-solid fa-pen" aria-hidden="true"></i> Note</button>
+      <button id="attentionFollowupMeetingTab" data-attention-followup-type="meeting" type="button" role="tab" aria-selected="false" aria-controls="attentionFollowupMeetingPanel"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Meeting</button>
+    </div>
+    <section class="attention-followup-panel" id="attentionFollowupNotePanel" data-attention-followup-panel="note" role="tabpanel" aria-labelledby="attentionFollowupNoteTab">
+      <label class="attention-note-field">
+        <span>Note title</span>
+        <input data-attention-note-title aria-label="Note title" autocomplete="off" maxlength="120" placeholder="Add a clear title">
+      </label>
+      <div class="attention-note-field attention-note-body-field">
+        <span id="attentionNoteBodyLabel">Note body <small class="attention-note-required" aria-hidden="true">*</small></span>
+        <div class="attention-note-toolbar" role="toolbar" aria-label="Note formatting">
+          <button type="button" data-attention-note-format="bold" aria-label="Bold"><strong>B</strong></button>
+          <button type="button" data-attention-note-format="italic" aria-label="Italic"><em>I</em></button>
+          <button type="button" data-attention-note-format="underline" aria-label="Underline"><u>U</u></button>
+          <button type="button" data-attention-note-format="insertUnorderedList" aria-label="Bulleted list"><i class="fa-solid fa-list-ul" aria-hidden="true"></i></button>
+          <span class="attention-note-toolbar-divider" aria-hidden="true"></span>
+          <button class="attention-note-mention-button" type="button" data-attention-note-mention-toggle aria-label="Mention a teammate" aria-expanded="false"><span aria-hidden="true">@</span> Mention</button>
+        </div>
+        <div class="attention-note-body" data-attention-note-body contenteditable="true" role="textbox" aria-labelledby="attentionNoteBodyLabel" aria-multiline="true" aria-required="true" data-placeholder="Write the note… Type @ to tag a teammate"></div>
+        <div class="attention-note-people-picker" data-attention-note-people-picker hidden>
+          <label><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input data-attention-note-people-search aria-label="Search teammates" autocomplete="off" placeholder="Search teammate"></label>
+          <div data-attention-note-people-results></div>
+        </div>
+      </div>
+      <div class="attention-note-options">
+        <label class="attention-note-field">
+          <span>Follow-up date <small class="attention-note-required" aria-hidden="true">*</small></span>
+          <input data-attention-note-date type="date" aria-label="Follow-up date" required aria-required="true">
+        </label>
+        <label class="attention-note-field">
+          <span>Follow-up time <small class="attention-note-required" aria-hidden="true">*</small></span>
+          <input data-attention-note-time type="time" value="17:00" aria-label="Follow-up time" required aria-required="true">
+        </label>
+      </div>
+      <p class="attention-note-rule"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>This adds a follow-up to <strong>Needs Your Attention</strong> and saves a Note to the selected record. Add an @Mention to assign it to that person; without one, it stays in <strong>My attention</strong>.</span></p>
+    </section>
+    <section class="attention-followup-panel" id="attentionFollowupMeetingPanel" data-attention-followup-panel="meeting" role="tabpanel" aria-labelledby="attentionFollowupMeetingTab" hidden>
+      <header class="attention-meeting-form-head">
+        <span>Schedule a meeting</span>
+        <h3>Schedule meeting</h3>
+      </header>
+      <label class="attention-note-field">
+        <span>Meeting title <small class="attention-note-required" aria-hidden="true">*</small></span>
+        <input data-attention-meeting-title aria-label="Meeting title" autocomplete="off" maxlength="120" placeholder="e.g. Design review" required aria-required="true">
+      </label>
+      <div class="attention-meeting-schedule">
+        <label class="attention-note-field">
+          <span>Date <small class="attention-note-required" aria-hidden="true">*</small></span>
+          <input data-attention-meeting-date type="date" aria-label="Meeting date" required aria-required="true">
+        </label>
+        <label class="attention-note-field">
+          <span>Start time <small class="attention-note-required" aria-hidden="true">*</small></span>
+          <select data-attention-meeting-time aria-label="Meeting start time" required aria-required="true">
+            <option value="">Select time</option><option value="08:00">08:00</option><option value="08:30">08:30</option><option value="09:00">09:00</option><option value="09:30">09:30</option><option value="10:00">10:00</option><option value="10:30">10:30</option><option value="11:00">11:00</option><option value="11:30">11:30</option><option value="12:00">12:00</option><option value="12:30">12:30</option><option value="13:00">13:00</option><option value="13:30">13:30</option><option value="14:00">14:00</option><option value="14:30">14:30</option><option value="15:00">15:00</option><option value="15:30">15:30</option><option value="16:00">16:00</option><option value="16:30">16:30</option><option value="17:00">17:00</option><option value="17:30">17:30</option><option value="18:00">18:00</option>
+          </select>
+        </label>
+        <label class="attention-note-field">
+          <span>Duration <small class="attention-note-required" aria-hidden="true">*</small></span>
+          <select data-attention-meeting-duration aria-label="Meeting duration" required aria-required="true">
+            <option value="">Select duration</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">1 hour</option><option value="90">1 hour 30 minutes</option><option value="120">2 hours</option>
+          </select>
+        </label>
+      </div>
+      <div class="attention-note-field attention-meeting-method-field">
+        <span>Meeting method <small class="attention-note-required" aria-hidden="true">*</small></span>
+        <label class="attention-meeting-method-control">
+          <span class="attention-meeting-method-icon" aria-hidden="true"><i class="fa-solid fa-video"></i></span>
+          <span class="attention-meeting-method-copy"><strong data-attention-meeting-method-title>Select meeting method</strong><small data-attention-meeting-method-subtitle>Choose in person or paste a link</small></span>
+          <i class="fa-solid fa-chevron-down attention-meeting-method-chevron" aria-hidden="true"></i>
+          <select data-attention-meeting-method aria-label="Meeting method" required aria-required="true">
+            <option value="">Select meeting method</option><option value="in-person">In person</option><option value="manual">Paste a meeting link</option>
+          </select>
+        </label>
+        <p class="attention-meeting-method-help">Choose in person or paste an existing meeting link. The Meeting remains linked to the selected record.</p>
+      </div>
+      <label class="attention-note-field" data-attention-meeting-method-detail hidden>
+        <span><span data-attention-meeting-method-label>Meeting link</span> <small class="attention-note-required" aria-hidden="true">*</small></span>
+        <input data-attention-meeting-method-value autocomplete="off" placeholder="Paste a meeting link">
+      </label>
+      <div class="attention-note-field attention-meeting-attendees-field">
+        <span>Attendees</span>
+        <button class="attention-meeting-attendees-trigger" data-attention-meeting-attendees-toggle type="button" aria-haspopup="listbox" aria-expanded="false"><i class="fa-solid fa-plus" aria-hidden="true"></i><span data-attention-meeting-attendees-label>Add attendees</span></button>
+        <div class="attention-meeting-attendees-picker" data-attention-meeting-attendees-picker role="listbox" aria-label="Meeting attendees" aria-multiselectable="true" hidden></div>
+        <div class="attention-meeting-attendee-chips" data-attention-meeting-attendee-chips hidden></div>
+      </div>
+      <label class="attention-note-field">
+        <span>Agenda <small>(optional)</small></span>
+        <textarea data-attention-meeting-agenda aria-label="Meeting agenda" maxlength="500" rows="3" placeholder="What should everyone prepare or discuss?"></textarea>
+      </label>
+      <p class="attention-note-rule attention-meeting-rule"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>This schedules a Meeting on the selected record and adds it to <strong>Needs Your Attention</strong>.</span></p>
+    </section>
+    <div class="attention-note-validation" data-attention-note-validation role="alert"></div>
+    <div class="attention-note-actions">
+      <button class="attention-note-cancel" type="button" data-attention-composer-cancel>Cancel</button>
+      <button class="attention-add-button" type="submit"><i class="fa-solid fa-plus" data-attention-submit-icon aria-hidden="true"></i> <span data-attention-submit-label>Create follow-up</span></button>
+    </div>
+  </form>
+</section>
+
+<!-- The record picker is a separate decision step. It keeps the Note composer
+     compact while supporting records across WeQuote modules. -->
+<section class="attention-record-picker-layer" id="wequote-record-picker-modal" data-record-picker-modal hidden aria-hidden="true">
+  <div class="attention-record-picker-backdrop" data-record-picker-backdrop aria-hidden="true"></div>
+  <article class="attention-record-picker" role="dialog" aria-modal="true" aria-labelledby="attentionRecordPickerTitle">
+    <header class="attention-record-picker-head">
+      <button class="attention-record-picker-back" data-record-picker-back type="button" aria-label="Back to follow-up composer"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+      <div>
+        <strong id="attentionRecordPickerTitle">Choose a record</strong>
+        <span>Select the record this Needs Your Attention follow-up belongs to</span>
+      </div>
+      <button class="attention-record-picker-close" data-record-picker-close type="button" aria-label="Close record picker">×</button>
+    </header>
+    <label class="attention-record-search">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <input data-record-picker-search autocomplete="off" aria-label="Search all records" placeholder="Search by name, reference or customer across WeQuote…">
+      <span class="attention-record-search-scope" data-record-search-scope>All modules</span>
+    </label>
+    <section class="attention-record-modules" aria-label="Record modules">
+      <button class="active" data-record-picker-module="all" type="button"><span class="all"><i class="fa-solid fa-layer-group"></i></span><b>All</b><small>Search everything</small></button>
+      <button data-record-picker-module="crm" type="button"><span class="crm"><i class="fa-solid fa-address-card"></i></span><b>CRM</b><small>Deals & Leads</small></button>
+      <button data-record-picker-module="quote" type="button"><span class="quote"><i class="fa-solid fa-file-invoice-dollar"></i></span><b>Quote & Sales</b><small>Quotes & Orders</small></button>
+      <button data-record-picker-module="procurement" type="button"><span class="procurement"><i class="fa-solid fa-truck-ramp-box"></i></span><b>Procurement</b><small>POs & Requests</small></button>
+      <button data-record-picker-module="inventory" type="button"><span class="inventory"><i class="fa-solid fa-boxes-stacked"></i></span><b>Inventory</b><small>Products & Stock</small></button>
+    </section>
+    <section class="attention-record-results-wrap">
+      <header><div><strong data-record-picker-results-title>Recent records</strong><span data-record-picker-results-count></span></div><span>Click a row to assign the Note</span></header>
+      <div class="attention-record-results" data-record-picker-results role="listbox" aria-label="Matching records"></div>
+      <div class="attention-record-empty" data-record-picker-empty hidden><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><strong>No matching records</strong><span>Try another name, reference or module.</span></div>
+    </section>
+    <footer class="attention-record-picker-footer">
+      <span><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Your unfinished Note stays in the composer.</span>
+      <button data-record-picker-cancel type="button">Cancel</button>
+    </footer>
+  </article>
+</section>
+
+<!-- Productivity Dock first-use guide and once-a-day briefing -->
+<section class="attention-briefing-layer" data-attention-briefing hidden aria-hidden="true">
+  <div class="attention-briefing-backdrop" aria-hidden="true"></div>
+  <article class="attention-briefing-card" role="dialog" aria-modal="true" aria-labelledby="attentionBriefingTitle">
+    <header class="attention-briefing-card-head">
+      <div class="attention-briefing-brand" aria-hidden="true"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+      <div>
+        <span class="attention-briefing-eyebrow">WEQUOTE PRODUCTIVITY DOCK</span>
+        <span class="attention-briefing-progress" data-briefing-progress>Getting started · 1 of 3</span>
+      </div>
+      <button class="attention-briefing-close" data-briefing-close type="button" aria-label="Skip and close">×</button>
+    </header>
+
+    <div class="attention-briefing-setup" data-briefing-setup>
+      <section class="attention-briefing-step active" data-briefing-step="0">
+        <span class="attention-briefing-kicker">WELCOME BACK</span>
+        <h2 id="attentionBriefingTitle">Hi <span data-briefing-user>Candy</span>，歡迎返嚟。</h2>
+        <p>Your Productivity Dock brings together the work that needs your attention, without taking you away from the page you are using.</p>
+        <div class="attention-briefing-scope-grid" aria-label="Attention views">
+          <article><span class="scope-icon mine"><i class="fa-regular fa-circle-check"></i></span><strong>My attention</strong><small>Items assigned to you or waiting for your response.</small></article>
+          <article><span class="scope-icon assigned"><i class="fa-solid fa-arrow-up-right-from-square"></i></span><strong>Assigned by me</strong><small>Work you delegated and may need to follow up.</small></article>
+          <article><span class="scope-icon team"><i class="fa-solid fa-people-group"></i></span><strong>All team</strong><small>A permission-aware view of your team workload.</small></article>
+        </div>
+      </section>
+
+      <section class="attention-briefing-step" data-briefing-step="1" hidden>
+        <span class="attention-briefing-kicker">WORK WITHOUT LOSING CONTEXT</span>
+        <h2>Handle the next thing right here.</h2>
+        <p>Each item keeps the right actions close, while the title always takes you to its Lead, Deal or source record.</p>
+        <div class="attention-briefing-demo">
+          <div class="attention-briefing-demo-item">
+            <span class="demo-check" aria-hidden="true"></span>
+            <div><strong>Confirm projector model</strong><small>CRM · Note · Overdue · 2231 Quail Bluff Ct</small></div>
+            <span class="demo-more">···</span>
+          </div>
+          <div class="attention-briefing-demo-tools">
+            <span><i class="fa-solid fa-check"></i> Complete</span>
+            <span><i class="fa-regular fa-calendar"></i> Reschedule</span>
+            <span><i class="fa-solid fa-reply"></i> Quick reply</span>
+            <span><i class="fa-solid fa-arrow-up-right-from-square"></i> Open record</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="attention-briefing-step" data-briefing-step="2" hidden>
+        <span class="attention-briefing-kicker">CAPTURE NOW, ORGANISE LATER</span>
+        <h2>My Notes stays beside your work.</h2>
+        <p>Keep private notes, images, checklists and attachments in one place. Copy selected content to a Lead, Deal or Project only when it is ready.</p>
+        <div class="attention-briefing-notes-demo">
+          <div class="notes-divider-tabs"><span>Needs Your Attention</span><strong>My Notes</strong></div>
+          <div class="notes-demo-body">
+            <i class="fa-regular fa-note-sticky" aria-hidden="true"></i>
+            <div><strong>Site survey ideas</strong><small>Private · autosaved</small></div>
+            <span>+ Image</span><span>☑ Checklist</span>
+          </div>
+        </div>
+      </section>
+
+      <footer class="attention-briefing-setup-actions">
+        <button class="attention-briefing-text-button" data-briefing-skip type="button">Skip guide</button>
+        <div>
+          <button class="attention-briefing-secondary" data-briefing-previous type="button" hidden>Previous</button>
+          <button class="attention-briefing-primary" data-briefing-next type="button">Next <i class="fa-solid fa-arrow-right"></i></button>
+          <button class="attention-briefing-primary" data-briefing-start type="button" hidden>Start working <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </footer>
+    </div>
+
+    <div class="attention-briefing-daily" data-briefing-daily hidden>
+      <div class="attention-briefing-daily-intro">
+        <span class="attention-briefing-kicker" data-briefing-greeting-label>YOUR DAILY BRIEFING</span>
+        <h2 data-briefing-greeting>Good morning, Candy</h2>
+        <p>Here is what needs your attention first today.</p>
+      </div>
+      <div class="attention-briefing-counts" data-briefing-counts>
+        <button data-briefing-scope="my" type="button"><strong data-briefing-count="my">0</strong><span>My attention</span></button>
+        <button data-briefing-scope="assigned" type="button"><strong data-briefing-count="assigned">0</strong><span>Assigned by me</span></button>
+        <button data-briefing-scope="team" type="button"><strong data-briefing-count="team">0</strong><span>All team</span></button>
+      </div>
+      <section class="attention-briefing-priorities">
+        <header><strong>Your first priorities</strong><span data-briefing-priority-summary></span></header>
+        <div data-briefing-priority-list></div>
+      </section>
+      <footer class="attention-briefing-daily-actions">
+        <label><input data-briefing-disable type="checkbox"> Don’t show daily briefing</label>
+        <div>
+          <button class="attention-briefing-secondary" data-briefing-view-all type="button">View all items</button>
+          <button class="attention-briefing-primary" data-briefing-daily-start type="button">Start working <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </footer>
+    </div>
+  </article>
+</section>
+
+<section class="my-notes-workspace" id="myNotesWorkspace" data-my-notes-workspace role="dialog" aria-modal="true" aria-labelledby="myNotesWorkspaceTitle" hidden>
+  <div class="my-notes-workspace-shell">
+    <header class="my-notes-workspace-topbar">
+      <div>
+        <button class="my-notes-icon-button" data-my-notes-close type="button" aria-label="Close My Notes"><i class="fa-solid fa-arrow-left"></i></button>
+        <h2 id="myNotesWorkspaceTitle">My Notes</h2>
+        <span class="my-notes-private-pill"><i class="fa-solid fa-lock"></i> Private</span>
+      </div>
+      <label class="my-notes-search"><i class="fa-solid fa-magnifying-glass"></i><input data-my-notes-search type="search" placeholder="Search notes"></label>
+      <button class="my-notes-primary" data-my-notes-new type="button"><i class="fa-solid fa-plus"></i> New note</button>
+      <button class="my-notes-icon-button" data-my-notes-close type="button" aria-label="Close My Notes"><i class="fa-solid fa-xmark"></i></button>
+    </header>
+
+    <div class="my-notes-workspace-body">
+      <aside class="my-notes-collections" aria-label="Note collections">
+        <div class="my-notes-section-label">Collections</div>
+        <nav data-my-notes-collections></nav>
+        <div class="my-notes-collection-menu" data-my-notes-collection-menu role="menu" aria-label="Collection actions" tabindex="-1" hidden>
+          <div class="my-notes-collection-menu-label" data-my-notes-collection-menu-label></div>
+          <button data-my-notes-delete-collection type="button" role="menuitem"><i class="fa-regular fa-trash-can" aria-hidden="true"></i> Delete collection</button>
+        </div>
+        <button class="my-notes-new-collection" data-my-notes-new-collection type="button"><i class="fa-solid fa-plus"></i> New collection</button>
+        <section class="my-notes-new-collection-dialog" data-my-notes-new-collection-dialog role="dialog" aria-modal="true" aria-labelledby="myNotesNewCollectionTitle" hidden>
+          <form data-my-notes-new-collection-form>
+            <h3 id="myNotesNewCollectionTitle">New collection</h3>
+            <p>Give this private Notes collection a name.</p>
+            <label>Collection name<input data-my-notes-new-collection-name autocomplete="off" maxlength="64"></label>
+            <div>
+              <button data-my-notes-new-collection-cancel type="button">Cancel</button>
+              <button class="primary" type="submit">Create collection</button>
+            </div>
+          </form>
+        </section>
+        <section class="my-notes-new-collection-dialog" data-my-notes-delete-collection-dialog role="alertdialog" aria-modal="true" aria-labelledby="myNotesDeleteCollectionTitle" aria-describedby="myNotesDeleteCollectionSummary" hidden>
+          <div class="my-notes-delete-collection-card">
+            <h3 id="myNotesDeleteCollectionTitle">Delete collection?</h3>
+            <p id="myNotesDeleteCollectionSummary" data-my-notes-delete-collection-summary></p>
+            <div>
+              <button data-my-notes-delete-collection-cancel type="button">Cancel</button>
+              <button class="danger" data-my-notes-delete-collection-confirm type="button">Delete collection</button>
+            </div>
+          </div>
+        </section>
+        <div class="my-notes-privacy-note"><i class="fa-solid fa-shield-halved"></i><span><strong>Your private workspace</strong>Notes stay personal until you copy them to a WeQuote record.</span></div>
+      </aside>
+
+      <section class="my-notes-library" aria-label="Notes library">
+        <header>
+          <div><strong data-my-notes-library-title>All Notes</strong><span data-my-notes-library-count>0 notes</span></div>
+          <div class="my-notes-library-controls">
+            <select data-my-notes-sort aria-label="Sort notes"><option value="updated">Sort by: Updated</option><option value="title">Sort by: Title</option></select>
+            <button class="active" data-my-notes-layout="grid" type="button" aria-label="Grid view"><i class="fa-solid fa-table-cells-large"></i></button>
+            <button data-my-notes-layout="list" type="button" aria-label="List view"><i class="fa-solid fa-list"></i></button>
+          </div>
+        </header>
+        <div class="my-notes-cards" data-my-notes-cards></div>
+        <footer data-my-notes-library-footer>Showing 0 notes</footer>
+      </section>
+
+      <article class="my-notes-editor" aria-label="Full note editor">
+        <header class="my-notes-editor-head">
+          <input data-my-notes-title aria-label="Note title" value="Untitled note">
+          <span class="my-notes-private-pill"><i class="fa-solid fa-lock"></i> Private</span>
+          <button class="my-notes-pin" data-my-notes-pin type="button" aria-label="Pin note"><i class="fa-regular fa-star"></i></button>
+          <span class="my-notes-save-state" data-my-notes-save-state><i class="fa-solid fa-circle-check"></i> Autosaved just now</span>
+          <button class="my-notes-icon-button" data-my-notes-delete type="button" aria-label="Delete note"><i class="fa-regular fa-trash-can"></i></button>
+        </header>
+        <div class="my-notes-editor-meta">
+          <label>Collection <select data-my-notes-editor-collection></select></label>
+          <span data-my-notes-updated>Updated just now</span>
+        </div>
+        <div class="my-notes-canvas-toolbar" role="toolbar" aria-label="Canvas tools">
+          <div class="my-notes-canvas-toolset" aria-label="Add a canvas block">
+            <button data-canvas-add="text" type="button" title="Add text"><i class="fa-solid fa-font"></i><span>Text</span></button>
+            <button data-canvas-add="sticky" type="button" title="Add sticky note"><i class="fa-regular fa-note-sticky"></i><span>Sticky</span></button>
+            <button data-canvas-add="checklist" type="button" title="Add checklist"><i class="fa-regular fa-square-check"></i><span>Checklist</span></button>
+            <button data-canvas-add="image" type="button" title="Add image"><i class="fa-regular fa-image"></i><span>Image</span></button>
+            <button data-canvas-add="file" type="button" title="Add file"><i class="fa-solid fa-paperclip"></i><span>File</span></button>
+            <button data-canvas-add="drawing" type="button" title="Draw on the canvas"><i class="fa-solid fa-pen-ruler"></i><span>Draw</span></button>
+            <button data-canvas-add="arrow" type="button" title="Add arrow or connector"><i class="fa-solid fa-arrow-right-long"></i><span>Arrow</span></button>
+            <button data-canvas-add="equipment" type="button" title="Add AV equipment card"><i class="fa-solid fa-sliders"></i><span>AV card</span></button>
+          </div>
+          <div class="my-notes-canvas-zoom" aria-label="Canvas zoom">
+            <button data-canvas-zoom="out" type="button" aria-label="Zoom out"><i class="fa-solid fa-minus"></i></button>
+            <output data-canvas-zoom-value>100%</output>
+            <button data-canvas-zoom="in" type="button" aria-label="Zoom in"><i class="fa-solid fa-plus"></i></button>
+            <button data-canvas-zoom="fit" type="button">Fit</button>
+          </div>
+        </div>
+        <div class="my-notes-canvas-shell">
+          <div class="my-notes-canvas-viewport" data-canvas-viewport>
+            <div class="my-notes-canvas-stage" data-canvas-stage tabindex="0" aria-label="Free-form Canvas Note">
+              <div class="my-notes-canvas-grid" aria-hidden="true"></div>
+              <svg class="my-notes-canvas-ink" data-canvas-ink aria-hidden="true"></svg>
+              <div class="my-notes-canvas-blocks" data-canvas-blocks></div>
+              <div class="my-notes-canvas-empty" data-canvas-empty hidden>
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <strong>Blank canvas</strong>
+                <span>Choose a tool above, paste an image, or drag a file here.</span>
+              </div>
+            </div>
+          </div>
+          <aside class="my-notes-canvas-inspector" data-canvas-inspector hidden>
+            <div><strong data-canvas-inspector-title>Canvas block</strong><button data-canvas-delete type="button" aria-label="Delete selected block"><i class="fa-regular fa-trash-can"></i></button></div>
+            <p>Drag to move · use the corner handle to resize.</p>
+            <div class="my-notes-canvas-colours" data-canvas-colours>
+              <button data-canvas-colour="#fff3b8" style="--swatch:#fff3b8" type="button" aria-label="Yellow"></button>
+              <button data-canvas-colour="#dff7eb" style="--swatch:#dff7eb" type="button" aria-label="Green"></button>
+              <button data-canvas-colour="#e8edff" style="--swatch:#e8edff" type="button" aria-label="Blue"></button>
+              <button data-canvas-colour="#fce5ec" style="--swatch:#fce5ec" type="button" aria-label="Pink"></button>
+            </div>
+          </aside>
+        </div>
+        <div class="my-notes-legacy-editor">
+        <div class="my-notes-editor-toolbar" role="toolbar" aria-label="Note formatting">
+          <select aria-label="Text style"><option>Paragraph</option><option>Heading 2</option></select>
+          <button data-my-notes-command="bold" type="button" aria-label="Bold"><i class="fa-solid fa-bold"></i></button>
+          <button data-my-notes-command="italic" type="button" aria-label="Italic"><i class="fa-solid fa-italic"></i></button>
+          <button data-my-notes-command="underline" type="button" aria-label="Underline"><i class="fa-solid fa-underline"></i></button>
+          <button data-my-notes-command="insertUnorderedList" type="button" aria-label="Bulleted list"><i class="fa-solid fa-list-ul"></i></button>
+          <button data-my-notes-add-check type="button" aria-label="Add checklist item"><i class="fa-regular fa-square-check"></i></button>
+          <button data-my-notes-add-image type="button" aria-label="Add image"><i class="fa-regular fa-image"></i></button>
+          <button data-my-notes-add-attachment type="button" aria-label="Add attachment"><i class="fa-solid fa-paperclip"></i></button>
+        </div>
+        <div class="my-notes-editor-scroll">
+          <div class="my-notes-body" data-my-notes-body contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Start writing your note…"></div>
+          <section class="my-notes-checklist-section" data-my-notes-checklist-section>
+            <h3>Checklist</h3>
+            <div data-my-notes-checklist></div>
+          </section>
+          <section class="my-notes-media-section" data-my-notes-media-section>
+            <h3>Images</h3>
+            <div class="my-notes-media-grid" data-my-notes-media></div>
+          </section>
+          <section class="my-notes-attachments-section" data-my-notes-attachments-section>
+            <h3>Attachments</h3>
+            <div data-my-notes-attachments></div>
+          </section>
+        </div>
+        </div>
+        <footer class="my-notes-editor-footer">
+          <span><i class="fa-solid fa-circle-info"></i> Copy this note when it becomes an official business record.</span>
+          <div>
+            <button data-my-notes-copy="Deal" type="button"><i class="fa-regular fa-copy"></i> Add a copy to Deal</button>
+            <button data-my-notes-copy="Lead" type="button"><i class="fa-regular fa-copy"></i> Add a copy to Lead</button>
+            <button data-my-notes-copy="Project" type="button"><i class="fa-regular fa-copy"></i> Add a copy to Project</button>
+          </div>
+        </footer>
+        <input data-my-notes-image-input type="file" accept="image/*" multiple hidden>
+        <input data-my-notes-attachment-input type="file" multiple hidden>
+      </article>
+    </div>
+  </div>
+  <section class="my-notes-copy-dialog" data-my-notes-copy-dialog role="dialog" aria-modal="true" aria-labelledby="myNotesCopyTitle" hidden>
+    <div class="my-notes-copy-dialog-card">
+      <header>
+        <div><span class="my-notes-section-label">Official business record</span><h3 id="myNotesCopyTitle" data-my-notes-copy-title>Add a copy to Deal</h3></div>
+        <button class="my-notes-icon-button" data-my-notes-copy-close type="button" aria-label="Close copy dialog"><i class="fa-solid fa-xmark"></i></button>
+      </header>
+      <p>The private Note remains in My Notes. This creates a separate copy in the selected record.</p>
+      <label>Choose <span data-my-notes-copy-kind>Deal</span><select data-my-notes-copy-record></select></label>
+      <fieldset class="my-notes-copy-modes" hidden>
+        <legend>What should be copied?</legend>
+        <label><input data-my-notes-copy-mode type="radio" name="myNotesCopyMode" value="selection"> Selected Canvas blocks</label>
+        <label><input data-my-notes-copy-mode type="radio" name="myNotesCopyMode" value="snapshot" checked> Canvas snapshot</label>
+        <label><input data-my-notes-copy-mode type="radio" name="myNotesCopyMode" value="pdf"> PDF export</label>
+      </fieldset>
+      <div class="my-notes-copy-preview"><i class="fa-regular fa-copy"></i><span><strong data-my-notes-copy-note>Riverside Penthouse Site Survey</strong><small data-my-notes-copy-description>A copy of the note will be added. The private note stays in My Notes.</small></span></div>
+      <footer><button data-my-notes-copy-close type="button">Cancel</button><button class="my-notes-primary" data-my-notes-copy-confirm type="button"><i class="fa-regular fa-copy"></i> Add copy</button></footer>
+    </div>
+  </section>
+  <section class="my-notes-template-dialog" data-my-notes-template-dialog role="dialog" aria-modal="true" aria-labelledby="myNotesTemplateTitle" hidden>
+    <div class="my-notes-template-card">
+      <header><div><span class="my-notes-section-label">New Canvas Note</span><h3 id="myNotesTemplateTitle">Choose a starting layout</h3></div><button class="my-notes-icon-button" data-my-notes-template-close type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></header>
+      <p>Every block is editable, movable and removable. Templates only give you a useful starting point.</p>
+      <div class="my-notes-template-grid">
+        <button data-canvas-template="blank" type="button"><i class="fa-regular fa-square"></i><span><strong>Blank canvas</strong><small>Start with an open workspace</small></span></button>
+        <button data-canvas-template="site-survey" type="button"><i class="fa-solid fa-location-dot"></i><span><strong>Site survey</strong><small>Photos, room notes and install checklist</small></span></button>
+        <button data-canvas-template="signal-flow" type="button"><i class="fa-solid fa-code-branch"></i><span><strong>Signal flow</strong><small>Sources, AVR, displays and connectors</small></span></button>
+        <button data-canvas-template="equipment-comparison" type="button"><i class="fa-solid fa-sliders"></i><span><strong>Equipment comparison</strong><small>Compare AV models and specifications</small></span></button>
+        <button data-canvas-template="moodboard" type="button"><i class="fa-solid fa-palette"></i><span><strong>Moodboard</strong><small>Images, colours and design direction</small></span></button>
+      </div>
+    </div>
+  </section>
+  <div class="my-notes-toast" data-my-notes-toast aria-live="polite"></div>
+</section>
 
 <!-- ============ CUSTOMISE SIDEBAR MODAL ============ -->
 <div class="cs-overlay" id="csOverlay">
   <div class="cs-modal">
     <div class="cs-head">
-      <h2>Customise your sidebar</h2>
+      <h2>Customise your workspace</h2>
       <button class="cs-close fai" onclick="closeCustomise()">&#xf00d;</button>
     </div>
-    <p class="cs-desc">Selected items will always be visible in your sidebar. You can still access unselected items from the <b>More</b> menu in the sidebar.</p>
     <p class="cs-desc">The changes you make here only affect you and not anyone else in your organisation.</p>
 
-    <div class="cs-role">
-      <div class="cs-role-txt">
-        <label for="csRole">Role preset</label>
-        <span>Pick your role to arrange the modules for how you work. You can still fine-tune the order below.</span>
-      </div>
-      <select id="csRole" onchange="applyRolePreset(this.value)">
-        <option value="custom">Custom</option>
-        <option value="sales">Sales</option>
-        <option value="pm">Project Manager</option>
-        <option value="engineer">Engineer</option>
-        <option value="procurement">Procurement</option>
-        <option value="warehouse">Warehouse</option>
-      </select>
-    </div>
-
-    <h3 class="cs-sec-title">Quick access</h3>
-    <p class="cs-sec-desc">Shortcut items shown at the top of your sidebar.</p>
-    <div class="cs-list" id="csQuick"></div>
-
     <h3 class="cs-sec-title">Modules</h3>
-    <p class="cs-sec-desc">The following modules are available in WeQuote.</p>
+    <p class="cs-sec-desc">Drag modules to change their order in your sidebar.</p>
     <div class="cs-list" id="csModules"></div>
+
+    <h3 class="cs-sec-title">Widgets</h3>
+    <p class="cs-sec-desc">Choose which widgets remain available while you work.</p>
+    <div class="cs-widget-list">
+      <label class="cs-widget-row" for="csAttentionWidget">
+        <span class="cs-widget-icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
+        <span class="cs-widget-copy">
+          <strong>Needs Your Attention</strong>
+          <small id="csAttentionWidgetHelp">Show the floating Follow-up widget across WeQuote.</small>
+        </span>
+        <span class="cs-widget-switch">
+          <input id="csAttentionWidget" type="checkbox" role="switch" aria-describedby="csAttentionWidgetHelp">
+          <span aria-hidden="true"></span>
+        </span>
+      </label>
+    </div>
 
     <div class="cs-actions">
       <button class="cs-btn ghost" onclick="closeCustomise()">Cancel</button>
@@ -3359,8 +3962,25 @@
   </div>
 </div>
 
-<script src="./assets/js/crm.js?v=142"></script>
-  <script src="./assets/js/automation.js?v=134"></script>
+<div class="mydb-drawer-backdrop" id="myDashboardDrawerBackdrop" hidden></div>
+<aside class="mydb-drawer" id="myDashboardDrawer" aria-hidden="true" aria-labelledby="myDashboardDrawerTitle">
+  <header class="mydb-drawer-head">
+    <div>
+      <span class="mydb-eyebrow">PERSONAL DASHBOARD</span>
+      <h2 id="myDashboardDrawerTitle">Widget Library</h2>
+      <p>Add only the information you want to see.</p>
+    </div>
+    <button type="button" class="mydb-icon-button" id="myDashboardDrawerClose" aria-label="Close Widget Library"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+  </header>
+  <div class="mydb-library" id="myDashboardLibrary"></div>
+  <footer class="mydb-drawer-footer">
+    <button type="button" class="mydb-reset-button" id="myDashboardReset"><i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i> Reset layout</button>
+    <button type="button" class="mydb-done-button" id="myDashboardDrawerDone">Done</button>
+  </footer>
+</aside>
+
+<script src="./assets/js/crm.js?v=166"></script>
+  <script src="./assets/js/automation.js?v=193"></script>
 
 <!-- Pipeline stage drag insertion indicator -->
 
@@ -3374,11 +3994,15 @@
   <script src="./assets/compat/quote-first-co-trainline.js?v=5"></script>
 <script src="./assets/js/compatibility-post.js?v=1"></script>
 <script src="./assets/js/quote-demo.js?v=17"></script>
+<script src="./assets/js/focus-widget.js?v=72"></script>
+<script src="./assets/js/my-notes.js?v=12"></script>
+<script src="./assets/js/custom-dashboard.js?v=2"></script>
 <!-- First Change Order trainline: Revision 1 stays flat until CO 1.1 exists. -->
 
 <!-- Quote trainline visual correction: presentation only; no quote/status logic changes. -->
 
 <!-- Codex: quote revision / change-order trainline visual fix (v4) -->
 
+<script src="crm-note-attention-phase1.js?v=4"></script>
 </body>
 </html>

@@ -5,3 +5,19 @@ __probe*.html
 __shot-*.html
 __m-*.html
 __f-*.html
+
+# Local implementation snapshots and delivery archives.
+# Current files are copied into the canonical root/docs paths before Git upload.
+/handoff/
+/handoff-focus-point/
+/handoff-needs-your-attention 2/
+/handoff-focus-point.zip
+
+# Superseded standalone Focus widget concept exports.
+/focus-widget-*.html
+/focus-widget-*.png
+
+# Historical review briefs and superseded concept renders kept locally only.
+/docs/PRD-AUTOMATION-*-FOR-CLAUDE-2026-08-25.md
+/docs/PRD-PHASE-1-ONLY-RESTRUCTURE-BRIEF-FOR-CLAUDE-2026-08-25.md
+/docs/visuals/*.png

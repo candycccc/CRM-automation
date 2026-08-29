@@ -504,3 +504,387 @@ body.qw-standalone .quote-workspace { width: 100%; height: 100vh; min-height: 0;
   .qw-settings-grid { grid-template-columns: 1fr; }
   .qw-add-option-context { grid-template-columns: 1fr; }
 }
+
+/* CRM-aligned Quote workspace refresh.
+   This layer is intentionally visual-only: the existing Quote navigation,
+   status, Deal linking, option management and proposal actions stay intact. */
+body.qw-standalone {
+  background: #f6f7f9;
+}
+
+body.qw-standalone .quote-workspace {
+  --qw-ink: var(--ink, #1f2f3e);
+  --qw-muted: var(--wqd-color-text-default, #576a92);
+  --qw-line: var(--divider, #dadcdf);
+  --qw-soft: #f6f7f9;
+  --qw-red: var(--primary, #f12b53);
+  background: #f6f7f9;
+}
+
+.qw-editor-shell {
+  grid-template-columns: 128px minmax(0, 1fr);
+  grid-template-rows: 64px minmax(0, 1fr);
+  background: #f6f7f9;
+}
+
+.qw-editor-header {
+  grid-template-columns: minmax(240px, 1fr) minmax(260px, 1.45fr) minmax(160px, .7fr);
+  gap: 18px;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background: #1f2f3e;
+  box-shadow: none;
+}
+
+.qw-editor-brand { gap: 10px; }
+.qw-editor-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 7px;
+  background: var(--primary, #f12b53);
+  font-size: 16px;
+  box-shadow: 0 5px 14px rgba(241,43,83,.24);
+}
+.qw-editor-brand strong {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: calc(100% - 48px);
+  min-height: 26px;
+  border: 1px solid rgba(255,255,255,.42);
+  border-radius: 4px;
+  padding: 0 9px;
+  color: #f7f9fc;
+  font-size: 10px;
+  letter-spacing: .02em;
+}
+.qw-editor-header-title small,
+.qw-editor-header-total small {
+  margin-bottom: 3px;
+  color: #a9b6c6;
+  font-size: 8px;
+}
+.qw-editor-header-title strong { font-size: 14px; }
+.qw-editor-header-total strong { font-size: 17px; }
+
+.qw-editor-nav {
+  padding: 10px 8px 14px;
+  border-right: 1px solid var(--line-soft, #eff2f6);
+  background: #fff;
+  box-shadow: var(--shadow-menu, 0 0 30px rgba(0,0,0,.05));
+}
+.qw-editor-nav button {
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 68px;
+  margin-bottom: 4px;
+  border: 0;
+  border-radius: 4px;
+  padding: 8px 6px;
+  color: var(--wqd-color-text-default, #576a92);
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1.25;
+  text-align: center;
+}
+.qw-editor-nav button i {
+  width: 24px;
+  color: var(--wqd-color-icon-default, #576a92);
+  font-size: 15px;
+}
+.qw-editor-nav button span {
+  display: block;
+  max-width: 100%;
+  white-space: normal;
+}
+.qw-editor-nav button:hover {
+  background: var(--wqd-color-surface-default-hover, rgba(151,169,208,.08));
+  color: var(--ink, #1f2f3e);
+}
+.qw-editor-nav button.active {
+  border: 0;
+  background: var(--wqd-color-surface-secondary-default, #fff1f2);
+  color: var(--primary, #f12b53);
+  box-shadow: inset 3px 0 var(--primary, #f12b53);
+}
+.qw-editor-nav button.active i { color: var(--primary, #f12b53); }
+
+.qw-editor-main { background: #f6f7f9; }
+.qw-editor-page { padding: 18px 20px 36px; }
+
+.qw-editor-page .qw-record-top {
+  grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.25fr) auto;
+  gap: 14px;
+  margin-bottom: 12px;
+  border: 1px solid #e7eaee;
+  border-radius: 4px;
+  padding: 11px 12px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(31,47,62,.05);
+}
+.qw-record-title { gap: 10px; min-width: 0; }
+.qw-back {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-color: #d7dce2;
+  border-radius: 4px;
+  color: #576a92;
+}
+.qw-back:hover { border-color: #b9c1cc; background: #f6f7f9; }
+.qw-record-title > div { min-width: 0; }
+.qw-record-title h1 {
+  overflow: hidden;
+  font-size: 19px;
+  line-height: 1.16;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.qw-record-title p {
+  overflow: hidden;
+  color: #7b828c;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.qw-record-eyebrow {
+  margin-bottom: 3px;
+  color: #576a92;
+  font-size: 8px;
+}
+.qw-deal-context > span,
+.qw-status-control label {
+  color: #687a9d;
+  font-size: 8px;
+}
+.qw-linked-deal-chip {
+  min-height: 40px;
+  border-color: #cbd5e7;
+  border-radius: 4px;
+  padding: 5px 8px;
+}
+.qw-linked-deal-chip strong { color: #2450ff; }
+.qw-view-deal-button {
+  min-height: 40px;
+  border-color: #c8d2e5;
+  border-radius: 4px;
+  color: #2450ff;
+}
+.qw-status-select {
+  min-width: 148px;
+  height: 40px;
+  border-color: #536171;
+  border-radius: 4px;
+  background: #536171;
+  font-size: 10px;
+}
+
+.qw-lifecycle {
+  min-height: 44px;
+  margin-bottom: 12px;
+  border-color: #d9e1f2;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: #f8faff;
+  color: #576a92;
+  font-size: 10px;
+}
+.qw-lifecycle i { color: #2450ff; }
+.qw-lifecycle strong { color: #1f2f3e; }
+.qw-lifecycle .stage-result {
+  border-radius: 4px;
+  padding: 5px 8px;
+  background: #eaf0ff;
+  color: #2450ff;
+  white-space: nowrap;
+}
+
+.qw-detail-layout {
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 12px;
+  align-items: stretch;
+}
+.qw-detail-main,
+.qw-detail-side,
+.qw-workspace-card,
+.qw-proposal-layout,
+.qw-proposal-workspace {
+  border-color: transparent;
+  border-radius: 4px;
+  box-shadow: var(--shadow-card, 0 0 23px rgba(0,0,0,.1));
+}
+.qw-detail-main,
+.qw-detail-side { overflow: hidden; }
+.qw-section-head {
+  min-height: 60px;
+  padding: 14px 16px;
+  border-bottom-color: var(--divider, #dadcdf);
+}
+.qw-section-head h2 {
+  color: var(--ink, #1f2f3e);
+  font-size: 17px;
+}
+.qw-section-head .qw-sub {
+  margin-top: 3px;
+  color: #7b828c;
+  font-size: 10px;
+}
+.qw-btn {
+  min-height: 34px;
+  border-color: #cfd5dc;
+  border-radius: 4px;
+  padding: 0 12px;
+  font-size: 10px;
+  font-weight: 650;
+}
+.qw-btn.primary {
+  border-color: var(--primary, #f12b53);
+  background: var(--primary, #f12b53);
+}
+.qw-btn.primary:hover {
+  border-color: var(--wqd-color-surface-primary-hover, #db304c);
+  background: var(--wqd-color-surface-primary-hover, #db304c);
+}
+
+.qw-metrics {
+  gap: 0;
+  padding: 16px;
+  border-bottom-color: var(--divider, #dadcdf);
+}
+.qw-metric { min-width: 0; padding: 3px 15px; }
+.qw-metric span {
+  color: #576a92;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.qw-metric strong {
+  margin-top: 8px;
+  color: #1f2f3e;
+  font-size: 23px;
+  line-height: 1;
+}
+.qw-metric em { margin-top: 7px; color: #1e8539; font-size: 9px; }
+.qw-metric:nth-child(1) span { color: #e14461; }
+.qw-metric:nth-child(2) span { color: #7c71c3; }
+.qw-metric:nth-child(3) span { color: #1e9a83; }
+.qw-metric:nth-child(4) span { color: #576a92; }
+
+.qw-product-head,
+.qw-product-row {
+  grid-template-columns: minmax(230px, 1fr) 100px 100px 52px;
+  gap: 10px;
+}
+.qw-product-head {
+  min-height: 44px;
+  padding: 0 16px;
+  background: #fafbfc;
+  color: #687a9d;
+  font-size: 9px;
+}
+.qw-product-row {
+  min-height: 66px;
+  padding: 13px 16px;
+  border-top: 1px dotted #d4d8de;
+  color: #1f2f3e;
+  font-size: 11px;
+}
+.qw-product-row:nth-of-type(even) { background: #fbfcfd; }
+.qw-product-row strong { font-size: 11px; }
+.qw-product-row small { color: #7b828c; font-size: 9px; }
+
+.qw-card-fields { padding: 15px 16px; }
+.qw-card-fields-dense { gap: 9px; padding-bottom: 12px; }
+.qw-field label {
+  margin-bottom: 5px;
+  color: #43536c;
+  font-size: 9px;
+}
+.qw-field-value {
+  min-height: 36px;
+  border-color: #d3d9e1;
+  border-radius: 4px;
+  padding: 9px 10px;
+  background: #fff;
+  color: #31445f;
+  font-size: 10px;
+}
+.qw-quote-flags {
+  gap: 8px;
+  margin: 0 16px 14px;
+  padding: 12px 0;
+}
+.qw-quote-flags label { color: #43536c; font-size: 8px; }
+.qw-linked-side-card {
+  margin: 0 16px 14px;
+  border-radius: 4px;
+}
+.qw-linked-side-card > header { background: #f7f9fc; }
+.qw-linked-side-summary { background: #eef3ff; }
+.qw-detail-actions { gap: 8px; padding: 0 16px 16px; }
+
+.qw-workspace-card > header { padding: 17px 18px; }
+.qw-workspace-card > header h2 { font-size: 18px; }
+.qw-workspace-card > header p { font-size: 10px; }
+.qw-editor-tabs { padding: 0 16px; }
+.qw-editor-tabs button { min-height: 44px; }
+
+@media (min-width: 901px) and (max-width: 1180px) {
+  .qw-editor-shell { grid-template-columns: 112px minmax(0, 1fr); }
+  .qw-editor-header { grid-template-columns: minmax(210px, 1fr) minmax(230px, 1.3fr) auto; padding: 0 14px; }
+  .qw-editor-brand strong { max-width: 175px; }
+  .qw-editor-page { padding: 15px 16px 30px; }
+  .qw-editor-page .qw-record-top { grid-template-columns: minmax(225px, 1fr) minmax(330px, 1.25fr); }
+  .qw-editor-page .qw-status-control { grid-column: 1 / -1; justify-self: end; }
+  .qw-detail-layout { grid-template-columns: minmax(0, 1fr) 320px; }
+  .qw-product-head,
+  .qw-product-row { grid-template-columns: minmax(190px, 1fr) 82px 82px 42px; }
+}
+
+@media (max-width: 900px) {
+  .qw-editor-shell { grid-template-columns: 92px minmax(0, 1fr); }
+  .qw-editor-header { grid-template-columns: minmax(190px, 1fr) minmax(210px, 1fr) auto; padding: 0 12px; }
+  .qw-editor-brand strong { display: none; }
+  .qw-editor-page { padding: 14px; }
+  .qw-editor-page .qw-record-top { grid-template-columns: 1fr; }
+  .qw-editor-page .qw-status-control { justify-self: stretch; justify-content: space-between; }
+  .qw-detail-layout { grid-template-columns: 1fr; }
+  .qw-detail-side { order: 0; }
+}
+
+@media (max-width: 760px) {
+  .qw-editor-shell { grid-template-columns: 1fr; grid-template-rows: 58px 58px minmax(0, 1fr); }
+  .qw-editor-header { grid-column: 1; grid-template-columns: 1fr auto; }
+  .qw-editor-header-title { display: none; }
+  .qw-editor-nav {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: 0;
+    border-bottom: 1px solid #dbe2ea;
+    padding: 5px 7px;
+  }
+  .qw-editor-nav button {
+    min-width: 112px;
+    min-height: 48px;
+    flex-direction: row;
+    margin: 0;
+    padding: 6px 8px;
+    text-align: left;
+  }
+  .qw-editor-main { grid-row: 3; }
+  .qw-editor-page .qw-record-top { display: grid; }
+  .qw-deal-context,
+  .qw-deal-context > div { width: 100%; }
+  .qw-linked-deal-chip { min-width: 0; flex: 1; }
+  .qw-lifecycle { align-items: flex-start; flex-wrap: wrap; }
+  .qw-lifecycle .stage-result { margin-left: 22px; }
+  .qw-metrics { grid-template-columns: 1fr 1fr; }
+  .qw-metric:nth-child(2) { border-right: 0; }
+  .qw-product-head,
+  .qw-product-row { grid-template-columns: minmax(175px, 1fr) 78px 78px 40px; min-width: 460px; }
+  .qw-detail-main { overflow-x: auto; }
+}

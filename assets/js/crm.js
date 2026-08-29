@@ -59,12 +59,6 @@
 
   const navAcc = document.querySelector('.nav-acc');
 
-  // snapshot of each module's factory-default sub-item order (captured before any customising)
-  const defaultSubOrder = new Map();
-  navAcc.querySelectorAll('.acc').forEach(acc => {
-    defaultSubOrder.set(acc, [...acc.querySelectorAll('.acc-subs .sub-row')]);
-  });
-
   // first visible section sits right under the top divider — no own border
   function fixSectionBorders() {
     const accs = [...navAcc.querySelectorAll('.acc')];
@@ -75,32 +69,45 @@
 
   // ---------- Customise sidebar modal ----------
   const csOverlay = document.getElementById('csOverlay');
-  const csQuick = document.getElementById('csQuick');
   const csModules = document.getElementById('csModules');
+  const csAttentionWidget = document.getElementById('csAttentionWidget');
+  const ATTENTION_WIDGET_PREFERENCE_KEY = 'wequote-needs-attention-widget-enabled-v1';
 
-  function csRow(iconHTML, label, visible, opts, ref) {
-    const row = document.createElement('div');
-    row.className = 'cs-row';
-    row.draggable = !!opts.drag;
-    row._ref = ref;
-    row.innerHTML =
-      '<span class="grip fai' + (opts.drag ? '' : ' blank') + '">&#xf58e;</span>' +
-      '<input type="checkbox"' + (visible ? ' checked' : '') + (opts.lock ? ' disabled' : '') + '>' +
-      '<span class="cs-icon">' + iconHTML + '</span>' +
-      '<span class="cs-label">' + label + '</span>' +
-      (opts.expand ? '<span class="cs-exp fai" title="Show items">&#xf078;</span>' : '') +
-      '<span class="more fai">&#xf141;</span>';
-    return row;
+  function attentionWidgetIsEnabled() {
+    try {
+      const saved = localStorage.getItem(ATTENTION_WIDGET_PREFERENCE_KEY);
+      // Preserve the existing prototype experience until this user explicitly
+      // chooses a preference. Production rollout defaults remain a product
+      // decision and are not inferred from local prototype storage.
+      return saved === null ? true : saved === 'true';
+    } catch (_) {
+      return true;
+    }
   }
 
-  // sub-item row inside an expanded module: grip + label only
-  function csSubRow(label, ref) {
+  function applyAttentionWidgetPreference(enabled, persist) {
+    const next = enabled !== false;
+    if (persist) {
+      try { localStorage.setItem(ATTENTION_WIDGET_PREFERENCE_KEY, String(next)); } catch (_) {}
+    }
+    const widget = document.getElementById('wequote-attention-widget');
+    document.documentElement.classList.toggle('attention-widget-pref-disabled', !next);
+    if (widget) widget.classList.toggle('is-user-disabled', !next);
+    document.dispatchEvent(new CustomEvent('wequote:attention-widget-preference', {
+      detail: { enabled: next }
+    }));
+  }
+
+  applyAttentionWidgetPreference(attentionWidgetIsEnabled(), false);
+
+  function csModuleRow(iconHTML, label, ref) {
     const row = document.createElement('div');
-    row.className = 'cs-row cs-sub';
+    row.className = 'cs-row';
     row.draggable = true;
     row._ref = ref;
     row.innerHTML =
-      '<span class="grip fai">&#xf58e;</span>' +
+      '<span class="grip fai" aria-hidden="true">&#xf58e;</span>' +
+      '<span class="cs-icon">' + iconHTML + '</span>' +
       '<span class="cs-label">' + label + '</span>';
     return row;
   }
@@ -108,73 +115,21 @@
   function openCustomise(e) {
     e.stopPropagation();
     document.getElementById('accountMenu').classList.remove('open');
-    csQuick.innerHTML = '';
     csModules.innerHTML = '';
-    document.querySelectorAll('.quicknav .qn-item').forEach(el => {
-      const label = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
-      const icon = el.querySelector('.ic16').outerHTML;
-      const visible = !el.classList.contains('cs-hidden');
-      csQuick.appendChild(csRow(icon, label, visible, { drag: false, lock: label === 'Dashboard' }, el));
-    });
     navAcc.querySelectorAll('.acc').forEach(el => {
       const label = el.querySelector('.acc-head .label').textContent.trim();
       const icon = el.querySelector('.acc-head .ic16').outerHTML;
-      const visible = !el.classList.contains('cs-hidden');
 
       const mod = document.createElement('div');
       mod.className = 'cs-mod';
       mod.draggable = true;
-      const row = csRow(icon, label, visible, { drag: true, expand: true }, el);
+      const row = csModuleRow(icon, label, el);
       mod._row = row;
       mod.appendChild(row);
-
-      const subList = document.createElement('div');
-      subList.className = 'cs-subs-list';
-      el.querySelectorAll('.acc-subs .sub-row').forEach(sr => {
-        subList.appendChild(csSubRow(sr.querySelector('.txt').textContent.trim(), sr));
-      });
-      mod.appendChild(subList);
-      wireCsList(subList, '.cs-sub');
-
-      row.querySelector('.cs-exp').addEventListener('click', ev => {
-        ev.stopPropagation();
-        subList.classList.toggle('open');
-        row.querySelector('.cs-exp').classList.toggle('rot');
-      });
-
       csModules.appendChild(mod);
     });
-    document.getElementById('csRole').value = 'custom';
+    if (csAttentionWidget) csAttentionWidget.checked = attentionWidgetIsEnabled();
     csOverlay.classList.add('open');
-  }
-
-  // Role presets — module order tuned per role, fine-tunable by dragging
-  const ROLE_PRESETS = {
-    sales:       ['CRM', 'Quote & Sales', 'Contacts', 'Catalogues', 'Projects', 'Procurement', 'Inventory', 'Workhub'],
-    pm:          ['Projects', 'Workhub', 'Procurement', 'Inventory', 'Quote & Sales', 'Contacts', 'Catalogues', 'CRM'],
-    engineer:    ['Workhub', 'Projects', 'Inventory', 'Catalogues', 'Procurement', 'Quote & Sales', 'Contacts', 'CRM'],
-    procurement: ['Procurement', 'Inventory', 'Catalogues', 'Projects', 'Quote & Sales', 'Workhub', 'Contacts', 'CRM'],
-    warehouse:   ['Inventory', 'Procurement', 'Workhub', 'Projects', 'Catalogues', 'Quote & Sales', 'Contacts', 'CRM']
-  };
-
-  function applyRolePreset(role) {
-    const order = ROLE_PRESETS[role];
-    if (!order) return; // "custom" keeps the current arrangement
-    const mods = [...csModules.querySelectorAll('.cs-mod')];
-    order.forEach(label => {
-      const mod = mods.find(m => m._row.querySelector('.cs-label').textContent === label);
-      if (mod) csModules.appendChild(mod);
-    });
-    // presets also reset every module's sub-items to their default order
-    mods.forEach(mod => {
-      const defaults = defaultSubOrder.get(mod._row._ref) || [];
-      const subList = mod.querySelector('.cs-subs-list');
-      const rows = [...subList.querySelectorAll('.cs-sub')];
-      defaults.forEach(sr => {
-        const row = rows.find(r => r._ref === sr);
-        if (row) subList.appendChild(row);
-      });
-    });
   }
 
   function closeCustomise() {
@@ -182,34 +137,19 @@
   }
 
   function saveCustomise() {
-    const quicknav = document.querySelector('.quicknav');
-    csQuick.querySelectorAll('.cs-row').forEach(row => {
-      quicknav.appendChild(row._ref);
-      row._ref.classList.toggle('cs-hidden', !row.querySelector('input').checked);
-    });
     const bottomDivider = navAcc.querySelector('.discover').previousElementSibling;
     csModules.querySelectorAll('.cs-mod').forEach(mod => {
       const row = mod._row;
       const acc = row._ref;
       navAcc.insertBefore(acc, bottomDivider);
-      const hide = !row.querySelector('input').checked;
-      acc.classList.toggle('cs-hidden', hide);
-      if (hide && acc.classList.contains('open')) {
-        acc.classList.remove('open');
-        acc.querySelector('.acc-subs').style.height = '0px';
-      }
-      // apply sub-item order inside the module
-      const subsContainer = acc.querySelector('.acc-subs');
-      mod.querySelectorAll('.cs-subs-list .cs-sub').forEach(sub => {
-        subsContainer.appendChild(sub._ref);
-      });
+      acc.classList.remove('cs-hidden');
     });
+    if (csAttentionWidget) applyAttentionWidgetPreference(csAttentionWidget.checked, true);
     fixSectionBorders();
     closeCustomise();
   }
 
-  // Generic list reorder. rowSel scopes each level: sub-lists ('.cs-sub') sit inside
-  // module wrappers ('.cs-mod'), so handlers stop propagation to the outer list.
+  // Generic module-order drag handling.
   function wireCsList(list, rowSel) {
     let dragRow = null;
     list.addEventListener('dragstart', e => {
@@ -237,11 +177,10 @@
       const r = target.getBoundingClientRect();
       const after = e.clientY > r.top + r.height / 2;
       list.insertBefore(dragRow, after ? target.nextSibling : target);
-      document.getElementById('csRole').value = 'custom'; // any reordering = custom
     });
     list.addEventListener('drop', e => { if (dragRow) { e.preventDefault(); e.stopPropagation(); } });
   }
-  wireCsList(csModules, '.cs-mod'); // Quick access is show/hide only — no reorder
+  wireCsList(csModules, '.cs-mod');
 
   csOverlay.addEventListener('click', e => { if (e.target === csOverlay) closeCustomise(); });
   document.addEventListener('keydown', e => {
@@ -253,7 +192,7 @@
   const VIEW_CRUMBS = {
     leads: ['CRM', 'Lead'],
     crm: ['CRM', 'Deal'],
-    automation: ['<span class="crumb-link" onclick="showView(\'crm\')">CRM</span>', '<span class="crumb-link" onclick="window.openSalesPipelineAutomations()">Automations</span>'],
+    automation: ['<span class="crumb-link" onclick="showView(\'crm\')">CRM</span>', '<span class="crumb-link" onclick="window.openAutomationPipelineHub()">Automations</span>'],
     quotes: ['Quote & Sales', 'Quotes'],
     deal: ['CRM', '<span class="crumb-link" onclick="showView(\'crm\')">Deals</span>']
   };
@@ -293,6 +232,9 @@
     document.getElementById('topSearchPill').style.display = onDeal ? 'none' : '';
     document.getElementById('topCreateWrap').style.display = onDeal || onAutomation || onQuotes ? 'none' : '';
     currentView = v;
+    if (v === 'automation' && typeof window.openAutomationPipelineHub === 'function') {
+      window.openAutomationPipelineHub();
+    }
     // The pipeline starts inside a hidden view, so its first minimap measurement is 0px.
     // Re-measure after the CRM view has been painted to make the red viewport represent
     // the actual visible column range instead of falling back to the 16px minimum.
@@ -303,6 +245,9 @@
     closeLeadKebab();
   }
   window.showView = showView;
+  document.querySelectorAll('.sub-item[onclick*="showView(\'automation\')"]').forEach(function (item) {
+    item.addEventListener('click', function () { showView('automation'); });
+  });
   // ---------- CRM Deals pipeline (Figma DS – WeQuote Platform, node 2063-72600) ----------
   const CRM_STAGE_DEFS = [
     { name: 'Qualified',       icon: '\uf14a', color: '#576A92', probability: 10,  protected: true, lifecycleRule: 'No related Quote yet' },
@@ -589,7 +534,9 @@
   const CRM_PIPELINES = [
     {
       id: 'sales-pipeline',
-      name: 'Sales Pipeline',
+      // Keep the legacy ID for saved Template routing, but use the approved
+      // customer-facing name across the combined Phase 1/2/3 prototype.
+      name: 'Quote Pipeline',
       stages: CRM_STAGE_DEFS.map(clonePipelineStage),
       deals: CRM_DEALS.map(clonePipelineDeal),
       lifecycleVersion: CRM_SALES_LIFECYCLE_VERSION,
@@ -597,13 +544,12 @@
       quoteConnected: true
     },
     {
-      id: 'quote-pipeline',
-      name: 'Quote Pipeline',
-      stages: CRM_STAGE_DEFS.map(clonePipelineStage),
+      id: 'client-delivery-pipeline',
+      name: 'Client Delivery Pipeline',
+      stages: CRM_STANDALONE_STAGE_TEMPLATE.map(clonePipelineStage),
       deals: [],
-      lifecycleVersion: CRM_SALES_LIFECYCLE_VERSION,
-      type: 'quote-connected',
-      quoteConnected: true
+      type: 'standalone',
+      quoteConnected: false
     }
   ];
   const CRM_CUSTOM_STAGE_DEMO_ID = 'custom-site-ready-demo';
@@ -659,7 +605,9 @@
     }
     return changed;
   }
-  const CRM_STORAGE_KEY = 'wequote-crm-state-v3';
+  // Isolate the combined roadmap demo from both the old master prototype and
+  // the frozen Phase 1 handoff so no saved custom structure leaks either way.
+  const CRM_STORAGE_KEY = 'wequote-crm-state-full-roadmap-v1';
   let activePipelineId = 'sales-pipeline';
   let editingPipelineId = null;
   let pendingPipelineDeleteId = null;
@@ -1610,8 +1558,8 @@
     const pipelineCurrent = pipeline.value || 'sales-pipeline';
     const ownerCurrent = owner.value || 'all';
     const stageCurrent = stage.value || 'all';
-    pipeline.innerHTML = '<option value="sales-pipeline">Sales Pipeline</option><option value="quote-pipeline">Quote Pipeline</option>';
-    pipeline.value = pipelineCurrent === 'quote-pipeline' ? 'quote-pipeline' : 'sales-pipeline';
+    pipeline.innerHTML = '<option value="sales-pipeline">Quote Pipeline</option><option value="client-delivery-pipeline">Client Delivery Pipeline</option>';
+    pipeline.value = pipelineCurrent === 'client-delivery-pipeline' ? 'client-delivery-pipeline' : 'sales-pipeline';
     const owners = new Map();
     crmCommitRows().forEach(item => owners.set(crmForecastOwnerKey(item.deal), crmTableOwnerName(item.deal)));
     owner.innerHTML = '<option value="all">All owners</option>' + [...owners.entries()].sort((a,b) => a[1].localeCompare(b[1])).map(([key,name]) => '<option value="' + archiveEscape(key) + '">' + archiveEscape(name) + '</option>').join('');
@@ -1621,7 +1569,7 @@
   };
 
   crmV2FilteredDeals = function() {
-    if (document.getElementById('crmV2Pipeline').value === 'quote-pipeline') return [];
+    if (document.getElementById('crmV2Pipeline').value === 'client-delivery-pipeline') return [];
     const owner = document.getElementById('crmV2Owner').value || 'all';
     const stage = document.getElementById('crmV2Stage').value || 'all';
     const category = document.getElementById('crmV2Category').value || 'all';
@@ -5434,6 +5382,7 @@
   let ddMeetingProvider = '';
   let ddMeetingEditProvider = 'google';
   let ddMeetingEditingId = null;
+  let ddMeetingReopenMode = false;
   let ddMeetingSummaryEditingId = null;
   let ddMeetingIntegrationRequest = null;
   let ddMeetingPendingRemoveId = null;
@@ -5442,6 +5391,8 @@
   let ddNoteMentionReplaceLength = 0;
   let ddNoteReplyingId = null;
   let ddNoteReactionPickerId = null;
+  let ddNoteReplyEditingKey = '';
+  let ddNoteReplyReactionKey = '';
   let ddNoteActionMenuId = null;
   let ddNoteEditingId = null;
   let ddNotePickerMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -6027,17 +5978,24 @@
     }
   }
 
-  function editDealMeeting(id) {
+  function editDealMeeting(id, options) {
     const meeting = ddMeetingById(id);
     if (!meeting) return;
+    const reopening = Boolean(options && options.reopen);
     ddMeetingEditingId = meeting.id;
+    ddMeetingReopenMode = reopening;
+    document.getElementById('ddEditMeetingEyebrow').textContent = reopening ? 'Follow-up required' : 'Scheduled meeting';
+    document.getElementById('ddEditMeetingHeading').textContent = reopening ? 'Reopen meeting' : 'Edit meeting';
+    document.getElementById('ddEditMeetingSave').innerHTML = reopening
+      ? '<i class="fai">&#xf2ea;</i> Reopen & schedule'
+      : '<i class="fai">&#xf0c7;</i> Save changes';
     const date = document.getElementById('ddEditMeetingDate');
     document.getElementById('ddEditMeetingTitle').value = meeting.title;
     date.min = ddTodayIso();
-    date.value = meeting.date;
+    date.value = reopening ? '' : meeting.date;
     const time = document.getElementById('ddEditMeetingTime');
-    time.innerHTML = meetingTimeOptionsHtml(meeting.time);
-    time.value = meeting.time;
+    time.innerHTML = meetingTimeOptionsHtml(reopening ? '' : meeting.time);
+    time.value = reopening ? '' : meeting.time;
     document.getElementById('ddEditMeetingDuration').value = String(meeting.duration);
     document.getElementById('ddEditMeetingAgenda').value = meeting.agenda || '';
     document.getElementById('ddEditMeetingManualLink').value = meeting.provider === 'in-person' ? '' : (meeting.link || '');
@@ -6055,12 +6013,17 @@
   function closeMeetingEditDialog() {
     document.getElementById('meetingEditOverlay').classList.remove('open');
     document.getElementById('ddEditMeetingValidation').textContent = '';
+    document.getElementById('ddEditMeetingEyebrow').textContent = 'Scheduled meeting';
+    document.getElementById('ddEditMeetingHeading').textContent = 'Edit meeting';
+    document.getElementById('ddEditMeetingSave').innerHTML = '<i class="fai">&#xf0c7;</i> Save changes';
+    ddMeetingReopenMode = false;
     ddMeetingEditingId = null;
   }
 
   function saveDealMeetingEdit() {
     const meeting = ddMeetingById(ddMeetingEditingId);
     if (!meeting) return;
+    const reopening = ddMeetingReopenMode;
     const title = document.getElementById('ddEditMeetingTitle').value.trim();
     const date = document.getElementById('ddEditMeetingDate').value;
     const time = document.getElementById('ddEditMeetingTime').value;
@@ -6094,15 +6057,19 @@
         : manualLink,
       updatedAt: new Date().toISOString()
     });
+    if (reopening) {
+      meeting.status = 'scheduled';
+      delete meeting.completedAt;
+    }
     saveActivePipelineState();
     closeMeetingEditDialog();
     ddRenderFocus();
     ddRenderHistory();
     refreshPipelineDealCard(ddDeal);
     if (window.WeQuoteAutomation) window.WeQuoteAutomation.emit('deal.meeting.changed', {
-      deal: ddDeal, meeting, change: 'updated', field: 'meeting'
+      deal: ddDeal, meeting, change: reopening ? 'reopened' : 'updated', field: 'meeting'
     });
-    qtShowSnackbar('Meeting updated.', 'success');
+    qtShowSnackbar(reopening ? 'Meeting reopened with a new follow-up time.' : 'Meeting updated.', 'success');
   }
 
   function emailIntegrationRowsHtml() {
@@ -6864,6 +6831,77 @@
     ddRenderHistory();
   }
 
+  function ddNoteReplyKey(noteId, replyId) {
+    return String(noteId) + ':' + String(replyId);
+  }
+
+  function ddNoteReplyById(noteId, replyId) {
+    const note = ddNoteById(noteId);
+    if (!note) return null;
+    const reply = (note.replies || []).find(item => String(item.id) === String(replyId));
+    return reply ? { note, reply } : null;
+  }
+
+  function openDealNoteReplyEdit(noteId, replyId, event) {
+    if (event) event.stopPropagation();
+    const target = ddNoteReplyById(noteId, replyId);
+    if (!target || target.reply.author !== CURRENT_USER) return;
+    ddNoteReplyReactionKey = '';
+    ddNoteReplyEditingKey = ddNoteReplyKey(noteId, replyId);
+    ddRenderHistory();
+    requestAnimationFrame(() => {
+      const editor = document.getElementById('ddNoteReplyEdit-' + noteId + '-' + replyId);
+      if (editor) { editor.focus(); editor.setSelectionRange(editor.value.length, editor.value.length); }
+    });
+  }
+
+  function cancelDealNoteReplyEdit(event) {
+    if (event) event.stopPropagation();
+    ddNoteReplyEditingKey = '';
+    ddRenderHistory();
+  }
+
+  function saveDealNoteReplyEdit(noteId, replyId, event) {
+    if (event) event.stopPropagation();
+    const target = ddNoteReplyById(noteId, replyId);
+    const editor = document.getElementById('ddNoteReplyEdit-' + noteId + '-' + replyId);
+    if (!target || target.reply.author !== CURRENT_USER || !editor) return;
+    const body = editor.value.trim();
+    if (!body) { editor.focus(); return; }
+    target.reply.body = body;
+    target.reply.editedAt = new Date().toISOString();
+    target.reply.editedBy = CURRENT_USER;
+    ddNoteReplyEditingKey = '';
+    saveActivePipelineState();
+    ddRenderHistory();
+    qtShowSnackbar('Reply updated.', 'success');
+  }
+
+  function toggleDealNoteReplyReactionPicker(noteId, replyId, event) {
+    if (event) event.stopPropagation();
+    if (!ddNoteReplyById(noteId, replyId)) return;
+    const key = ddNoteReplyKey(noteId, replyId);
+    ddNoteReplyEditingKey = '';
+    ddNoteReplyReactionKey = ddNoteReplyReactionKey === key ? '' : key;
+    ddRenderHistory();
+  }
+
+  function toggleDealNoteReplyReaction(noteId, replyId, emoji, event) {
+    if (event) event.stopPropagation();
+    const target = ddNoteReplyById(noteId, replyId);
+    if (!target || !DD_NOTE_REACTIONS.includes(emoji)) return;
+    target.reply.reactions = target.reply.reactions || {};
+    const people = Array.isArray(target.reply.reactions[emoji]) ? target.reply.reactions[emoji] : [];
+    const currentIndex = people.indexOf(CURRENT_USER);
+    if (currentIndex >= 0) people.splice(currentIndex, 1);
+    else people.push(CURRENT_USER);
+    if (people.length) target.reply.reactions[emoji] = people;
+    else delete target.reply.reactions[emoji];
+    ddNoteReplyReactionKey = '';
+    saveActivePipelineState();
+    ddRenderHistory();
+  }
+
   document.addEventListener('click', event => {
     let shouldRender = false;
     if (ddNoteReactionPickerId != null && !event.target.closest('.dd-note-reaction-wrap')) {
@@ -6872,6 +6910,10 @@
     }
     if (ddNoteActionMenuId != null && !event.target.closest('.dd-note-action-wrap')) {
       ddNoteActionMenuId = null;
+      shouldRender = true;
+    }
+    if (ddNoteReplyReactionKey && !event.target.closest('.dd-note-reply-reaction-wrap')) {
+      ddNoteReplyReactionKey = '';
       shouldRender = true;
     }
     if (ddMeetingActionMenuId != null && !event.target.closest('.dd-meeting-action-wrap')) {
@@ -10065,13 +10107,7 @@
   function reopenDealMeeting(id) {
     const meeting = ddMeetingById(id);
     if (!meeting || meeting.status !== 'completed') return;
-    meeting.status = 'scheduled';
-    delete meeting.completedAt;
-    saveActivePipelineState();
-    ddRenderFocus();
-    ddRenderHistory();
-    refreshPipelineDealCard(ddDeal);
-    qtShowSnackbar(meeting.title + ' reopened.', 'success');
+    editDealMeeting(id, { reopen: true });
   }
 
   function viewMeetingHistory(id) {
@@ -10167,6 +10203,19 @@
       const automationFocus = window.WeQuoteAutomation.renderDealFocus(d);
       if (automationFocus) focusItems.push(automationFocus);
     }
+    (d.attentionTasks || []).filter(task => task.status !== 'completed' && task.status !== 'cancelled')
+      .sort((a, b) => Date.parse(a.dueAt) - Date.parse(b.dueAt)).forEach(task => {
+        const due = new Date(task.dueAt);
+        const overdue = !Number.isNaN(due.getTime()) && due < new Date();
+        const dueLabel = Number.isNaN(due.getTime()) ? 'Date not set' : due.toLocaleString('en-GB', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        focusItems.push('<div class="dd-focus-item deal-attention-task' + (overdue ? ' overdue' : '') + '" data-focus-attention-task="' + archiveEscape(task.id) + '"' +
+          (overdue ? ' data-overdue-focus="true"' : '') + ' tabindex="-1"><i class="fai">&#xf14a;</i>' +
+          '<div><b>' + (overdue ? 'Task overdue' : 'Upcoming task') + '</b> &mdash; ' + archiveEscape(task.title || 'Task') +
+          '<div class="dd-focus-meeting-meta">Due ' + archiveEscape(dueLabel) + ' · @' + archiveEscape(task.assignedTo || CRM_CURRENT_USER) + '</div></div>' +
+          '<button type="button" class="wq-btn wq-btn-neutral dd-focus-complete" onclick="completeDealAttentionTask(\'' + archiveEscape(task.id) + '\',event)"><i class="fai">&#xf00c;</i> Mark complete</button></div>');
+      });
     const nextAction = d.nextAction && d.nextAction.status !== 'completed' ? d.nextAction : null;
     if (nextAction && nextAction.dueAt) {
       const due = new Date(nextAction.dueAt);
@@ -10286,6 +10335,19 @@
     ddRenderFocus();
     refreshPipelineDealCard(ddDeal);
     qtShowSnackbar('Customer contact marked complete.', 'success');
+  }
+
+  function completeDealAttentionTask(id, event) {
+    if (event) event.stopPropagation();
+    const task = ((ddDeal && ddDeal.attentionTasks) || []).find(item => String(item.id) === String(id));
+    if (!task || task.status === 'completed') return;
+    task.status = 'completed';
+    task.completedAt = new Date().toISOString();
+    saveActivePipelineState();
+    ddRenderFocus();
+    ddRenderHistory();
+    refreshPipelineDealCard(ddDeal);
+    qtShowSnackbar((task.title || 'Task') + ' marked complete.', 'success');
   }
 
   function recordDealActionEvent(deal, event) {
@@ -10724,10 +10786,36 @@
       ? '<div class="dd-note-thread">' + replies.map(reply => {
           const author = reply.author || CURRENT_USER;
           const initials = author.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
+          const key = ddNoteReplyKey(note.id, reply.id);
+          const isMine = author === CURRENT_USER;
+          const isEditing = ddNoteReplyEditingKey === key;
+          const reactionEntries = Object.entries(reply.reactions || {}).filter(([, people]) => Array.isArray(people) && people.length);
+          const reactionCount = reactionEntries.reduce((sum, [, people]) => sum + people.length, 0);
+          const reactionChips = reactionEntries.length ? '<div class="dd-note-reply-reactions">' + reactionEntries.map(([emoji, people]) =>
+            '<button type="button" class="dd-note-reaction-chip' + (people.includes(CURRENT_USER) ? ' mine' : '') + '" title="' + archiveEscape(people.join(', ')) + '" onclick="toggleDealNoteReplyReaction(' + note.id + ',' + reply.id + ',\'' + emoji + '\',event)"><span>' + emoji + '</span><b>' + people.length + '</b></button>'
+          ).join('') + '</div>' : '';
+          const reactionPicker = ddNoteReplyReactionKey === key ? '<div class="dd-note-reaction-picker dd-note-reply-reaction-picker" role="menu" aria-label="Choose a reply reaction">' + DD_NOTE_REACTIONS.map(emoji =>
+            '<button type="button" role="menuitem" aria-label="React with ' + emoji + '" onclick="toggleDealNoteReplyReaction(' + note.id + ',' + reply.id + ',\'' + emoji + '\',event)">' + emoji + '</button>'
+          ).join('') + '</div>' : '';
+          const bodyHtml = isEditing
+            ? '<div class="dd-note-reply-editor"><textarea id="ddNoteReplyEdit-' + note.id + '-' + reply.id + '" maxlength="800">' + archiveEscape(reply.body) + '</textarea><div><button type="button" onclick="cancelDealNoteReplyEdit(event)">Cancel</button><button type="button" class="primary" onclick="saveDealNoteReplyEdit(' + note.id + ',' + reply.id + ',event)">Save</button></div></div>'
+            : '<div class="dd-note-reply-body">' + archiveEscape(reply.body).replace(/\n/g, '<br>') + '</div>';
+          const replyAttachments = Array.isArray(reply.attachments) && reply.attachments.length
+            ? '<div class="dd-note-reply-attachments">' + reply.attachments.map(file => {
+                const name = archiveEscape(file.name || 'Attached file');
+                const fileCopy = '<span><b>' + name + '</b><small>' + formatDealFileSize(Number(file.size) || 0) + '</small></span>';
+                if (file.isImage && file.dataUrl) {
+                  const source = archiveEscape(file.dataUrl);
+                  return '<a href="' + source + '" target="_blank" rel="noopener" aria-label="Open ' + name + '"><img src="' + source + '" alt="">' + fileCopy + '</a>';
+                }
+                return '<span class="dd-note-reply-file"><i class="fai">&#xf15b;</i>' + fileCopy + '</span>';
+              }).join('') + '</div>'
+            : '';
           return '<div class="dd-note-reply"><span class="dd-note-reply-avatar">' + archiveEscape(initials) + '</span>' +
-            '<div class="dd-note-reply-copy"><div class="dd-note-reply-head"><strong>' + archiveEscape(author) + '</strong>' +
-            '<span>' + archiveEscape(ddHistoryTimestamp(reply.createdAt)) + '</span></div>' +
-            '<div class="dd-note-reply-body">' + archiveEscape(reply.body).replace(/\n/g, '<br>') + '</div></div></div>';
+            '<div class="dd-note-reply-copy"><div class="dd-note-reply-head"><strong>' + archiveEscape(ownerDisplay(author)) + '</strong>' +
+            '<span>' + archiveEscape(ddHistoryTimestamp(reply.createdAt)) + (reply.editedAt ? ' · Edited' : '') + '</span></div>' + bodyHtml + replyAttachments +
+            '<div class="dd-note-reply-toolbar"><div class="dd-note-reply-reaction-wrap"><button type="button" aria-expanded="' + (ddNoteReplyReactionKey === key) + '" onclick="toggleDealNoteReplyReactionPicker(' + note.id + ',' + reply.id + ',event)">☺ React' + (reactionCount ? ' · ' + reactionCount : '') + '</button>' + reactionPicker + '</div>' +
+            (isMine ? '<button type="button" onclick="openDealNoteReplyEdit(' + note.id + ',' + reply.id + ',event)"><i class="fai">&#xf304;</i> Edit</button>' : '') + '</div>' + reactionChips + '</div></div>';
         }).join('') + '</div>'
       : '';
     const replying = note && ddNoteReplyingId === note.id;
@@ -11119,7 +11207,7 @@
   const LEAD_ACTIVITY_SEEDS = {
     'ABR Residential Lead': { type: 'qualification', title: 'Qualification call', dueAt: '2026-08-13T14:30:00.000Z' },
     'Wong Residence — Full Home AV': { type: 'call', title: 'Call back re: budget', dueAt: '2026-08-12T10:00:00.000Z' },
-    'Ellis Property — Show Flats': { type: 'other', title: 'Send brochure', dueAt: '2026-08-16T10:00:00.000Z' },
+    'Ellis Property — Show Flats': { type: 'task', title: 'Send brochure', dueAt: '2026-08-16T10:00:00.000Z' },
     'Lau & Partners Boardroom': { type: 'site-visit', title: 'Site visit', dueAt: '2026-08-11T11:00:00.000Z' },
     'Grand Hyatt F&B Screens': { type: 'qualification', title: 'Proposal walkthrough', dueAt: '2026-08-14T15:00:00.000Z' },
     'Sim Marine — Yacht AV': { type: 'qualification', title: 'Qualify budget', dueAt: '2026-08-10T09:30:00.000Z' }
@@ -12113,6 +12201,8 @@
   let leadNotePickerMonth = new Date();
   let leadNotePickerDate = '';
   let leadNotePickerTime = '09:00';
+  let leadNoteReplyEditingKey = '';
+  let leadNoteReplyReactionKey = '';
 
   function leadContactValues(tab) {
     const lead = Number.isInteger(ldpIdx) ? CRM_LEADS[ldpIdx] : null;
@@ -12523,8 +12613,8 @@
     document.getElementById('leadActivityDate').value = leadLocalIsoDate(date); document.getElementById('leadActivityTime').value = '09:00';
   }
 
-  function leadActivityTypeLabel(type) { return ({ meeting: 'Meeting', call: 'Call', 'site-visit': 'Site visit', qualification: 'Qualification call', other: 'Activity' })[type] || 'Activity'; }
-  function leadActivityIcon(type) { return ({ meeting: '&#xf073;', call: '&#xf095;', 'site-visit': '&#xf3c5;', qualification: '&#xf2b5;', other: '&#xf017;' })[type] || '&#xf017;'; }
+  function leadActivityTypeLabel(type) { return ({ meeting: 'Meeting', call: 'Task · Call', 'site-visit': 'Task · Site visit', qualification: 'Task · Qualification', task: 'Task', other: 'Task' })[type] || 'Task'; }
+  function leadActivityIcon(type) { return ({ meeting: '&#xf073;', call: '&#xf095;', 'site-visit': '&#xf3c5;', qualification: '&#xf2b5;', task: '&#xf14a;', other: '&#xf14a;' })[type] || '&#xf14a;'; }
   function saveLeadActivity() {
     if (ldpIdx === null) return;
     const lead = CRM_LEADS[ldpIdx]; const type = document.getElementById('leadActivityType').value;
@@ -12533,7 +12623,7 @@
     if (!date || !time) { qtShowSnackbar('Choose an activity date and time.', 'error'); return; }
     lead.activities.push({ id: lead.leadId + '-activity-' + Date.now(), type, title, dueAt: new Date(date + 'T' + time).toISOString(), status: 'scheduled', owner: lead.owner, createdAt: new Date().toISOString() });
     refreshLeadNextFromActivities(lead); saveLeadState(); renderLeadFocus(lead); renderLdpHistory(lead); renderLeadAiSummary(lead); renderLeads(); clearLeadActivityForm();
-    qtShowSnackbar(title + ' added to Lead Activity.', 'success');
+    qtShowSnackbar(title + ' added to Lead history.', 'success');
   }
 
   const LEAD_FILE_MAX_BYTES = 25 * 1024 * 1024;
@@ -12800,11 +12890,86 @@
     activity.status = 'completed'; activity.completedAt = new Date().toISOString(); refreshLeadNextFromActivities(lead); saveLeadState();
     renderLeadFocus(lead); renderLdpHistory(lead); renderLeadAiSummary(lead); renderLeads(); qtShowSnackbar(activity.title + ' marked complete.', 'success');
   }
+  let leadReopenTarget = null;
+  function openLeadReopenDialog(kind, id, event) {
+    if (event) event.stopPropagation();
+    const item = kind === 'note' ? leadFindNote(id) : leadFindActivity(id);
+    const isCompleted = kind === 'note' ? item && item.followUpStatus === 'completed' : item && item.status === 'completed';
+    if (!item || !isCompleted) return;
+    leadReopenTarget = { kind, id: String(id) };
+    const overlay = document.getElementById('leadReopenOverlay');
+    const heading = document.getElementById('leadReopenHeading');
+    const description = document.getElementById('leadReopenDescription');
+    const subject = document.getElementById('leadReopenSubject');
+    const dateInput = document.getElementById('leadReopenDate');
+    const timeInput = document.getElementById('leadReopenTime');
+    heading.textContent = kind === 'note' ? 'Reopen follow-up' : (item.type === 'meeting' ? 'Reopen meeting' : 'Reopen task');
+    description.textContent = 'Choose a new follow-up date and time before this ' + (kind === 'note' ? 'Note follow-up' : (item.type === 'meeting' ? 'Meeting' : 'Task')) + ' is reopened.';
+    subject.textContent = item.title || (kind === 'note' ? 'Note follow-up' : 'Task');
+    dateInput.min = leadLocalIsoDate(new Date());
+    dateInput.value = '';
+    timeInput.value = '';
+    document.getElementById('leadReopenValidation').textContent = '';
+    syncLeadReopenState();
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => dateInput.focus());
+  }
+  function closeLeadReopenDialog() {
+    const overlay = document.getElementById('leadReopenOverlay');
+    if (overlay) {
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+    leadReopenTarget = null;
+  }
+  function syncLeadReopenState() {
+    const date = document.getElementById('leadReopenDate');
+    const time = document.getElementById('leadReopenTime');
+    const confirm = document.getElementById('leadReopenConfirm');
+    const validation = document.getElementById('leadReopenValidation');
+    if (!date || !time || !confirm) return;
+    confirm.disabled = !date.value || !time.value;
+    if (validation && date.value && time.value) validation.textContent = '';
+  }
+  function confirmLeadReopen() {
+    if (!leadReopenTarget || ldpIdx === null) return;
+    const dateValue = document.getElementById('leadReopenDate').value;
+    const timeValue = document.getElementById('leadReopenTime').value;
+    const validation = document.getElementById('leadReopenValidation');
+    if (!dateValue || !timeValue) {
+      validation.textContent = 'Choose both a follow-up date and time.';
+      syncLeadReopenState();
+      return;
+    }
+    const followUp = new Date(dateValue + 'T' + timeValue);
+    if (Number.isNaN(followUp.getTime()) || followUp <= new Date()) {
+      validation.textContent = 'Choose a follow-up date and time in the future.';
+      return;
+    }
+    const lead = CRM_LEADS[ldpIdx];
+    const item = leadReopenTarget.kind === 'note' ? leadFindNote(leadReopenTarget.id) : leadFindActivity(leadReopenTarget.id);
+    if (!item) { closeLeadReopenDialog(); return; }
+    if (leadReopenTarget.kind === 'note') {
+      item.followUpStatus = 'open';
+      item.followUpAt = followUp.toISOString();
+      delete item.followUpCompletedAt;
+    } else {
+      item.status = 'scheduled';
+      item.dueAt = followUp.toISOString();
+      item.date = dateValue;
+      item.time = timeValue;
+      delete item.completedAt;
+      refreshLeadNextFromActivities(lead);
+    }
+    const label = item.title || (leadReopenTarget.kind === 'note' ? 'Note follow-up' : 'Task');
+    saveLeadState();
+    closeLeadReopenDialog();
+    renderLeadFocus(lead); renderLdpHistory(lead); renderLeadAiSummary(lead); renderLeads();
+    qtShowSnackbar(label + ' reopened for ' + leadDateTimeLabel(followUp.toISOString()) + '.', 'success');
+  }
   function reopenLeadActivity(id, event) {
-    if (event) event.stopPropagation(); const lead = CRM_LEADS[ldpIdx]; const activity = leadFindActivity(id);
-    if (!activity || activity.status !== 'completed') return;
-    activity.status = 'scheduled'; delete activity.completedAt; refreshLeadNextFromActivities(lead); saveLeadState();
-    renderLeadFocus(lead); renderLdpHistory(lead); renderLeadAiSummary(lead); renderLeads(); qtShowSnackbar(activity.title + ' reopened.', 'success');
+    openLeadReopenDialog('activity', id, event);
   }
   function copyLeadMeetingLink(id, event) {
     if (event) event.stopPropagation(); const meeting = leadFindActivity(id);
@@ -12818,10 +12983,7 @@
     renderLeadFocus(lead); renderLdpHistory(lead); renderLeadAiSummary(lead); renderLeads(); qtShowSnackbar(note.title + ' follow-up marked complete.', 'success');
   }
   function reopenLeadNoteFollowUp(id, event) {
-    if (event) event.stopPropagation(); const lead = CRM_LEADS[ldpIdx]; const note = leadFindNote(id);
-    if (!note || note.followUpStatus !== 'completed') return;
-    note.followUpStatus = 'open'; delete note.followUpCompletedAt; saveLeadState();
-    renderLeadFocus(lead); renderLdpHistory(lead); renderLeadAiSummary(lead); renderLeads(); qtShowSnackbar(note.title + ' follow-up reopened.', 'success');
+    openLeadReopenDialog('note', id, event);
   }
   function toggleLeadNoteReaction(id, event) {
     if (event) event.stopPropagation(); const note = leadFindNote(id); if (!note) return;
@@ -12835,6 +12997,73 @@
     note.replies.push({ id: Date.now(), body: body.trim(), author: CRM_CURRENT_USER, createdAt: new Date().toISOString() });
     saveLeadState(); renderLdpHistory(CRM_LEADS[ldpIdx]); qtShowSnackbar('Reply added.', 'success');
   }
+  function leadNoteReplyKey(noteId, replyId) { return String(noteId) + ':' + String(replyId); }
+  function leadNoteReplyById(noteId, replyId) {
+    const note = leadFindNote(noteId); if (!note) return null;
+    const reply = (note.replies || []).find(item => String(item.id) === String(replyId));
+    return reply ? { note, reply } : null;
+  }
+  function openLeadNoteReplyEdit(noteId, replyId, event) {
+    if (event) event.stopPropagation(); const target = leadNoteReplyById(noteId, replyId);
+    if (!target || target.reply.author !== CRM_CURRENT_USER) return;
+    leadNoteReplyReactionKey = ''; leadNoteReplyEditingKey = leadNoteReplyKey(noteId, replyId);
+    renderLdpHistory(CRM_LEADS[ldpIdx]);
+    requestAnimationFrame(() => {
+      const editor = document.getElementById('leadNoteReplyEdit-' + noteId + '-' + replyId);
+      if (editor) { editor.focus(); editor.setSelectionRange(editor.value.length, editor.value.length); }
+    });
+  }
+  function cancelLeadNoteReplyEdit(event) {
+    if (event) event.stopPropagation(); leadNoteReplyEditingKey = ''; renderLdpHistory(CRM_LEADS[ldpIdx]);
+  }
+  function saveLeadNoteReplyEdit(noteId, replyId, event) {
+    if (event) event.stopPropagation(); const target = leadNoteReplyById(noteId, replyId);
+    const editor = document.getElementById('leadNoteReplyEdit-' + noteId + '-' + replyId);
+    if (!target || target.reply.author !== CRM_CURRENT_USER || !editor) return;
+    const body = editor.value.trim(); if (!body) { editor.focus(); return; }
+    target.reply.body = body; target.reply.editedAt = new Date().toISOString(); target.reply.editedBy = CRM_CURRENT_USER;
+    leadNoteReplyEditingKey = ''; saveLeadState(); renderLdpHistory(CRM_LEADS[ldpIdx]); qtShowSnackbar('Reply updated.', 'success');
+  }
+  function toggleLeadNoteReplyReactionPicker(noteId, replyId, event) {
+    if (event) event.stopPropagation(); if (!leadNoteReplyById(noteId, replyId)) return;
+    const key = leadNoteReplyKey(noteId, replyId); leadNoteReplyEditingKey = '';
+    leadNoteReplyReactionKey = leadNoteReplyReactionKey === key ? '' : key; renderLdpHistory(CRM_LEADS[ldpIdx]);
+  }
+  function toggleLeadNoteReplyReaction(noteId, replyId, emoji, event) {
+    if (event) event.stopPropagation(); const target = leadNoteReplyById(noteId, replyId);
+    if (!target || !DD_NOTE_REACTIONS.includes(emoji)) return;
+    target.reply.reactions = target.reply.reactions || {};
+    const people = Array.isArray(target.reply.reactions[emoji]) ? target.reply.reactions[emoji] : [];
+    const currentIndex = people.indexOf(CRM_CURRENT_USER);
+    if (currentIndex >= 0) people.splice(currentIndex, 1); else people.push(CRM_CURRENT_USER);
+    if (people.length) target.reply.reactions[emoji] = people; else delete target.reply.reactions[emoji];
+    leadNoteReplyReactionKey = ''; saveLeadState(); renderLdpHistory(CRM_LEADS[ldpIdx]);
+  }
+  function leadNoteReplyHtml(note, reply) {
+    const key = leadNoteReplyKey(note.id, reply.id); const isMine = reply.author === CRM_CURRENT_USER;
+    const reactionEntries = Object.entries(reply.reactions || {}).filter(([, people]) => Array.isArray(people) && people.length);
+    const reactionCount = reactionEntries.reduce((sum, [, people]) => sum + people.length, 0);
+    const reactionPicker = leadNoteReplyReactionKey === key ? '<div class="dd-note-reaction-picker ldm-reply-reaction-picker" role="menu">' + DD_NOTE_REACTIONS.map(emoji => '<button type="button" onclick="toggleLeadNoteReplyReaction(\'' + note.id + '\',\'' + reply.id + '\',\'' + emoji + '\',event)">' + emoji + '</button>').join('') + '</div>' : '';
+    const reactionChips = reactionEntries.length ? '<div class="ldm-reply-reactions">' + reactionEntries.map(([emoji, people]) => '<button type="button" class="dd-note-reaction-chip' + (people.includes(CRM_CURRENT_USER) ? ' mine' : '') + '" title="' + escapeLeadNoteText(people.join(', ')) + '" onclick="toggleLeadNoteReplyReaction(\'' + note.id + '\',\'' + reply.id + '\',\'' + emoji + '\',event)"><span>' + emoji + '</span><b>' + people.length + '</b></button>').join('') + '</div>' : '';
+    const body = leadNoteReplyEditingKey === key ? '<div class="ldm-reply-editor"><textarea id="leadNoteReplyEdit-' + note.id + '-' + reply.id + '" maxlength="800">' + escapeLeadNoteText(reply.body) + '</textarea><div><button type="button" onclick="cancelLeadNoteReplyEdit(event)">Cancel</button><button type="button" class="primary" onclick="saveLeadNoteReplyEdit(\'' + note.id + '\',\'' + reply.id + '\',event)">Save</button></div></div>' : '<span class="ldm-reply-body">' + escapeLeadNoteText(reply.body) + '</span>';
+    const replyAttachments = Array.isArray(reply.attachments) && reply.attachments.length
+      ? '<div class="ldm-reply-attachments">' + reply.attachments.map(file => {
+          const name = escapeLeadNoteText(file.name || 'Attached file');
+          const fileCopy = '<span><b>' + name + '</b><small>' + leadAttachmentSizeLabel(Number(file.size) || 0) + '</small></span>';
+          if (file.isImage && file.dataUrl) {
+            const source = escapeLeadNoteText(file.dataUrl);
+            return '<a href="' + source + '" target="_blank" rel="noopener" aria-label="Open ' + name + '"><img src="' + source + '" alt="">' + fileCopy + '</a>';
+          }
+          return '<span class="ldm-reply-file"><i class="fai">&#xf15b;</i>' + fileCopy + '</span>';
+        }).join('') + '</div>'
+      : '';
+    return '<div class="ldm-history-reply"><span class="ldm-reply-avatar">' + escapeLeadNoteText(leadInitials(reply.author)) + '</span><div class="ldm-reply-copy"><b>' + escapeLeadNoteText(ownerDisplay(reply.author)) + '</b>' + body + replyAttachments + '<small>' + leadTimestamp(reply.createdAt) + (reply.editedAt ? ' · Edited' : '') + '</small><div class="ldm-reply-toolbar"><div class="dd-note-reply-reaction-wrap"><button type="button" aria-expanded="' + (leadNoteReplyReactionKey === key) + '" onclick="toggleLeadNoteReplyReactionPicker(\'' + note.id + '\',\'' + reply.id + '\',event)">☺ React' + (reactionCount ? ' · ' + reactionCount : '') + '</button>' + reactionPicker + '</div>' + (isMine ? '<button type="button" onclick="openLeadNoteReplyEdit(\'' + note.id + '\',\'' + reply.id + '\',event)"><i class="fai">&#xf304;</i> Edit</button>' : '') + '</div>' + reactionChips + '</div></div>';
+  }
+  document.addEventListener('click', event => {
+    if (!leadNoteReplyReactionKey || event.target.closest('.dd-note-reply-reaction-wrap')) return;
+    leadNoteReplyReactionKey = '';
+    if (ldpIdx !== null) renderLdpHistory(CRM_LEADS[ldpIdx]);
+  });
   function editLeadHistoryNote(id, event) {
     if (event) event.stopPropagation(); const note = leadFindNote(id); if (!note) return;
     const title = prompt('Note title', note.title); if (title === null) return;
@@ -12850,10 +13079,6 @@
 
   function viewLeadHistoryItem(kind, id) {
     if (ldpIdx === null) return; const lead = CRM_LEADS[ldpIdx];
-    if (kind === 'note') {
-      const note = leadFindNote(id);
-      if (note && !note.followUpAt && (note.mentions || []).some(name => /lee/i.test(name))) { note.mentionReadAt = new Date().toISOString(); saveLeadState(); renderLeadFocus(lead); }
-    }
     document.getElementById('leadHistoryFilter').value = 'all'; renderLdpHistory(lead);
     requestAnimationFrame(() => {
       const target = document.querySelector('[data-lead-' + kind + '-history="' + id + '"]');
@@ -12892,7 +13117,12 @@
     (l.activities || []).forEach(activity => events.push({ type: 'activity', at: Date.parse(activity.createdAt) || 0, activity }));
     (l.files || []).forEach(file => events.push({ type: 'file', at: Date.parse(file.createdAt) || 0, file }));
     events.push({ type: 'created', at: Date.parse(l.created) || 1 });
-    const visible = events.filter(item => filter === 'all' || item.type === filter || (filter === 'activity' && item.type === 'created')).sort((a, b) => b.at - a.at);
+    const visible = events.filter(item => {
+      if (filter === 'all') return true;
+      if (filter === 'task') return item.type === 'activity' && item.activity.type !== 'meeting';
+      if (filter === 'meeting') return item.type === 'activity' && item.activity.type === 'meeting';
+      return item.type === filter;
+    }).sort((a, b) => b.at - a.at);
     document.getElementById('ldp-hist').innerHTML = visible.map(item => {
       const railIcon = item.type === 'note' ? '&#xf304;' : item.type === 'file' ? '&#xf0c5;' : item.type === 'created' ? '&#xf2b9;' : leadActivityIcon(item.activity.type);
       let historyBody = '';
@@ -12903,7 +13133,7 @@
           const content = (file.isImage && file.dataUrl ? '<img src="' + file.dataUrl + '" alt="">' : '<i class="fai">&#xf0c6;</i>') + '<span class="attachment-name">' + escapeLeadNoteText(file.name) + '</span>';
           return file.dataUrl ? '<a href="' + file.dataUrl + '" target="_blank" rel="noopener" title="Open attachment">' + content + '</a>' : '<span>' + content + '</span>';
         }).join('') + '</div>' : '';
-        const replies = note.replies.length ? '<div class="ldm-history-replies">' + note.replies.map(reply => '<div><span>' + escapeLeadNoteText(leadInitials(reply.author)) + '</span><p><b>' + escapeLeadNoteText(ownerDisplay(reply.author)) + '</b>' + escapeLeadNoteText(reply.body) + '<small>' + leadTimestamp(reply.createdAt) + '</small></p></div>').join('') + '</div>' : '';
+        const replies = note.replies.length ? '<div class="ldm-history-replies">' + note.replies.map(reply => leadNoteReplyHtml(note, reply)).join('') + '</div>' : '';
         historyBody = '<article class="ldm-history-card note" data-lead-note-history="' + note.id + '" tabindex="-1"><header><b>' + escapeLeadNoteText(note.title) + '</b><span><button type="button" onclick="editLeadHistoryNote(\'' + note.id + '\',event)" aria-label="Edit note"><i class="fai">&#xf304;</i></button><button type="button" onclick="deleteLeadHistoryNote(\'' + note.id + '\',event)" aria-label="Delete note"><i class="fai">&#xf1f8;</i></button></span></header><div class="body">' + note.bodyHtml + '</div>' + attachments + followUp + '<footer><time>' + leadTimestamp(note.createdAt) + (note.editedAt ? ' · Edited' : '') + '</time><div class="right"><button type="button" onclick="toggleLeadNoteReaction(\'' + note.id + '\',event)">☺ React' + (reactionCount ? ' · ' + reactionCount : '') + '</button><button type="button" onclick="replyToLeadNote(\'' + note.id + '\',event)"><i class="fai">&#xf3e5;</i> Reply' + (note.replies.length ? ' · ' + note.replies.length : '') + '</button>' + leadOwnerHtml(note.author) + '</div></footer>' + replies + '</article>';
       } else if (item.type === 'activity') {
         const activity = item.activity; const completed = activity.status === 'completed';
@@ -12911,7 +13141,7 @@
         const meetingMeta = isMeeting ? (activity.duration ? ' · ' + activity.duration + ' min' : '') + (activity.providerLabel ? ' · ' + escapeLeadNoteText(activity.providerLabel) : '') : '';
         const meetingAgenda = isMeeting && activity.agenda ? '<div class="ldm-history-meeting-agenda"><b>Agenda:</b> ' + escapeLeadNoteText(activity.agenda) + '</div>' : '';
         const linkAction = isMeeting && activity.link ? '<button type="button" class="wq-btn wq-btn-secondary" onclick="copyLeadMeetingLink(\'' + activity.id + '\',event)"><i class="fai">&#xf0c1;</i> Copy meeting link</button>' : '';
-        const reopenLabel = isMeeting ? 'Reopen meeting' : 'Reopen activity';
+        const reopenLabel = isMeeting ? 'Reopen meeting' : 'Reopen task';
         historyBody = '<article class="ldm-history-card activity' + (isMeeting ? ' meeting' : '') + '" data-lead-activity-history="' + activity.id + '" tabindex="-1"><header><b>' + escapeLeadNoteText(leadActivityTypeLabel(activity.type)) + '</b>' + (completed ? '<span class="ldm-history-completed"><i class="fai">&#xf058;</i> Completed</span>' : '') + '</header><div class="activity-title">' + escapeLeadNoteText(activity.title) + '</div><div class="activity-due">' + leadDateTimeLabel(activity.dueAt) + meetingMeta + '</div>' + meetingAgenda + '<footer><div class="ldm-history-activity-actions">' + (completed ? '<button type="button" class="wq-btn wq-btn-primary" onclick="reopenLeadActivity(\'' + activity.id + '\',event)"><i class="fai">&#xf2ea;</i> ' + reopenLabel + '</button>' : '<button type="button" class="wq-btn wq-btn-primary" onclick="completeLeadActivity(\'' + activity.id + '\',event)"><i class="fai">&#xf058;</i> Mark complete</button>') + linkAction + '</div><div class="right">' + leadOwnerHtml(activity.owner) + '</div></footer></article>';
       } else if (item.type === 'file') {
         const previewButton = leadFilePreviewButtonHtml(item.file);
@@ -12920,7 +13150,7 @@
         historyBody = '<article class="ldm-history-created"><div><b>Lead created</b><span>' + escapeLeadNoteText(l.created) + ' · ' + escapeLeadNoteText(ownerDisplay(l.owner)) + '</span></div></article>';
       }
       return '<div class="dd-hist-item ldm-history-item"><div class="dd-hist-rail"><span class="dd-hist-ico fai">' + railIcon + '</span></div><div class="dd-hist-body">' + historyBody + '</div></div>';
-    }).join('') || '<div class="ldm-history-empty">No matching Lead activity.</div>';
+    }).join('') || '<div class="ldm-history-empty">No matching Lead history.</div>';
   }
 
   function getVisibleLeadIndices() {
@@ -12966,18 +13196,25 @@
     document.getElementById('ldp-next').disabled = pos === -1 || pos >= visible.length - 1;
 
     leadDrawer.classList.add('open');
+    document.body.classList.add('lead-detail-page-open');
+    if (history.replaceState) history.replaceState(null, '', window.location.href.split('#')[0] + '#lead-' + encodeURIComponent(l.leadId || l.title));
   }
   function closeLeadPanel() {
+    closeLeadReopenDialog();
     cancelLeadNote();
     closeLeadFilePreview();
     closeLabelPicker();
     closeOrganisationPicker();
     closeLeadOwnerPicker();
     leadDrawer.classList.remove('open');
+    document.body.classList.remove('lead-detail-page-open');
+    if (/^#lead-/.test(window.location.hash) && history.replaceState) history.replaceState(null, '', window.location.href.split('#')[0]);
   }
   leadDrawer.addEventListener('click', e => { if (e.target === leadDrawer) closeLeadPanel(); });
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
+    const reopenOverlay = document.getElementById('leadReopenOverlay');
+    if (reopenOverlay && reopenOverlay.classList.contains('open')) { closeLeadReopenDialog(); return; }
     const filePreview = document.getElementById('leadFilePreviewOverlay');
     if (filePreview && filePreview.classList.contains('open')) { closeLeadFilePreview(); return; }
     const orgMenu = document.getElementById('organisationPickerMenu');
@@ -13002,6 +13239,610 @@
     const url = window.location.href.split('#')[0] + '#lead-' + ldpIdx;
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).catch(() => {});
   }
+
+  // Public bridge for the global "Needs Your Attention" widget. The widget reads and
+  // changes the same Lead/Deal records used by the CRM pages; it does not keep a second
+  // task database or duplicate navigation logic.
+  const crmAttentionSources = new Map();
+
+  function crmAttentionDateLabel(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Date not set';
+    const now = new Date();
+    const datePart = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const timePart = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return (date < now ? 'Overdue · ' : 'Due · ') + datePart + ' · ' + timePart;
+  }
+
+  function crmAttentionScopes(settings) {
+    const scopes = ['team'];
+    const mentions = settings.mentions || [];
+    if (settings.assignedTo === CRM_CURRENT_USER || settings.owner === CRM_CURRENT_USER || mentions.includes(CRM_CURRENT_USER)) scopes.unshift('my');
+    if (settings.author === CRM_CURRENT_USER || settings.createdBy === CRM_CURRENT_USER) scopes.push('assigned');
+    return [...new Set(scopes)];
+  }
+
+  function crmAttentionSourceVisible(source) {
+    if (!source || source.attentionDismissedAt) return false;
+    if (!source.attentionSnoozedUntil) return true;
+    const snoozedUntil = Date.parse(source.attentionSnoozedUntil);
+    return Number.isNaN(snoozedUntil) || snoozedUntil <= Date.now();
+  }
+
+  function crmAttentionPlainText(value) {
+    const holder = document.createElement('div');
+    holder.innerHTML = String(value || '');
+    return (holder.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function crmAttentionCompletion(entry) {
+    if (entry.kind === 'note-followup') {
+      return {
+        done: entry.source.followUpStatus === 'completed',
+        completedAt: entry.source.followUpCompletedAt || ''
+      };
+    }
+    if (entry.kind === 'mention') {
+      return {
+        done: Boolean(entry.source.mentionReadAt),
+        completedAt: entry.source.mentionReadAt || ''
+      };
+    }
+    return {
+      done: entry.source.status === 'completed',
+      completedAt: entry.source.completedAt || ''
+    };
+  }
+
+  function crmAttentionCompletedLabel(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Completed';
+    if (Date.now() - date.getTime() < 60000) return 'Completed · just now';
+    return 'Completed · ' + date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' · ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function crmAttentionAdd(items, entry, item) {
+    if (!crmAttentionSourceVisible(entry.source)) return;
+    const id = entry.entity + ':' + entry.recordIndex + ':' + entry.kind + ':' + String(entry.source.id || items.length);
+    crmAttentionSources.set(id, entry);
+    const dueAt = item.dueAt || entry.source.createdAt || '';
+    const completion = crmAttentionCompletion(entry);
+    items.push({
+      id,
+      title: item.title || 'Follow up',
+      module: 'CRM',
+      tag: '',
+      record: item.record,
+      dueAt,
+      createdAt: entry.source.createdAt || dueAt,
+      when: completion.done ? crmAttentionCompletedLabel(completion.completedAt) : crmAttentionDateLabel(dueAt),
+      scopes: crmAttentionScopes(item),
+      done: completion.done,
+      completedAt: completion.completedAt,
+      canReply: Boolean(item.canReply),
+      canComplete: !completion.done && item.canComplete !== false,
+      canReopen: completion.done,
+      canReschedule: item.canReschedule !== false,
+      sourceType: entry.entity,
+      sourceKind: item.sourceKind || entry.kind,
+      itemType: item.itemType || (item.canReply ? 'Note' : entry.kind === 'meeting' ? 'Meeting' : 'Task'),
+      preview: item.preview || '',
+      author: item.author || entry.source.author || entry.source.createdBy || '',
+      replyCount: Number(item.replyCount || 0),
+      attachmentCount: Number(item.attachmentCount || 0)
+    });
+  }
+
+  function crmAttentionList() {
+    const items = [];
+    crmAttentionSources.clear();
+    CRM_LEADS.forEach((lead, leadIndex) => {
+      (lead.activities || []).filter(activity => activity.status !== 'cancelled').forEach(activity => {
+        crmAttentionAdd(items, { entity: 'lead', recordIndex: leadIndex, record: lead, kind: 'activity', source: activity }, {
+          title: activity.title,
+          record: lead.title,
+          dueAt: activity.dueAt,
+          assignedTo: activity.owner,
+          owner: lead.owner,
+          createdBy: activity.createdBy,
+          canReply: false,
+          itemType: activity.type === 'meeting' ? 'Meeting' : 'Task',
+          sourceKind: activity.type === 'meeting' ? 'meeting' : 'task'
+        });
+      });
+      (lead.notes || []).filter(note => note.followUpAt).forEach(note => {
+        crmAttentionAdd(items, { entity: 'lead', recordIndex: leadIndex, record: lead, kind: 'note-followup', source: note }, {
+          title: 'Follow up · ' + (note.title || 'Note'),
+          record: lead.title,
+          dueAt: note.followUpAt,
+          assignedTo: note.assignedTo || ((note.mentions || [])[0]) || note.author,
+          author: note.author,
+          mentions: note.mentions || [],
+          canReply: true,
+          itemType: 'Note',
+          preview: crmAttentionPlainText(note.bodyHtml),
+          replyCount: (note.replies || []).length,
+          attachmentCount: (note.attachments || []).length
+        });
+      });
+      (lead.notes || []).filter(note => !note.followUpAt && (note.mentions || []).includes(CRM_CURRENT_USER)).forEach(note => {
+        crmAttentionAdd(items, { entity: 'lead', recordIndex: leadIndex, record: lead, kind: 'mention', source: note }, {
+          title: 'Reply to mention · ' + (note.title || 'Note'),
+          record: lead.title,
+          dueAt: note.createdAt,
+          owner: lead.owner,
+          mentions: note.mentions || [],
+          canReply: true,
+          canComplete: true,
+          canReschedule: false,
+          itemType: 'Mention',
+          preview: crmAttentionPlainText(note.bodyHtml),
+          replyCount: (note.replies || []).length,
+          attachmentCount: (note.attachments || []).length
+        });
+      });
+    });
+
+    CRM_DEALS.forEach((deal, dealIndex) => {
+      const dealOwner = crmTableOwnerName(deal);
+      (deal.attentionTasks || []).filter(task => task.status !== 'cancelled').forEach(task => {
+        crmAttentionAdd(items, { entity: 'deal', recordIndex: dealIndex, record: deal, kind: 'attention-task', source: task }, {
+          title: task.title,
+          record: deal.t,
+          dueAt: task.dueAt,
+          assignedTo: task.assignedTo,
+          owner: dealOwner,
+          createdBy: task.createdBy,
+          canReply: false,
+          itemType: 'Task',
+          sourceKind: 'task'
+        });
+      });
+      if (deal.nextAction && deal.nextAction.status !== 'cancelled') {
+        crmAttentionAdd(items, { entity: 'deal', recordIndex: dealIndex, record: deal, kind: 'next-action', source: deal.nextAction }, {
+          title: deal.nextAction.title || 'Next Action',
+          record: deal.t,
+          dueAt: deal.nextAction.dueAt,
+          assignedTo: deal.nextAction.assignedTo,
+          owner: dealOwner,
+          canReply: false,
+          itemType: 'Task',
+          sourceKind: 'task'
+        });
+      }
+      if (deal.qualifiedContact && deal.qualifiedContact.status !== 'cancelled') {
+        crmAttentionAdd(items, { entity: 'deal', recordIndex: dealIndex, record: deal, kind: 'qualified-contact', source: deal.qualifiedContact }, {
+          title: deal.qualifiedContact.title || 'Contact customer',
+          record: deal.t,
+          dueAt: deal.qualifiedContact.dueAt,
+          assignedTo: dealOwner,
+          owner: dealOwner,
+          canReply: false,
+          itemType: 'Task',
+          sourceKind: 'task'
+        });
+      }
+      (deal.meetings || []).filter(meeting => meeting.status !== 'cancelled').forEach(meeting => {
+        crmAttentionAdd(items, { entity: 'deal', recordIndex: dealIndex, record: deal, kind: 'meeting', source: meeting }, {
+          title: meeting.title || 'Meeting',
+          record: deal.t,
+          dueAt: meeting.date && meeting.time ? meeting.date + 'T' + meeting.time + ':00' : meeting.createdAt,
+          assignedTo: meeting.assignedTo,
+          owner: dealOwner,
+          createdBy: meeting.createdBy,
+          canReply: false,
+          itemType: 'Meeting',
+          sourceKind: 'meeting'
+        });
+      });
+      (deal.notes || []).filter(note => !note.deletedAt && note.followUpAt).forEach(note => {
+        crmAttentionAdd(items, { entity: 'deal', recordIndex: dealIndex, record: deal, kind: 'note-followup', source: note }, {
+          title: 'Follow up · ' + (note.title || 'Note'),
+          record: deal.t,
+          dueAt: note.followUpAt,
+          assignedTo: note.assignedTo || ((note.mentions || [])[0]) || note.author,
+          author: note.author,
+          mentions: note.mentions || [],
+          canReply: true,
+          itemType: 'Note',
+          preview: crmAttentionPlainText(note.bodyHtml),
+          replyCount: (note.replies || []).length,
+          attachmentCount: (note.attachments || []).length
+        });
+      });
+      (deal.notes || []).filter(note => !note.deletedAt && !note.followUpAt && (note.mentions || []).includes(CRM_CURRENT_USER)).forEach(note => {
+        crmAttentionAdd(items, { entity: 'deal', recordIndex: dealIndex, record: deal, kind: 'mention', source: note }, {
+          title: 'Reply to mention · ' + (note.title || 'Note'),
+          record: deal.t,
+          dueAt: note.createdAt,
+          owner: dealOwner,
+          mentions: note.mentions || [],
+          canReply: true,
+          canComplete: true,
+          canReschedule: false,
+          itemType: 'Mention',
+          preview: crmAttentionPlainText(note.bodyHtml),
+          replyCount: (note.replies || []).length,
+          attachmentCount: (note.attachments || []).length
+        });
+      });
+    });
+
+    return items.sort((a, b) => {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      if (a.done && b.done) {
+        const aCompleted = Date.parse(a.completedAt) || 0;
+        const bCompleted = Date.parse(b.completedAt) || 0;
+        if (aCompleted !== bCompleted) return bCompleted - aCompleted;
+      }
+      const aDue = Date.parse(a.dueAt) || Number.MAX_SAFE_INTEGER;
+      const bDue = Date.parse(b.dueAt) || Number.MAX_SAFE_INTEGER;
+      return aDue - bDue || String(a.title).localeCompare(String(b.title));
+    });
+  }
+
+  function crmAttentionFind(id) {
+    if (!crmAttentionSources.has(id)) crmAttentionList();
+    return crmAttentionSources.get(id) || null;
+  }
+
+  function crmAttentionChanged(entry) {
+    if (!entry) return;
+    if (entry.entity === 'lead') {
+      saveLeadState();
+      refreshLeadNextFromActivities(entry.record);
+      renderLeads();
+      if (ldpIdx === entry.recordIndex && leadDrawer.classList.contains('open')) {
+        renderLeadFocus(entry.record);
+        renderLdpHistory(entry.record);
+        renderLeadAiSummary(entry.record);
+      }
+    } else {
+      saveActivePipelineState();
+      refreshPipelineDealCard(entry.record);
+      if (ddDeal === entry.record && currentView === 'deal') {
+        ddRenderFocus();
+        ddRenderHistory();
+      }
+    }
+    document.dispatchEvent(new CustomEvent('wequote:attention-changed'));
+  }
+
+  function crmAttentionSnapshot(source, keys) {
+    const snapshot = {};
+    keys.forEach(key => {
+      snapshot[key] = {
+        exists: Object.prototype.hasOwnProperty.call(source, key),
+        value: source[key]
+      };
+    });
+    return snapshot;
+  }
+
+  function crmAttentionRestore(source, snapshot) {
+    Object.keys(snapshot || {}).forEach(key => {
+      if (snapshot[key].exists) source[key] = snapshot[key].value;
+      else delete source[key];
+    });
+  }
+
+  function crmAttentionFocusEntry(entry) {
+    if (!entry) return false;
+    if (entry.entity === 'lead') {
+      showView('leads');
+      requestAnimationFrame(() => {
+        openLeadPanel(entry.recordIndex);
+        if (entry.kind === 'activity') window.setTimeout(() => viewLeadHistoryItem('activity', entry.source.id), 40);
+        if (entry.kind === 'note-followup' || entry.kind === 'mention') window.setTimeout(() => viewLeadHistoryItem('note', entry.source.id), 40);
+      });
+      return true;
+    }
+    if (!window.openCrmDealByName(entry.record.t)) return false;
+    window.setTimeout(() => {
+      if (entry.kind === 'meeting') viewMeetingHistory(entry.source.id);
+      else if (entry.kind === 'note-followup' || entry.kind === 'mention') viewNoteHistory(entry.source.id);
+      else {
+        const selector = entry.kind === 'attention-task'
+          ? '[data-focus-attention-task="' + CSS.escape(String(entry.source.id)) + '"]'
+          : entry.kind === 'next-action' ? '[data-next-action-focus="true"]' : '.dd-focus-item.qualified-contact';
+        const target = document.querySelector(selector);
+        if (target) {
+          target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          target.focus({ preventScroll: true });
+        }
+      }
+    }, 60);
+    return true;
+  }
+
+  window.openCrmLeadById = function openCrmLeadById(leadId) {
+    const index = CRM_LEADS.findIndex(lead => lead.leadId === leadId || lead.title === leadId);
+    if (index < 0) return false;
+    showView('leads');
+    requestAnimationFrame(() => openLeadPanel(index));
+    return true;
+  };
+
+  function crmAttentionReopenEntry(entry) {
+    if (!entry || !entry.source) return false;
+    if (entry.kind === 'note-followup') {
+      entry.source.followUpStatus = 'open';
+      delete entry.source.followUpCompletedAt;
+    } else if (entry.kind === 'mention') {
+      delete entry.source.mentionReadAt;
+    } else if (entry.kind === 'meeting') {
+      entry.source.status = 'scheduled';
+      delete entry.source.completedAt;
+    } else {
+      entry.source.status = 'open';
+      delete entry.source.completedAt;
+    }
+    return true;
+  }
+
+  window.WeQuoteCrmAttention = {
+    list: crmAttentionList,
+    context: function context() {
+      if (currentView === 'deal' && ddDeal) return { type: 'deal', label: 'Deal', record: ddDeal.t };
+      if (ldpIdx !== null && leadDrawer.classList.contains('open')) {
+        return { type: 'lead', label: 'Lead', record: CRM_LEADS[ldpIdx].title };
+      }
+      return null;
+    },
+    records: function records(type) {
+      if (type === 'lead') return CRM_LEADS.filter(lead => lead.status === 'open').map(lead => lead.title);
+      if (type === 'deal') return CRM_DEALS.filter(deal => !deal.archived).map(deal => deal.t);
+      return [];
+    },
+    open: function open(id) { return crmAttentionFocusEntry(crmAttentionFind(id)); },
+    complete: function complete(id) {
+      const entry = crmAttentionFind(id);
+      if (!entry) return false;
+      const undoToken = {
+        entry,
+        snapshot: crmAttentionSnapshot(entry.source, [
+          'status', 'completedAt', 'followUpStatus', 'followUpCompletedAt', 'mentionReadAt'
+        ])
+      };
+      if (entry.kind === 'note-followup') {
+        entry.source.followUpStatus = 'completed';
+        entry.source.followUpCompletedAt = new Date().toISOString();
+      } else if (entry.kind === 'mention') {
+        entry.source.mentionReadAt = new Date().toISOString();
+      } else {
+        entry.source.status = 'completed';
+        entry.source.completedAt = new Date().toISOString();
+      }
+      crmAttentionChanged(entry);
+      return undoToken;
+    },
+    undoComplete: function undoComplete(token) {
+      if (!token || !token.entry || !token.entry.source || !token.snapshot) return false;
+      crmAttentionRestore(token.entry.source, token.snapshot);
+      crmAttentionChanged(token.entry);
+      return true;
+    },
+    reopen: function reopen(id) {
+      const entry = crmAttentionFind(id);
+      if (!crmAttentionReopenEntry(entry)) return false;
+      crmAttentionChanged(entry);
+      return true;
+    },
+    reschedule: function reschedule(id, dueAt) {
+      const entry = crmAttentionFind(id);
+      const due = new Date(dueAt);
+      if (!entry || Number.isNaN(due.getTime()) || entry.kind === 'mention') return false;
+      if (entry.kind === 'note-followup') entry.source.followUpAt = due.toISOString();
+      else if (entry.kind === 'meeting') {
+        entry.source.date = localIsoDate(due);
+        entry.source.time = due.toTimeString().slice(0, 5);
+      } else entry.source.dueAt = due.toISOString();
+      crmAttentionReopenEntry(entry);
+      delete entry.source.attentionSnoozedUntil;
+      crmAttentionChanged(entry);
+      return true;
+    },
+    snooze: function snooze(id, until) {
+      const entry = crmAttentionFind(id);
+      if (!entry) return false;
+      entry.source.attentionSnoozedUntil = new Date(until).toISOString();
+      crmAttentionChanged(entry);
+      return true;
+    },
+    dismiss: function dismiss(id) {
+      const entry = crmAttentionFind(id);
+      if (!entry) return false;
+      entry.source.attentionDismissedAt = new Date().toISOString();
+      if (entry.kind === 'mention') entry.source.mentionReadAt = entry.source.attentionDismissedAt;
+      crmAttentionChanged(entry);
+      return true;
+    },
+    reply: function reply(id, body, settings) {
+      const entry = crmAttentionFind(id);
+      const text = String(body || '').trim();
+      if (!entry || !text || (entry.kind !== 'mention' && entry.kind !== 'note-followup')) return false;
+      const meta = settings && typeof settings === 'object' ? settings : {};
+      entry.source.replies = Array.isArray(entry.source.replies) ? entry.source.replies : [];
+      entry.source.replies.push({
+        id: Date.now(),
+        body: text,
+        author: CRM_CURRENT_USER,
+        createdAt: new Date().toISOString(),
+        mentions: Array.isArray(meta.mentions) ? meta.mentions.slice() : [],
+        attachments: Array.isArray(meta.attachments) ? meta.attachments.map(function (file) {
+          return {
+            name: String(file.name || 'Attachment'),
+            type: String(file.type || ''),
+            size: Number(file.size || 0),
+            isImage: Boolean(file.isImage),
+            dataUrl: typeof file.dataUrl === 'string' ? file.dataUrl : ''
+          };
+        }) : []
+      });
+      entry.source.mentionReadAt = new Date().toISOString();
+      crmAttentionChanged(entry);
+      return true;
+    },
+    react: function react(id, emoji) {
+      const entry = crmAttentionFind(id);
+      const symbol = String(emoji || '').trim();
+      if (!entry || !symbol || (entry.kind !== 'mention' && entry.kind !== 'note-followup')) return false;
+      entry.source.reactions = entry.source.reactions || {};
+      const people = Array.isArray(entry.source.reactions[symbol]) ? entry.source.reactions[symbol] : [];
+      if (!people.includes(CRM_CURRENT_USER)) people.push(CRM_CURRENT_USER);
+      entry.source.reactions[symbol] = people;
+      entry.source.mentionReadAt = new Date().toISOString();
+      crmAttentionChanged(entry);
+      return true;
+    },
+    createMeeting: function createMeeting(settings) {
+      if (!settings || !settings.type || !settings.record || !String(settings.title || '').trim()) return false;
+      const start = new Date(settings.startAt || (settings.date + 'T' + settings.time));
+      const duration = Number(settings.duration);
+      const method = settings.method === 'in-person' ? 'in-person' : settings.method === 'manual' ? 'manual' : '';
+      const methodValue = String(settings.methodValue || '').trim();
+      if (Number.isNaN(start.getTime()) || !duration || !method) return false;
+      if (method === 'in-person' && !methodValue) return false;
+      if (method === 'manual' && !ddValidMeetingLink(methodValue)) return false;
+      const title = String(settings.title).trim();
+      const date = settings.date || localIsoDate(start);
+      const time = settings.time || start.toTimeString().slice(0, 5);
+      const providerLabel = method === 'in-person' ? 'In person' : ddManualMeetingLabel(methodValue);
+      const attendees = (Array.isArray(settings.attendees) ? settings.attendees : [])
+        .map(name => String(name || '').trim())
+        .filter((name, index, list) => name && list.indexOf(name) === index);
+      const agenda = String(settings.agenda || '').trim();
+      if (settings.type === 'lead') {
+        const recordIndex = CRM_LEADS.findIndex(lead => lead.title === settings.record);
+        if (recordIndex < 0) return false;
+        const lead = CRM_LEADS[recordIndex];
+        lead.activities = Array.isArray(lead.activities) ? lead.activities : [];
+        const meeting = {
+          id: lead.leadId + '-meeting-' + Date.now(), type: 'meeting', title,
+          dueAt: start.toISOString(), date, time, duration,
+          provider: method, providerLabel,
+          link: method === 'manual' ? methodValue : '',
+          address: method === 'in-person' ? methodValue : '',
+          attendees, agenda, status: 'scheduled', owner: lead.owner,
+          createdAt: new Date().toISOString(), createdBy: CRM_CURRENT_USER
+        };
+        lead.activities.push(meeting);
+        crmAttentionChanged({ entity: 'lead', recordIndex, record: lead, kind: 'activity', source: meeting });
+        return { created: true, behaviour: 'meeting', assignedTo: CRM_CURRENT_USER, meetingId: meeting.id };
+      }
+      if (settings.type === 'deal') {
+        const recordIndex = CRM_DEALS.findIndex(deal => deal.t === settings.record);
+        if (recordIndex < 0) return false;
+        const deal = CRM_DEALS[recordIndex];
+        deal.meetings = Array.isArray(deal.meetings) ? deal.meetings : [];
+        const meeting = {
+          id: Date.now(), title, date, time, duration, agenda,
+          provider: method, providerLabel,
+          address: method === 'in-person' ? methodValue : '',
+          link: method === 'manual' ? methodValue : '',
+          attendees, summary: '', status: 'scheduled',
+          assignedTo: CRM_CURRENT_USER, createdAt: new Date().toISOString(), createdBy: CRM_CURRENT_USER
+        };
+        deal.meetings.push(meeting);
+        crmAttentionChanged({ entity: 'deal', recordIndex, record: deal, kind: 'meeting', source: meeting });
+        if (window.WeQuoteAutomation) window.WeQuoteAutomation.emit('deal.meeting.changed', {
+          deal, meeting, change: 'scheduled', field: 'meeting'
+        });
+        return { created: true, behaviour: 'meeting', assignedTo: CRM_CURRENT_USER, meetingId: meeting.id };
+      }
+      return false;
+    },
+    createNote: function createNote(settings) {
+      if (!settings || !settings.type || !settings.record || !String(settings.body || '').trim()) return false;
+      const mentions = (Array.isArray(settings.mentions) ? settings.mentions : [settings.mention])
+        .map(name => String(name || '').trim())
+        .filter((name, index, list) => name && list.indexOf(name) === index);
+      const mention = mentions[0] || '';
+      const followUp = settings.followUpAt ? new Date(settings.followUpAt) : null;
+      if (followUp && Number.isNaN(followUp.getTime())) return false;
+      const hasFollowUp = Boolean(followUp);
+      const behaviour = mention && hasFollowUp
+        ? 'assigned-attention'
+        : hasFollowUp
+          ? 'self-reminder'
+          : mention
+            ? 'mention'
+            : 'record-note';
+      const assignedTo = behaviour === 'assigned-attention'
+        ? mention
+        : behaviour === 'self-reminder'
+          ? CRM_CURRENT_USER
+          : '';
+      const note = {
+        id: settings.type + '-note-' + Date.now(),
+        title: String(settings.title || 'Note').trim() || 'Note',
+        body: String(settings.body || '').trim(),
+        bodyHtml: sanitizeDealNoteHtml(settings.bodyHtml || settings.body),
+        mentions,
+        assignedTo,
+        attentionBehaviour: behaviour,
+        author: CRM_CURRENT_USER,
+        createdAt: new Date().toISOString(),
+        followUpAt: hasFollowUp ? followUp.toISOString() : '',
+        followUpStatus: hasFollowUp ? 'open' : '',
+        followUpCompletedAt: '',
+        mentionReadAt: '',
+        reactions: {},
+        replies: [],
+        attachments: []
+      };
+      if (settings.type === 'lead') {
+        const recordIndex = CRM_LEADS.findIndex(lead => lead.title === settings.record);
+        if (recordIndex < 0) return false;
+        const lead = CRM_LEADS[recordIndex];
+        lead.notes = Array.isArray(lead.notes) ? lead.notes : [];
+        lead.notes.push(note);
+        crmAttentionChanged({ entity: 'lead', recordIndex, record: lead, kind: 'note', source: note });
+      } else if (settings.type === 'deal') {
+        const recordIndex = CRM_DEALS.findIndex(deal => deal.t === settings.record);
+        if (recordIndex < 0) return false;
+        const deal = CRM_DEALS[recordIndex];
+        deal.notes = Array.isArray(deal.notes) ? deal.notes : [];
+        deal.notes.push(note);
+        crmAttentionChanged({ entity: 'deal', recordIndex, record: deal, kind: 'note', source: note });
+      } else {
+        return false;
+      }
+      return { created: true, behaviour, assignedTo, noteId: note.id };
+    },
+    create: function create(settings) {
+      if (!settings || !settings.title) return false;
+      const due = new Date(settings.dueAt);
+      if (Number.isNaN(due.getTime())) return false;
+      if (settings.type === 'lead') {
+        const recordIndex = CRM_LEADS.findIndex(lead => lead.title === settings.record);
+        if (recordIndex < 0) return false;
+        const lead = CRM_LEADS[recordIndex];
+        const activity = {
+          id: lead.leadId + '-attention-' + Date.now(), type: 'task', title: settings.title,
+          dueAt: due.toISOString(), status: 'scheduled', owner: CRM_CURRENT_USER,
+          createdAt: new Date().toISOString(), createdBy: CRM_CURRENT_USER
+        };
+        lead.activities.push(activity);
+        crmAttentionChanged({ entity: 'lead', recordIndex, record: lead, kind: 'activity', source: activity });
+        return true;
+      }
+      if (settings.type === 'deal') {
+        const recordIndex = CRM_DEALS.findIndex(deal => deal.t === settings.record);
+        if (recordIndex < 0) return false;
+        const deal = CRM_DEALS[recordIndex];
+        deal.attentionTasks = Array.isArray(deal.attentionTasks) ? deal.attentionTasks : [];
+        const task = {
+          id: 'deal-attention-' + Date.now(), title: settings.title, dueAt: due.toISOString(),
+          status: 'scheduled', assignedTo: CRM_CURRENT_USER, createdAt: new Date().toISOString(), createdBy: CRM_CURRENT_USER
+        };
+        deal.attentionTasks.push(task);
+        crmAttentionChanged({ entity: 'deal', recordIndex, record: deal, kind: 'attention-task', source: task });
+        return true;
+      }
+      return false;
+    }
+  };
 
   function editLeadTitle() {
     const l = CRM_LEADS[ldpIdx];

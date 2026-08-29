@@ -1,0 +1,365 @@
+/*
+ * Full Roadmap working prototype.
+ *
+ * The reviewed Phase 1 handoff remains frozen in its own folder. This layer
+ * deliberately re-opens Phase 2 Custom Stages and Phase 3 Fully Custom
+ * Pipelines while preserving the latest Phase 1 creation and Map/List UI.
+ */
+
+:root {
+  --roadmap-phase-1: #2450ff;
+  --roadmap-phase-2: #7c3aed;
+  --roadmap-phase-3: #0d8b6f;
+}
+
+/* Future-phase entry points hidden by the frozen Phase 1 boundary. */
+#pipelineCreateTrigger,
+#pipelineManageButton,
+.pipeline-option-edit,
+.pipeline-select-add {
+  display: inline-flex !important;
+}
+
+/* Pipeline creation asks one product question only; the choice copy explains the result. */
+#pipelineCreateOverlay .pipeline-template-card {
+  display: none;
+}
+
+[data-crm-view="forecast"],
+[data-crm-view="crmforecast"],
+a[onclick*="crmforecast"] {
+  display: flex !important;
+}
+
+#autCreatorTemplates [data-aut-custom-template-section].is-stage-match:not([hidden]) {
+  display: flex !important;
+}
+
+#autCreatorTemplates [data-aut-template^="custom-stage-"].is-stage-match:not([hidden]) {
+  display: grid !important;
+}
+
+/* Automation Company scope is not part of the combined roadmap model. */
+#viewAutomation .aut-map-company-scope,
+#viewAutomation .aut-train-company-scope,
+#viewAutomation .aut-inspect-company-scope,
+#viewAutomation .aut-inspect-automation > .aut-scope-pills,
+#viewAutomation .aut-detail-company-scope,
+#viewAutomation .aut-before-after-company,
+#viewAutomation .aut-test-scope,
+#viewAutomation .aut-company-scope-inline,
+#viewAutomation .aut-flow-context-card.is-company,
+#viewAutomation .aut-workflow-scope,
+#viewAutomation .aut-stage-lock-summary.company,
+#viewAutomation .aut-creator-company-picker,
+#viewAutomation .aut-inspector-summary-row.company {
+  display: none !important;
+}
+
+.aut-roadmap-overview {
+  margin: 0 12px 12px;
+  padding: 18px;
+  border: 1px solid #dbe3f1;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8faff 0%, #fff 58%, #f5fbf9 100%);
+}
+
+.aut-roadmap-heading > span {
+  color: #2450ff;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.aut-roadmap-heading h2 {
+  margin: 5px 0 3px;
+  color: #243447;
+  font-size: 18px;
+}
+
+.aut-roadmap-heading p {
+  margin: 0;
+  color: #6e7d91;
+  font-size: 10px;
+}
+
+.aut-roadmap-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.aut-roadmap-card {
+  position: relative;
+  display: flex;
+  min-height: 220px;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid #dce3ef;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(42, 57, 86, .06);
+}
+
+.aut-roadmap-card::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 4px;
+  background: var(--roadmap-phase-1);
+  content: "";
+}
+
+.aut-roadmap-card.phase-two::before { background: var(--roadmap-phase-2); }
+.aut-roadmap-card.phase-three::before { background: var(--roadmap-phase-3); }
+
+.aut-roadmap-phase {
+  align-self: flex-start;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #eef3ff;
+  color: var(--roadmap-phase-1);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: .07em;
+}
+
+.phase-two .aut-roadmap-phase { background: #f3efff; color: var(--roadmap-phase-2); }
+.phase-three .aut-roadmap-phase { background: #eaf8f4; color: var(--roadmap-phase-3); }
+
+.aut-roadmap-card h3 {
+  margin: 10px 0 5px;
+  color: #243447;
+  font-size: 15px;
+}
+
+.aut-roadmap-card p {
+  margin: 0;
+  color: #66768c;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.aut-roadmap-card ul {
+  display: grid;
+  gap: 5px;
+  margin: 12px 0 15px;
+  padding: 0;
+  color: #41536c;
+  font-size: 8px;
+  list-style: none;
+}
+
+.aut-roadmap-card li::before {
+  margin-right: 6px;
+  color: var(--roadmap-phase-1);
+  content: "✓";
+  font-weight: 900;
+}
+
+.phase-two li::before { color: var(--roadmap-phase-2); }
+.phase-three li::before { color: var(--roadmap-phase-3); }
+
+.aut-roadmap-card button {
+  min-height: 34px;
+  margin-top: auto;
+  border: 0;
+  border-radius: 7px;
+  background: var(--roadmap-phase-1);
+  color: #fff;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.phase-two button { background: var(--roadmap-phase-2); }
+.phase-three button { background: var(--roadmap-phase-3); }
+.aut-roadmap-card button:hover { filter: brightness(.94); }
+
+.aut-pipeline-phase-badge {
+  display: inline-flex;
+  width: max-content;
+  margin-bottom: 3px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #eef3ff;
+  color: #2450ff;
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
+.aut-pipeline-phase-badge.fully-custom {
+  background: #eaf8f4;
+  color: #0d8b6f;
+}
+
+.aut-context-scratch-card {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  border: 1px dashed #8ea6e7;
+  border-radius: 9px;
+  background: #f7f9ff;
+  color: #2a3d59;
+  text-align: left;
+}
+
+.aut-context-scratch-card > i {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 8px;
+  background: #e9efff;
+  color: #2450ff;
+}
+
+.aut-context-scratch-card span { display: grid; gap: 3px; }
+.aut-context-scratch-card strong { font-size: 10px; }
+.aut-context-scratch-card small { color: #6e7d91; font-size: 8px; line-height: 1.35; }
+.aut-context-scratch-card b { color: #2450ff; font-size: 8px; }
+
+.aut-template-fixed-note,
+.aut-template-custom-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0 0 10px;
+  padding: 9px 10px;
+  border: 1px solid #dce4f4;
+  border-radius: 8px;
+  background: #f8faff;
+  color: #5d6d84;
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.aut-template-custom-note { border-color: #cfe6de; background: #f3fbf8; }
+.aut-template-fixed-note i { color: #2450ff; }
+.aut-template-custom-note i { color: #0d8b6f; }
+
+@media (max-width: 1050px) {
+  .aut-roadmap-cards { grid-template-columns: 1fr; }
+  .aut-roadmap-card { min-height: 0; }
+}
+.aut-nav-action {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.aut-pipeline-hub-title {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+}
+
+.aut-pipeline-hub-title > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.aut-pipeline-hub-title h1,
+.aut-pipeline-hub-title p {
+  margin: 0;
+}
+
+.aut-pipeline-hub-title p {
+  color: #6e7d91;
+  font-size: 9px;
+}
+
+.aut-creator-pipeline-heading {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.aut-creator-pipeline-heading > span {
+  color: #2450ff;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.aut-creator-pipeline-heading h3,
+.aut-creator-pipeline-heading p {
+  margin: 0;
+}
+
+.aut-creator-pipeline-heading h3 {
+  color: #243447;
+  font-size: 18px;
+}
+
+.aut-creator-pipeline-heading p {
+  color: #6e7d91;
+  font-size: 10px;
+}
+
+.aut-creator-pipeline-list {
+  display: grid;
+  gap: 10px;
+}
+
+.aut-creator-pipeline-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #d8e0ef;
+  border-radius: 10px;
+  background: #fff;
+  color: #263a55;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.aut-creator-pipeline-card:hover,
+.aut-creator-pipeline-card:focus-visible {
+  border-color: #2450ff;
+  box-shadow: 0 0 0 3px rgba(36, 80, 255, .1);
+  outline: 0;
+}
+
+.aut-creator-pipeline-card > i {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 10px;
+  background: #eef3ff;
+  color: #2450ff;
+  font-size: 15px;
+}
+
+.aut-creator-pipeline-card > span {
+  display: grid;
+  gap: 4px;
+}
+
+.aut-creator-pipeline-card strong { font-size: 12px; }
+.aut-creator-pipeline-card small { color: #6e7d91; font-size: 9px; }
+.aut-creator-pipeline-card em { color: #2450ff; font-size: 8px; font-style: normal; font-weight: 800; }
+.aut-creator-pipeline-card > b { color: #2450ff; font-size: 9px; }
+
+@media (max-width: 760px) {
+  .aut-pipeline-hub-title { align-items: stretch; flex-direction: column; }
+}

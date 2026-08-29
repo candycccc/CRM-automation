@@ -1,0 +1,95 @@
+/*
+ * Phase 1 colleague handoff boundary.
+ *
+ * The full working prototype retains future-facing Pipeline and Forecast code.
+ * This standalone handoff intentionally exposes only the fixed, protected
+ * Quote lifecycle and its Phase 1 CRM/Automation experience.
+ */
+#pipelineCreateTrigger,
+#pipelineManageButton,
+.pipeline-option-edit,
+.pipeline-select-add,
+#autCreatePipeline,
+[data-aut-custom-template-section],
+[data-aut-template^="custom-stage-"],
+[data-crm-view="forecast"],
+[data-crm-view="crmforecast"],
+#crmForecastView,
+#crmForecastV2View,
+a[onclick*="crmforecast"] {
+  display: none !important;
+}
+
+/* Phase 1 creation slice: Stage must be chosen before any Template appears. */
+#autPhase1TemplateGrid[hidden],
+#autCreatorTemplates [data-aut-template][hidden],
+#autCreatorTemplates .aut-template-section-label[hidden],
+#autCreatorTemplates .aut-template-stage-note[hidden] {
+  display: none !important;
+}
+
+.aut-template-stage-back {
+  padding: 6px 8px;
+  border: 1px solid #9cb3eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #2450ff;
+  font: inherit;
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* Creating an Automation opens a real Untitled Draft in the Builder first. */
+#viewAutomation.aut-untitled-builder-mode .aut-flow-context-card.is-company,
+#viewAutomation.aut-untitled-builder-mode .aut-workflow.active .aut-workflow-scope {
+  display: none !important;
+}
+
+#viewAutomation .aut-flow[data-mode="phase1-untitled"] {
+  width: min(100%, 540px);
+  padding: 72px 0 110px;
+}
+
+.aut-untitled-builder-start {
+  width: min(100%, 430px);
+  padding: 34px 36px;
+  border: 1px solid #cbd8ed;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 18px 44px rgba(31, 47, 62, .12);
+  color: #243447;
+  text-align: center;
+}
+
+.aut-untitled-builder-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #eef3ff;
+  color: #2450ff;
+  font-size: 20px;
+}
+
+.aut-untitled-builder-start > small {
+  color: #6a7fae;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.aut-untitled-builder-start h2 {
+  margin: 8px 0 7px;
+  color: #243447;
+  font-size: 20px;
+}
+
+.aut-untitled-builder-start p {
+  margin: 0 auto 18px;
+  color: #65758c;
+  font-size: 11px;
+  line-height: 1.55;
+}
