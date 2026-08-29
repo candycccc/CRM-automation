@@ -8,12 +8,13 @@ Standalone HTML prototype for WeQuote CRM, Quote lifecycle Automation and Needs 
 ├── index.html              ← the prototype and Quotes-list entry. Open this first.
 ├── quote-detail.html       ← dedicated Quote workspace opened from the Quotes list
 ├── QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html ← direct colleague-facing Guide
+├── QUOTE-LIFECYCLE-AUTOMATION-MIND-MAP.html ← interactive scope map; Templates + Custom routes
 ├── CLAUDE-BUILD-QUOTE-LIFECYCLE-AUTOMATION-GUIDE.md ← complete Guide rebuild brief
 ├── crm-note-attention-phase1.js  ← Phase 1 Note / follow-up bridge
 ├── docs/                   ← requirements, guides and review material
 │   ├── WeQuote-CRM-Phase-1-PRD.html
 │   ├── WeQuote-CRM-Phase-1-QA-Checklist.xlsx   (frozen snapshot — see below)
-│   ├── quote-automation/   ← current Automation guide and source catalogue
+│   ├── quote-automation/   ← Automation reading order and source catalogue
 │   ├── needs-your-attention/ ← current Phase 1 scope and review pack
 │   ├── handoffs/           ← current implementation handoff
 │   └── visuals/            ← colleague-facing comparisons
@@ -27,17 +28,21 @@ Standalone HTML prototype for WeQuote CRM, Quote lifecycle Automation and Needs 
 
 ### Product documents and handoff
 
-| Document | What it is | Where it lives |
-|---|---|---|
-| **Phase 1 PRD** | The requirements. Self-contained: images are embedded, so it needs no assets. Part A is the main PRD, Part B the developer appendix, Part C the audit appendix. | [`docs/WeQuote-CRM-Phase-1-PRD.html`](docs/WeQuote-CRM-Phase-1-PRD.html) — open it directly |
-| **Phase 1 QA test plan** | Test plan and 137 test cases across 13 sheets, including the per-release gate and the traceability matrix. Testers record results here. | **[Google Sheets](https://docs.google.com/spreadsheets/d/144dD3swr3wN4Sp8pcLdtUvSaI-OaLEVaTOnozMtj_N0/edit)** |
-| **Quote Lifecycle Automation Guide** | The current colleague-facing explanation of fixed Templates, custom flows, Quote contexts, Custom Stages and compatible choices. A top-level copy keeps it easy to find. | [`QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html`](QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html) |
-| **Claude build brief for the Guide** | Complete build instructions, verified scope calculations, product boundaries and acceptance tests for rebuilding the interactive Guide. | [`CLAUDE-BUILD-QUOTE-LIFECYCLE-AUTOMATION-GUIDE.md`](CLAUDE-BUILD-QUOTE-LIFECYCLE-AUTOMATION-GUIDE.md) |
-| **Quote lifecycle source catalogue** | The detailed recipe and combination source used to validate the Guide. | [`docs/quote-automation/QUOTE-LIFECYCLE-FROM-SCRATCH-STAGE-CATALOGUE.md`](docs/quote-automation/QUOTE-LIFECYCLE-FROM-SCRATCH-STAGE-CATALOGUE.md) |
-| **Needs Your Attention review pack** | Current Phase 1 scope, cross-module create behaviour and review handoff. | [`docs/needs-your-attention/NEEDS-YOUR-ATTENTION-COMPLETE-REVIEW-PACK-2026-08-28.md`](docs/needs-your-attention/NEEDS-YOUR-ATTENTION-COMPLETE-REVIEW-PACK-2026-08-28.md) |
-| **Template vs Start from scratch visual** | White-background scope comparison for colleague review. | [`docs/visuals/template-vs-scratch-scope.html`](docs/visuals/template-vs-scratch-scope.html) |
-| **Claude Quote & Sales handoff** | The new Quotes-list, dedicated Quote workspace, linked Deal, option and multi-company behaviour that must be reconciled into the PRD and QA plan. | [`docs/CLAUDE-HANDOFF-QUOTE-AND-SALES-UPDATE.md`](docs/CLAUDE-HANDOFF-QUOTE-AND-SALES-UPDATE.md) |
-| **Claude Quote Detail blocking bug** | Runtime evidence, required routing contract and browser acceptance checks for the Quote Detail page that still opens inside the CRM shell. | [`docs/CLAUDE-ACTION-QUOTE-DETAIL-WORKSPACE-BUG.md`](docs/CLAUDE-ACTION-QUOTE-DETAIL-WORKSPACE-BUG.md) |
+| Document | Status / reviewed | What it is | Where it lives |
+|---|---|---|---|
+| **Quote Lifecycle Automation product direction** | **Current Automation decision authority** · 29 August 2026 | The approved authoring direction: managed Templates plus compatible Custom in all seven Quote contexts, and the current Interest/Label boundaries. | [`docs/quote-automation/QUOTE-LIFECYCLE-AUTOMATION-PRODUCT-DIRECTION-2026-08-29.md`](docs/quote-automation/QUOTE-LIFECYCLE-AUTOMATION-PRODUCT-DIRECTION-2026-08-29.md) |
+| **Phase 1 PRD** | **Committed Phase 1 baseline, with Automation addendum** · reviewed 29 August 2026 | The wider Phase 1 requirements. Its 29 August addendum points Automation authoring questions to the current product-direction record. Self-contained: images are embedded, so it needs no assets. | [`docs/WeQuote-CRM-Phase-1-PRD.html`](docs/WeQuote-CRM-Phase-1-PRD.html) — open it directly |
+| **Phase 1 QA test plan** | Live test record · linked 29 August 2026 | Test plan and 137 test cases across 13 sheets, including the per-release gate and the traceability matrix. Testers record results here. | **[Google Sheets](https://docs.google.com/spreadsheets/d/144dD3swr3wN4Sp8pcLdtUvSaI-OaLEVaTOnozMtj_N0/edit)** |
+| **Quote Lifecycle Automation mind map** | **Current colleague-facing scope overview** · reviewed 29 August 2026 | White-background interactive map of the 12 ready-made Templates, Custom Automation in every Quote context, inserted Custom Stages, Standalone Pipelines and shared safeguards. | [`QUOTE-LIFECYCLE-AUTOMATION-MIND-MAP.html`](QUOTE-LIFECYCLE-AUTOMATION-MIND-MAP.html) |
+| **Quote Lifecycle Automation Guide** | Interactive reference · reviewed 29 August 2026 · **rebuild pending** | Existing 79-candidate prototype for exploring Stages, flow parts and custom choices. It predates the newer 12-Template overview and is not the fixed-Template inventory. | [`QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html`](QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html) |
+| **Claude build brief for the Guide** | **Current rebuild specification** · 29 August 2026 | Complete build instructions, verified scope calculations, product boundaries and acceptance tests for bringing the interactive Guide up to the current overview. | [`CLAUDE-BUILD-QUOTE-LIFECYCLE-AUTOMATION-GUIDE.md`](CLAUDE-BUILD-QUOTE-LIFECYCLE-AUTOMATION-GUIDE.md) |
+| **Quote lifecycle source catalogue** | Review evidence · reviewed 29 August 2026 | Detailed recipe and combination source used to validate the Guide. Its candidate combinations are not the 12 fixed Templates. | [`docs/quote-automation/QUOTE-LIFECYCLE-FROM-SCRATCH-STAGE-CATALOGUE.md`](docs/quote-automation/QUOTE-LIFECYCLE-FROM-SCRATCH-STAGE-CATALOGUE.md) |
+| **Needs Your Attention review pack** | Current review pack · 28 August 2026 | Current Phase 1 scope, cross-module create behaviour and review handoff. | [`docs/needs-your-attention/NEEDS-YOUR-ATTENTION-COMPLETE-REVIEW-PACK-2026-08-28.md`](docs/needs-your-attention/NEEDS-YOUR-ATTENTION-COMPLETE-REVIEW-PACK-2026-08-28.md) |
+| **Template vs Start from scratch visual** | Scope visual · reviewed 29 August 2026 | White-background scope comparison for colleague review. | [`docs/visuals/template-vs-scratch-scope.html`](docs/visuals/template-vs-scratch-scope.html) |
+| **Claude Quote & Sales handoff** | Reconciliation input · current on 29 August 2026 | The new Quotes-list, dedicated Quote workspace, linked Deal, option and multi-company behaviour that must be reconciled into the PRD and QA plan. | [`docs/CLAUDE-HANDOFF-QUOTE-AND-SALES-UPDATE.md`](docs/CLAUDE-HANDOFF-QUOTE-AND-SALES-UPDATE.md) |
+| **Claude Quote Detail blocking bug** | Open blocking handoff · current on 29 August 2026 | Runtime evidence, required routing contract and browser acceptance checks for the Quote Detail page that still opens inside the CRM shell. | [`docs/CLAUDE-ACTION-QUOTE-DETAIL-WORKSPACE-BUG.md`](docs/CLAUDE-ACTION-QUOTE-DETAIL-WORKSPACE-BUG.md) |
+
+Status matters when the files disagree: the 29 August product-direction record controls Quote Automation authoring; the PRD remains the wider committed Phase 1 baseline and carries a matching addendum. The Mind Map is the current colleague-facing overview; the existing Guide remains an interactive reference until it is rebuilt from the current build brief. The catalogue's 79 reviewed candidates are not the 12 fixed Templates.
 
 Each document has exactly one home. The PRD is a single HTML file — edit it in place rather than keeping a separate source copy. The QA test plan is the Google Sheet: it is the live document testers fill in, so it is never overwritten by re-uploading a workbook.
 

@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRM Automation Scope — Interactive Mind Map</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17263a;
+      --muted: #687991;
+      --line: #c9d4e2;
+      --blue: #2558e8;
+      --blue-soft: #edf3ff;
+      --green: #16834f;
+      --green-soft: #edf8f2;
+      --purple: #7138d5;
+      --purple-soft: #f4efff;
+      --amber: #a66508;
+      --amber-soft: #fff7e6;
+      --red: #b7394c;
+      --red-soft: #fff1f3;
+      --grey-soft: #f2f5f8;
+      --shadow: 0 8px 26px rgba(35, 52, 77, .11);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 12px;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #fff; color: var(--ink); overflow: hidden; }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid rgba(37, 88, 232, .28); outline-offset: 2px; }
+    .app { width: 100%; height: 100%; display: grid; grid-template-rows: auto 1fr; background: #fff; }
+    .topbar {
+      min-height: 64px; padding: 10px 14px; display: flex; align-items: center; gap: 14px;
+      border-bottom: 1px solid #dce4ee; background: #fff; z-index: 20;
+    }
+    .brand { min-width: 255px; display: flex; align-items: center; gap: 10px; }
+    .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; background: #f22e57; color: #fff; font-weight: 900; font-size: 16px; }
+    .brand-copy strong { display: block; font-size: 16px; line-height: 1.2; }
+    .brand-copy span { display: block; margin-top: 2px; color: var(--muted); }
+    .toolbar { margin-left: auto; display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
+    .segmented { display: inline-flex; padding: 3px; border: 1px solid #d8e0eb; border-radius: 10px; background: #f5f7fa; }
+    .tool, .segmented button {
+      min-height: 34px; border: 1px solid #d6dfeb; border-radius: 8px; padding: 0 10px;
+      background: #fff; cursor: pointer; white-space: nowrap;
+    }
+    .companion-link { min-height: 34px; display: inline-flex; align-items: center; border: 1px solid #d6dfeb; border-radius: 8px; padding: 0 10px; background: #fff; color: var(--blue); text-decoration: none; font-weight: 750; white-space: nowrap; }
+    .companion-link:hover { border-color: #9eb0c8; }
+    .segmented button { border: 0; background: transparent; }
+    .segmented button[aria-pressed="true"] { background: #fff; color: var(--blue); box-shadow: 0 1px 4px rgba(33, 50, 74, .13); font-weight: 750; }
+    .tool:hover, .segmented button:hover { border-color: #9eb0c8; }
+    .tool.primary { color: var(--blue); border-color: #aec2fb; background: var(--blue-soft); font-weight: 750; }
+    .search-wrap { width: min(300px, 28vw); position: relative; }
+    .search-wrap input { width: 100%; height: 36px; border: 1px solid #cdd8e6; border-radius: 9px; padding: 0 72px 0 32px; color: var(--ink); background: #fff; }
+    .search-wrap::before { content: "⌕"; position: absolute; left: 10px; top: 7px; color: var(--muted); font-size: 17px; }
+    .search-count { position: absolute; right: 8px; top: 9px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .workspace { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 360px; background: #fff; }
+    .map-pane, .outline-pane { min-width: 0; min-height: 0; position: relative; }
+    .map-pane[hidden], .outline-pane[hidden] { display: none; }
+    .map-viewport { width: 100%; height: 100%; overflow: hidden; position: relative; background-color: #fff; background-image: radial-gradient(#dce5f0 1px, transparent 1px); background-size: 22px 22px; cursor: grab; touch-action: none; }
+    .map-viewport.is-panning { cursor: grabbing; }
+    .map-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+    #connectors { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+    #nodes { position: absolute; inset: 0; }
+    .map-node { position: absolute; width: 258px; min-height: 86px; filter: drop-shadow(0 5px 10px rgba(35, 52, 77, .08)); }
+    .node-main {
+      width: 100%; min-height: 86px; padding: 12px 42px 11px 13px; text-align: left;
+      border: 1px solid #c9d5e5; border-left: 5px solid var(--blue); border-radius: 12px;
+      background: #fff; cursor: pointer; display: block;
+    }
+    .node-main:hover { border-color: #8fa5c1; transform: translateY(-1px); }
+    .map-node.is-selected .node-main { outline: 3px solid rgba(37, 88, 232, .22); border-color: var(--blue); }
+    .map-node.is-match .node-main { box-shadow: 0 0 0 4px #ffe69d; }
+    .map-node.is-dim { opacity: .24; }
+    .node-eyebrow { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; color: var(--muted); font-size: 10px; line-height: 1.1; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+    .node-title { display: block; font-size: 14px; line-height: 1.25; font-weight: 800; }
+    .node-summary { display: block; margin-top: 5px; color: var(--muted); line-height: 1.3; }
+    .node-toggle { position: absolute; right: 10px; top: 25px; width: 28px; height: 28px; border: 1px solid #cbd7e6; border-radius: 50%; background: #fff; cursor: pointer; font-weight: 850; color: #52657d; }
+    .node-toggle:hover { color: var(--blue); border-color: #94acf0; background: var(--blue-soft); }
+    .map-node.root .node-main { border-color: #f22e57; border-left-color: #f22e57; background: #fff6f8; }
+    .map-node.root .node-title { font-size: 16px; }
+    .map-node.branch .node-main { border-left-color: var(--blue); background: var(--blue-soft); }
+    .map-node.stage .node-main { border-left-color: #13887f; background: #f0fbf8; }
+    .map-node.result .node-main { border-left-color: #3e627d; background: #f1f5f8; }
+    .map-node.fixed .node-main { border-left-color: #64748b; background: var(--grey-soft); }
+    .map-node.editable .node-main { border-left-color: var(--green); background: var(--green-soft); }
+    .map-node.category .node-main { border-left-color: var(--purple); background: var(--purple-soft); }
+    .map-node.warning .node-main { border: 1px dashed #ca8b22; border-left: 5px solid var(--amber); background: var(--amber-soft); }
+    .map-node.blocked .node-main { border: 1px dashed #cc7c88; border-left: 5px solid var(--red); background: var(--red-soft); }
+    .map-node.proposal .node-main { border: 1px dashed #8f6cce; border-left: 5px solid var(--purple); background: #fbf8ff; }
+    .map-help { position: absolute; left: 14px; bottom: 14px; display: flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid #d7e0eb; border-radius: 10px; background: rgba(255,255,255,.94); box-shadow: var(--shadow); color: var(--muted); z-index: 4; }
+    .map-help kbd { border: 1px solid #cbd5e1; border-bottom-width: 2px; border-radius: 5px; background: #fff; padding: 1px 5px; color: var(--ink); }
+    .zoom-dock { position: absolute; right: 14px; bottom: 14px; display: flex; align-items: center; padding: 4px; border: 1px solid #d6dfeb; border-radius: 11px; background: #fff; box-shadow: var(--shadow); z-index: 5; }
+    .zoom-dock button { min-width: 34px; height: 32px; border: 0; border-radius: 7px; background: #fff; cursor: pointer; }
+    .zoom-dock button:hover { background: var(--blue-soft); color: var(--blue); }
+    .zoom-readout { min-width: 52px; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .detail-panel { min-width: 0; min-height: 0; border-left: 1px solid #dbe3ed; background: #fff; display: grid; grid-template-rows: auto 1fr; }
+    .detail-head { padding: 15px 16px 13px; border-bottom: 1px solid #e1e7ef; }
+    .detail-head small { display: block; color: var(--blue); font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
+    .detail-head h2 { margin: 6px 0 5px; font-size: 18px; line-height: 1.25; }
+    .detail-head p { margin: 0; color: var(--muted); line-height: 1.45; }
+    .detail-actions { display: flex; gap: 7px; margin-top: 12px; }
+    .detail-actions button { min-height: 33px; border: 1px solid #ced8e5; border-radius: 8px; background: #fff; padding: 0 9px; cursor: pointer; }
+    .detail-body { min-height: 0; overflow: auto; padding: 14px 16px 24px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .chip { display: inline-flex; align-items: center; gap: 5px; min-height: 25px; padding: 3px 8px; border: 1px solid #d2dce8; border-radius: 999px; background: #f7f9fb; color: #4b5f77; font-size: 11px; font-weight: 750; }
+    .chip.fixed { background: var(--grey-soft); }
+    .chip.editable { background: var(--green-soft); color: #176c46; border-color: #b8e0cc; }
+    .chip.warning { background: var(--amber-soft); color: #8a5708; border-color: #efd399; }
+    .chip.proposal { background: var(--purple-soft); color: #6432b2; border-color: #d8c6f4; }
+    .detail-section { margin: 0 0 10px; border: 1px solid #dce4ee; border-radius: 10px; background: #fff; }
+    .detail-section summary { cursor: pointer; padding: 10px 12px; font-weight: 800; list-style: none; }
+    .detail-section summary::-webkit-details-marker { display: none; }
+    .detail-section summary::after { content: "+"; float: right; color: var(--muted); }
+    .detail-section[open] summary::after { content: "−"; }
+    .detail-content { border-top: 1px solid #e5ebf2; padding: 10px 12px 12px; color: #40536b; line-height: 1.5; }
+    .detail-content p { margin: 0 0 8px; }
+    .detail-content ul, .detail-content ol { margin: 0; padding-left: 18px; }
+    .detail-content li + li { margin-top: 5px; }
+    .status-card { padding: 11px 12px; border-radius: 10px; background: #f5f7fa; color: #40536b; margin-bottom: 10px; }
+    .status-card strong { display: block; color: var(--ink); margin-bottom: 4px; }
+    .legend { display: grid; gap: 7px; }
+    .legend span { display: flex; align-items: center; gap: 8px; }
+    .legend i { width: 13px; height: 13px; border-radius: 4px; background: var(--grey-soft); border: 1px solid #8392a6; }
+    .legend .editable i { background: var(--green-soft); border-color: var(--green); }
+    .legend .proposal i { background: var(--purple-soft); border: 1px dashed var(--purple); }
+    .legend .blocked i { background: var(--red-soft); border: 1px dashed var(--red); }
+    .outline-pane { overflow: auto; padding: 18px 22px 40px; background: #fff; }
+    .outline-intro { max-width: 920px; margin: 0 auto 14px; }
+    .outline-intro h2 { margin: 0 0 4px; font-size: 18px; }
+    .outline-intro p { margin: 0; color: var(--muted); }
+    .outline-tree { max-width: 920px; margin: 0 auto; }
+    .outline-item { margin: 6px 0; border-left: 2px solid #d8e1ed; padding-left: 12px; }
+    .outline-row { display: flex; align-items: stretch; gap: 6px; }
+    .outline-select { flex: 1; min-height: 42px; text-align: left; border: 1px solid #d4deea; border-radius: 9px; background: #fff; padding: 8px 10px; cursor: pointer; }
+    .outline-select strong { display: block; }
+    .outline-select span { display: block; margin-top: 3px; color: var(--muted); }
+    .outline-toggle { width: 42px; border: 1px solid #d4deea; border-radius: 9px; background: #fff; cursor: pointer; }
+    .outline-children { margin-left: 18px; }
+    .source-note { margin-top: 14px; padding: 10px 12px; border-left: 4px solid var(--amber); background: var(--amber-soft); color: #6d4b16; line-height: 1.45; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 1080px) {
+      .workspace { grid-template-columns: minmax(0, 1fr) 320px; }
+      .brand { min-width: 210px; }
+      .tool.optional { display: none; }
+    }
+    @media (max-width: 800px) {
+      html, body { overflow: auto; }
+      .app { min-height: 100%; height: auto; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .brand { min-width: 0; }
+      .toolbar { width: 100%; margin: 0; justify-content: flex-start; }
+      .search-wrap { width: 100%; order: 3; }
+      .workspace { min-height: calc(100vh - 130px); display: block; }
+      .map-pane, .outline-pane { height: calc(100vh - 130px); }
+      .detail-panel { position: fixed; left: 12px; right: 12px; bottom: 12px; max-height: 58vh; border: 1px solid #d2dce8; border-radius: 14px; box-shadow: 0 16px 44px rgba(20,35,55,.22); z-index: 30; display: none; }
+      .detail-panel.is-mobile-open { display: grid; }
+      .map-help { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+    @media print {
+      html, body { overflow: visible; }
+      .topbar, .detail-panel, .zoom-dock, .map-help { display: none !important; }
+      .workspace, .map-pane, .map-viewport { display: block; width: 100%; height: auto; overflow: visible; background: #fff; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">WQ</div>
+        <div class="brand-copy"><strong>CRM Automation Scope</strong><span>Current overview · with and without the Quote lifecycle · reviewed 29 August 2026</span></div>
+      </div>
+      <div class="toolbar" aria-label="Mind map controls">
+        <a class="companion-link" href="QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html">Open Guide reference</a>
+        <div class="segmented" aria-label="View">
+          <button id="mapMode" type="button" aria-pressed="true">Map</button>
+          <button id="outlineMode" type="button" aria-pressed="false">Outline</button>
+        </div>
+        <div class="search-wrap"><label class="sr-only" for="search">Search the mind map</label><input id="search" type="search" placeholder="Search Templates, Stages, Rules…"><span id="searchCount" class="search-count"></span></div>
+        <button class="tool optional" id="expandAll" type="button">Expand all</button>
+        <button class="tool optional" id="collapseAll" type="button">Collapse details</button>
+        <button class="tool primary" id="fitView" type="button">Fit view</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="map-pane" id="mapPane" aria-label="Interactive mind map">
+        <div class="map-viewport" id="viewport" tabindex="0" aria-describedby="mapInstructions">
+          <div class="map-world" id="world">
+            <svg id="connectors" aria-hidden="true"></svg>
+            <div id="nodes"></div>
+          </div>
+        </div>
+        <p class="map-help" id="mapInstructions"><span>Drag the white space to move</span><span>•</span><span>Scroll to zoom</span><span>•</span><kbd>F</kbd><span>fits all</span></p>
+        <div class="zoom-dock" aria-label="Zoom controls">
+          <button id="zoomOut" type="button" aria-label="Zoom out">−</button>
+          <button id="zoomReset" class="zoom-readout" type="button" aria-label="Reset zoom to 100 percent">100%</button>
+          <button id="zoomIn" type="button" aria-label="Zoom in">+</button>
+        </div>
+      </section>
+
+      <section class="outline-pane" id="outlinePane" hidden aria-label="Mind map outline">
+        <div class="outline-intro"><h2>CRM Automation scope outline</h2><p>Compare the Quote-connected and Standalone branches, then open any item to read the full fixed, editable and proposed scope.</p></div>
+        <div class="outline-tree" id="outlineTree"></div>
+      </section>
+
+      <aside class="detail-panel" id="detailPanel" aria-label="Selected item details">
+        <header class="detail-head">
+          <small id="detailEyebrow">Scope overview</small>
+          <h2 id="detailTitle">Quote Lifecycle Automation</h2>
+          <p id="detailSummary"></p>
+          <div class="detail-actions"><button id="centreNode" type="button">Centre on map</button><button id="toggleBranch" type="button">Expand branch</button></div>
+        </header>
+        <div class="detail-body" id="detailBody"></div>
+      </aside>
+    </main>
+    <div class="sr-only" id="live" aria-live="polite"></div>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const sharedStarts = [
+      'Deal Owner changes',
+      'Deal Next Action changes',
+      'Deal Next Action becomes Due, Overdue or Completed',
+      'Meeting or Site Visit is scheduled, starts or completes',
+      'A file is added to the Deal',
+      'A requested file is received',
+      'No activity on the Deal for a chosen time',
+      'Expected Close Date is coming up',
+      'Deal information changes: Owner, Label, Interest, Value, Company or Expected Close Date'
+    ];
+    const sharedRules = [
+      'Does the Deal have an Owner?',
+      'What is the Deal Next Action status?',
+      'Is a required task missing or complete?',
+      'What is the required file or File Request status?',
+      'Is a Meeting or Site Visit complete?',
+      'Has there been recent activity on the Deal?',
+      'Does the Deal have this Label?',
+      'Does the Deal have this Interest?',
+      'Is the Deal Value above or below an amount?',
+      'Does this Company own the Deal?',
+      'When is the Expected Close Date?'
+    ];
+    const sharedActions = [
+      'Assign the Deal to a person',
+      'Set the Deal Next Action',
+      'Clear the Deal Next Action',
+      'Create a Note',
+      'Schedule a Meeting or Site Visit',
+      'Add someone to Watch this Deal',
+      'Remove someone from Watching this Deal',
+      'Add a Deal Label',
+      'Remove a Deal Label',
+      'Add an Interest — only from clear, structured evidence',
+      'Request a file',
+      'Attach a file to the Deal',
+      'Set the Expected Close Date',
+      'Send an internal notification'
+    ];
+    const noteFields = ['Note title', 'Description', 'Responsible or mentioned person', 'Follow-up date', 'Follow-up time', 'Optional or Required completion'];
+
+    const templates = [
+      { id:'qualified-next-action', stage:'Qualified', title:'Qualified first Next Action', count:5, start:'Deal enters Qualified', wait:'None', rule:'No open Deal Next Action exists', yes:'Set Deal Next Action', no:'Keep the existing Next Action and stop', editable:['Next Action title','Assignee','Due-day count','Working or calendar day unit','Due time'], fixed:['Next Action type: Customer follow-up','Duplicate and replacement policy'] },
+      { id:'qualified-inactivity', stage:'Qualified', title:'Qualified inactivity reminder', count:7, start:'Deal enters Qualified', wait:'7 calendar days by default', rule:'Deal is still Qualified AND has no recent sales activity', yes:'Create Note — Qualified inactivity follow-up', no:'Stop', editable:['Wait duration', ...noteFields] },
+      { id:'prequote-readiness', stage:'Qualified', title:'Site visit & pre-Quote readiness', count:6, start:'Deal enters Qualified', wait:'None', rule:'Required Site Visit OR customer/site information is incomplete', yes:'Create Note — Site readiness follow-up', no:'Stop', editable:noteFields, fixed:['When completion is Required, the checkpoint remains the first related Quote'] },
+      { id:'quote-build', stage:'In Progress', title:'Quote build & SOW checks', count:6, start:'First related Quote is created or edited', prototypeStart:'Prototype currently starts only when the first related Quote is created', wait:'None', rule:'Required pricing data or SOW information is missing', yes:'Create Note — Quote information needs attention', no:'Stop', editable:noteFields, warning:'Guide and prototype do not yet use exactly the same start event.' },
+      { id:'internal-review', stage:'In Review', title:'Internal Quote review', count:6, start:'Quote is submitted for internal review', wait:'None', rule:'No open technical review Note exists', yes:'Create Note — Technical review required', no:'Stop', editable:noteFields },
+      { id:'ready-to-send', stage:'Passed Review', title:'Ready-to-send check', count:6, start:'Quote becomes Passed Review', wait:'None', rule:'Quote is still viable AND required customer-facing content is complete', yes:'Create Note — Quote ready-to-send check complete', no:'Stop', editable:noteFields, warning:'A separate concept preview shows a No-path Note; the fixed Template currently stops. Confirm before build.' },
+      { id:'high-value', stage:'Passed Review', title:'High-value approval', count:2, start:'Quote becomes Passed Review', wait:'None', rule:'Quote value > £25,000 OR discount > 15%', yes:'Create Note — High-value approval required', no:'Stop', editable:['Quote-value threshold in company currency','Discount percentage from 0–100'], fixed:['The OR operator','Both branches','Create Note Action and its Note content'] },
+      { id:'sent-follow-up', stage:'Sent', title:'Sent Quote follow-up', count:7, start:'Quote is sent', wait:'3 calendar days by default', rule:'Intended: Quote is still Sent AND not expired', prototypeRule:'Prototype currently checks: No open Deal Next Action exists', yes:'Create Note — Sent Quote customer follow-up', no:'Stop', editable:['Wait duration', ...noteFields], warning:'The intended Rule and current prototype Rule conflict. This must be resolved before build.' },
+      { id:'expiry-reminder', stage:'Sent', title:'Quote expiry reminder', count:6, start:'Quote expiry date approaches — prototype uses 3 days away', wait:'None — this is a date-based start, not a Wait', rule:'Quote is still Sent AND remains viable', yes:'Create Note — Quote expiry follow-up', no:'Stop', editable:noteFields, fixed:['Prototype trigger offset: 3 days'] },
+      { id:'won-handoff', stage:'Won result', title:'Won Deal handoff', count:6, start:'Any relevant Quote is Accepted; WeQuote derives Won', wait:'None', rule:'Prototype: No open Deal Next Action exists', yes:'Create Note — Won Deal handoff', no:'Stop', editable:noteFields, warning:'The exact handoff Rule still needs one agreed product contract.' },
+      { id:'draft-invoice', stage:'Won result', title:'Accepted Quote → Draft Invoice', count:0, start:'Quote is Accepted', wait:'None', rule:'Deposit amount is available to invoice', yes:'Create Draft Invoice', no:'Stop', editable:[], fixed:['Managed integration Action','30% deposit and billing defaults','Draft-only mode','Finance team owner'] },
+      { id:'lost-follow-up', stage:'Lost result', title:'Lost Deal reason follow-up', count:6, start:'No viable relevant Quote remains; WeQuote derives Lost', wait:'None', rule:'Loss reason is empty', yes:'Create Note — Loss reason required', no:'Stop', editable:noteFields }
+    ];
+
+    const gaps = [
+      { id:'gap-qualified', title:'Qualified → In Progress', subtitle:'Before the first Quote', counts:'10 starts · 13 checks · 15 actions', examples:'Site Ready, Discovery Complete, Requirements Confirmed', starts:[], rules:['Deal still has no current Quote','Deal is still Qualified'], action:'Create the first Quote for this Deal', actionStatus:'Latest guarded design proposal', next:'First Quote is created or linked → WeQuote moves the Deal to In Progress', unavailable:'No later Quote revision, variation or direct protected-Stage movement.' },
+      { id:'gap-progress', title:'In Progress → In Review', subtitle:'While Quote options are being prepared', counts:'12 starts · 13 checks · 15 actions', examples:'Costing Complete, Scope Confirmed, Ready for Review', starts:['A Quote for this Deal is saved','Saved Quote price changes'], rules:['Quote can still be edited','Quote Review is enabled or disabled'], action:'Create another Quote option', actionStatus:'Latest guarded design proposal', next:'Submit a Quote for review → WeQuote moves the Deal to In Review', unavailable:'Another option is not a revision or variation. One run creates no more than one option.' },
+      { id:'gap-review', title:'In Review → Passed Review', subtitle:'While the Quote is being reviewed', counts:'12 starts · 14 checks · 14 actions', examples:'Commercial Check, Technical Check, Director Sign-off', starts:['Quote is submitted for internal review','Quote Review Note changes'], rules:['Quote is still In Review','Nobody can review','Technical review Note status'], action:'No Create Quote Action', next:'Pass → Passed Review; changes requested → the relevant Quote returns to In Progress', unavailable:'Creating another Quote here would require a clear option/revision/variation choice, which is not available yet.' },
+      { id:'gap-passed', title:'Passed Review → Sent', subtitle:'After review, before sending', counts:'11 starts · 15 checks · 14 actions', examples:'Final Pack Check, Customer Details Check, Ready to Send', starts:['Quote passes internal review'], rules:['Quote still counts for this Deal','Quote total threshold','Discount threshold','Another approval is needed'], action:'No Create Quote Action', next:'Successful send → WeQuote moves the Deal to Sent', unavailable:'Automation cannot send a Quote or move the Deal directly to Sent.' },
+      { id:'gap-sent', title:'Sent → Won / Lost', subtitle:'After sending, before the result', counts:'13 starts · 16 checks · 14 actions', examples:'Follow-up, Negotiation, Decision Pending', starts:['Quote is sent','Customer views a Sent Quote','Quote expiry date approaches'], rules:['Quote is still Sent','Customer has viewed it','No related Quote has been viewed','Quote still counts for the Deal','Quote has not expired'], action:'No Create Quote Action', next:'Accepted option → Won; when no option can continue → Lost', unavailable:'Automation cannot accept for the customer, mark Won/Lost or create a new Quote after the result.' }
+    ];
+
+    const quoteContexts = [
+      {
+        id:'quote-custom-qualified', title:'Qualified', type:'Protected Quote Stage',
+        meaning:'The Deal is ready, but it does not yet have a current Quote.', counts:'10 Starts when · 13 Rules · 14 shared Actions',
+        extraStarts:['Deal enters Qualified'],
+        extraRules:['Does the Deal still have no current Quote?','Is the Deal still Qualified?'],
+        quoteAction:'Create the first Quote for this Deal', actionStatus:'Guarded design proposal',
+        boundary:'Only while the Deal is still Qualified and has no current Quote. It creates one empty, not-sent Quote at In Progress; the protected lifecycle then moves the Deal.'
+      },
+      {
+        id:'quote-custom-progress', title:'In Progress', type:'Protected Quote Stage',
+        meaning:'At least one current Quote already exists and can still be edited.', counts:'12 Starts when · 13 Rules · 14 shared Actions',
+        extraStarts:['First Quote is added to the Deal','A Quote for this Deal is saved','Saved Quote price changes'],
+        extraRules:['Can the Quote still be edited?','Is Quote Review turned on?'],
+        quoteAction:'Create another Quote option', actionStatus:'Guarded multi-Quote design proposal',
+        boundary:'Only while the Deal is still In Progress and already has a current Quote. It creates a separate empty option, not a revision or variation. One run creates no more than one option.'
+      },
+      {
+        id:'quote-custom-review', title:'In Review', type:'Protected Quote Stage',
+        meaning:'A Quote is waiting for an internal review result.', counts:'11 Starts when · 14 Rules · 14 shared Actions',
+        extraStarts:['Quote is submitted for internal review','Quote Review Note changes'],
+        extraRules:['Is the Quote still In Review?','Is there nobody who can review the Quote?','What is the technical review Note status?'],
+        quoteAction:'No Create Quote Action here', actionStatus:'Protected boundary',
+        boundary:'A new Quote here could mean another option, a revision or a variation. WeQuote must not guess. Custom Automation also cannot pass or reject the review.'
+      },
+      {
+        id:'quote-custom-passed', title:'Passed Review', type:'Protected Quote Stage',
+        meaning:'A Quote passed review but has not been sent yet.', counts:'10 Starts when · 15 Rules · 14 shared Actions',
+        extraStarts:['Quote passes internal review'],
+        extraRules:['Does the Quote still count for this Deal?','Is the Quote total above an amount?','Is the Quote discount above a percentage?','Does this Quote need another approval?'],
+        quoteAction:'No Create Quote Action here', actionStatus:'Protected boundary',
+        boundary:'Custom Automation can prepare internal work, but it cannot send the Quote or move the Deal directly into Sent.'
+      },
+      {
+        id:'quote-custom-sent', title:'Sent', type:'Protected Quote Stage',
+        meaning:'At least one current Quote has been sent to the customer.', counts:'12 Starts when · 16 Rules · 14 shared Actions',
+        extraStarts:['Quote is sent','Customer views a Sent Quote','Quote expiry date is coming up'],
+        extraRules:['Is the Quote still Sent?','Has the customer viewed the Sent Quote?','Has the customer viewed none of the matching Sent Quotes?','Does the Quote still count for this Deal?','Has the Quote not expired yet?'],
+        quoteAction:'No Create Quote Action here', actionStatus:'Protected boundary',
+        boundary:'Custom Automation can create follow-up work, but it cannot accept for the customer, mark Won/Lost or create a new Quote after the result.'
+      },
+      {
+        id:'quote-custom-won', title:'Won context', type:'Protected result context',
+        meaning:'A relevant Quote was accepted, so WeQuote derives the Deal as Won.', counts:'11 Starts when · 12 Rules · 14 shared Actions',
+        extraStarts:['Quote is accepted','Deal becomes Won'],
+        extraRules:['Does the Deal have an accepted Quote?'],
+        quoteAction:'No Create Quote Action here', actionStatus:'Protected result',
+        boundary:'Custom Automation can run handoff work after the result, but it cannot create another Quote, accept a Quote or write the Won result.'
+      },
+      {
+        id:'quote-custom-lost', title:'Lost context', type:'Protected result context',
+        meaning:'No current Quote can keep the Deal open, so WeQuote derives the Deal as Lost.', counts:'10 Starts when · 13 Rules · 14 shared Actions',
+        extraStarts:['Deal becomes Lost'],
+        extraRules:['Is the Loss Reason missing?','Can none of the Deal’s Quotes keep it open?'],
+        quoteAction:'No Create Quote Action here', actionStatus:'Protected result',
+        boundary:'Custom Automation can create internal follow-up work after the result, but it cannot create another Quote or write the Lost result.'
+      }
+    ];
+
+    const node = (id, title, eyebrow, summary, kind, sections = [], children = [], tags = []) => ({ id, title, eyebrow, summary, kind, sections, children, tags });
+    const listSection = (title, items, copy = '') => ({ title, items, copy });
+    const textSection = (title, copy) => ({ title, copy });
+
+    function templateNode(t) {
+      const flowItems = [
+        `Starts when — ${t.start}`,
+        `Wait — ${t.wait}`,
+        `Rule — ${t.rule}`,
+        `If Yes — ${t.yes}`,
+        `If No — ${t.no}`
+      ];
+      if (t.prototypeStart) flowItems.push(t.prototypeStart);
+      if (t.prototypeRule) flowItems.push(t.prototypeRule);
+      const fixed = ['Template name and placement','Starts when choice','Rule and operator','Yes / No branch shape','Wait position','Step order','Action type','Duplicate-prevention policy', ...(t.fixed || [])];
+      const children = [
+        node(`${t.id}-flow`, 'Fixed flow', 'Locked', `${t.start} → ${t.rule} → ${t.yes}`, 'fixed', [listSection('Complete fixed flow', flowItems), listSection('Fixed by WeQuote', fixed)], [], ['Fixed by WeQuote']),
+        node(`${t.id}-edit`, 'You can change', 'Approved settings', t.count ? `${t.count} approved settings` : 'No user-adjustable settings', t.count ? 'editable' : 'fixed', [listSection(t.count ? 'Approved settings' : 'No editable settings', t.editable.length ? t.editable : ['This managed integration Template has no user-adjustable fields.'])], [], [t.count ? 'You can change' : 'Fixed by WeQuote'])
+      ];
+      if (t.warning) children.push(node(`${t.id}-warning`, 'Confirm before build', 'Source conflict', t.warning, 'warning', [textSection('What needs a decision', t.warning)], [], ['Review required']));
+      return node(t.id, t.title, 'Fixed Template', `${t.count} editable setting${t.count === 1 ? '' : 's'} · structure locked`, 'fixed', [listSection('Fixed flow', flowItems), listSection('You can change', t.editable.length ? t.editable : ['Nothing']), listSection('Fixed by WeQuote', fixed), ...(t.warning ? [textSection('Confirm before build', t.warning)] : [])], children, ['Fixed Template', `${t.count} settings`]);
+    }
+
+    function stageNode(stage, kind = 'stage') {
+      const matching = templates.filter(t => t.stage === stage);
+      return node(`stage-${stage.toLowerCase().replace(/\W+/g,'-')}`, stage, kind === 'result' ? 'Derived result' : 'Protected Quote Stage', `${matching.length} fixed Template${matching.length === 1 ? '' : 's'}`, kind, [listSection('Templates here', matching.map(t => t.title)), textSection('What stays fixed', kind === 'result' ? 'WeQuote derives this result from related Quote outcomes. An Automation cannot write it directly.' : 'The Quote lifecycle meaning and movement into this Stage remain controlled by WeQuote.')], matching.map(templateNode), [kind === 'result' ? 'Result' : 'Protected Stage']);
+    }
+
+    const commonCustomSections = [
+      listSection('Starts when available in every Custom working Stage', ['Deal enters this Custom Stage', ...sharedStarts]),
+      listSection('Rules available in every Custom working Stage', sharedRules),
+      listSection('Actions in the design-guide library', sharedActions),
+      textSection('Wait and branches', 'Wait is optional. The first scratch contract supports 1–90 whole calendar days. A Rule is optional and automatically creates If Yes and If No paths. No Rule means the flow can go directly to Actions.'),
+      textSection('Activation check', 'The draft stays Inactive until the main path, or the If Yes path after a Rule, contains at least one Action.')
+    ];
+
+    function gapNode(g) {
+      const extraStarts = g.starts.length ? g.starts : ['No extra Quote Starts when in this gap'];
+      const extraActionKind = g.action.startsWith('No ') ? 'blocked' : 'proposal';
+      return node(g.id, g.title, 'Quote Custom Stage gap', `${g.subtitle} · ${g.counts}`, 'stage', [
+        textSection('Typical Stage names', g.examples),
+        ...commonCustomSections,
+        listSection('Extra Quote Starts when for this gap', extraStarts),
+        listSection('Extra Quote Rules for this gap', g.rules),
+        textSection('Extra Quote Action', `${g.action}${g.actionStatus ? ` — ${g.actionStatus}` : ''}`),
+        textSection('What moves the protected lifecycle next', g.next),
+        textSection('Not offered here', g.unavailable)
+      ], [
+        node(`${g.id}-shared`, 'Shared Deal library', 'Always available', 'Stage entry + 9 starts · 11 Rules · 14 available Actions', 'category', commonCustomSections, [], ['Shared choices']),
+        node(`${g.id}-starts`, 'Extra Quote Starts when', 'This gap only', extraStarts.join(' · '), g.starts.length ? 'editable' : 'fixed', [listSection('Extra Starts when', extraStarts)], [], [g.starts.length ? 'You can choose' : 'No extra choices']),
+        node(`${g.id}-rules`, 'Extra Quote Rules', 'This gap only', `${g.rules.length} extra checks`, 'category', [listSection('Extra Rules', g.rules)], [], ['You can choose']),
+        node(`${g.id}-action`, g.action, 'Quote Action', g.actionStatus || g.unavailable, extraActionKind, [textSection('Availability', g.actionStatus || g.unavailable), textSection('Boundary', g.unavailable)], [], [extraActionKind === 'proposal' ? 'Design proposal' : 'Not offered']),
+        node(`${g.id}-movement`, 'Protected movement', 'Fixed by WeQuote', g.next, 'fixed', [textSection('Next lifecycle event', g.next), textSection('Why it is fixed', 'Custom Automation cannot write a protected Quote Stage or result directly.')], [], ['Fixed by WeQuote'])
+      ], ['Custom Stage', g.counts]);
+    }
+
+    function quoteContextNode(context) {
+      const hasQuoteAction = !context.quoteAction.startsWith('No ');
+      const contextKind = context.type.includes('result') ? 'result' : 'stage';
+      return node(context.id, context.title, context.type, `${context.counts} · Custom route`, contextKind, [
+        textSection('What this context means', context.meaning),
+        textSection('Latest product direction', 'The user may choose a ready-made Template or build a compatible Custom Automation in this Quote context.'),
+        listSection('Shared Starts when', sharedStarts),
+        listSection('Extra Starts when for this context', context.extraStarts),
+        listSection('Shared Rules', sharedRules),
+        listSection('Extra Rules for this context', context.extraRules),
+        listSection('Shared Actions', sharedActions),
+        textSection('Quote-specific Action boundary', `${context.quoteAction} — ${context.actionStatus}. ${context.boundary}`),
+        textSection('What remains fixed', 'The Automation stays assigned to this Quote context. WeQuote still controls the protected Stage meaning, Quote-driven movement and Won/Lost result.')
+      ], [
+        node(`${context.id}-starts`, 'Starts when', 'Choose one compatible event', `${sharedStarts.length} shared + ${context.extraStarts.length} context choice${context.extraStarts.length === 1 ? '' : 's'}`, 'category', [listSection('Shared Deal events', sharedStarts), listSection('Extra Quote events', context.extraStarts)], [], ['Custom choice']),
+        node(`${context.id}-rules`, 'Rules', 'Optional checks', `${sharedRules.length} shared + ${context.extraRules.length} context check${context.extraRules.length === 1 ? '' : 's'}`, 'category', [listSection('Shared Deal checks', sharedRules), listSection('Extra Quote checks', context.extraRules), textSection('Branch behaviour', 'A Rule is optional. Adding one creates If Yes and If No paths automatically.')], [], ['Optional']),
+        node(`${context.id}-actions`, 'Actions', 'Choose compatible results', `14 shared Actions${hasQuoteAction ? ' + 1 guarded Quote proposal' : ''}`, hasQuoteAction ? 'proposal' : 'category', [listSection('Shared CRM Actions', sharedActions), textSection('Withheld Action', 'Remove Interest stays a manual CRM operation and is not offered as a general Automation Action.'), textSection('Quote-specific boundary', `${context.quoteAction} — ${context.actionStatus}. ${context.boundary}`)], [], [hasQuoteAction ? 'Guarded proposal' : 'Protected boundary']),
+        node(`${context.id}-fixed`, 'Context stays protected', 'Fixed by WeQuote', 'Customise the flow, not the lifecycle meaning', 'fixed', [textSection('Fixed boundary', 'The selected Quote context, its lifecycle meaning and the system-driven transitions stay fixed. Custom Automation cannot directly send, approve, accept, mark Won/Lost or write a protected Quote Stage.')], [], ['Fixed by WeQuote'])
+      ], ['Custom available', context.counts]);
+    }
+
+    const tree = node('root', 'CRM Automation Scope', 'Scope map', 'Two main branches: with or without the Quote lifecycle', 'root', [
+      textSection('How to read this map', 'The first main branch uses the Quote lifecycle. It contains the 12 ready-made Templates, Custom Automation in every existing Quote context, Custom Stages inserted between protected Quote Stages, and the wider option of another Quote-connected Pipeline. The second main branch is a Standalone Pipeline without Quote lifecycle behaviour.'),
+      textSection('Two main branches', '1. With Quote Lifecycle: Templates or compatible Custom Automation in existing Quote contexts, optional inserted Custom Stages, and later another Pipeline using the same protected lifecycle. 2. Without Quote Lifecycle: a Standalone Pipeline with user-defined working Stages and Deal-only Automation choices.'),
+      textSection('Source alignment', 'The 29 August product-direction record now overrides the older Templates-only gate, and the active prototype exposes both routes in all seven Quote contexts. Dated handoff snapshots remain historical evidence only.'),
+      textSection('Important count note', 'The 79 catalogue examples are candidate recipes. They are not the 12 fixed Templates, and zero are live end-to-end today.')
+    ], [
+      node('flow-grammar', 'How every flow works', 'Shared grammar', 'Starts when → Wait → Rule → Yes / No → Action', 'branch', [
+        textSection('Simple model', 'Starts when is required. Wait and Rule are optional. A Rule creates If Yes and If No paths. At least one Action is required before activation.'),
+        textSection('Plain-language terms', '“Starts when” says what event begins the flow. “Wait” pauses it. “Rule” asks a Yes/No question. “Action” says what WeQuote does next.')
+      ], [
+        node('grammar-start', 'Starts when', 'Required', 'Choose one event that starts the Automation', 'category', [listSection('Shared Deal events', sharedStarts), textSection('Stage-specific choices', 'Quote-connected Stages add only the Quote events that make sense in that lifecycle context.')], [], ['Required']),
+        node('grammar-wait', 'Wait', 'Optional', '1–90 whole calendar days in the first scratch contract', 'category', [textSection('What it does', 'Pauses this run before the next step. After waiting, WeQuote must check that the Deal and Quote are still in the right context.')], [], ['Optional']),
+        node('grammar-rule', 'Rule', 'Optional check', 'One Yes / No question; both paths are added automatically', 'category', [listSection('Shared Rule families', sharedRules), textSection('Current limit', 'Use one Rule for now. AND / OR groups and Wait-until-event are later scope.')], [], ['Optional']),
+        node('grammar-branches', 'If Yes / If No', 'Built automatically', 'Each branch can run Actions or stop', 'fixed', [textSection('Branch behaviour', 'If Yes normally runs the saved Action. If No can stop or run its own allowed Actions in a Custom flow. A fixed Template keeps its approved branch shape.')], [], ['Engine behaviour']),
+        node('grammar-action', 'Action', 'Required before activation', 'Run one or more visible CRM results', 'category', [listSection('Shared Action families', sharedActions)], [], ['At least one'])
+      ], ['Shared model']),
+
+      node('with-quote-lifecycle', 'With Quote Lifecycle', 'Main branch 1', 'Templates and Custom Automation connected to protected Quote contexts', 'branch', [
+        textSection('What belongs here', 'The protected Quote lifecycle stays intact. Users may choose a ready-made Template or build a compatible Custom Automation in every existing Quote context. They may also add Custom Stages inside the five allowed lifecycle gaps, and later create another Pipeline that uses the same protected Quote lifecycle.'),
+        textSection('Protected lifecycle', 'Qualified → In Progress → In Review → Passed Review → Sent → Won / Lost. WeQuote controls the meaning and Quote-driven movement; Automation works around it without rewriting it.')
+      ], [
+
+      node('templates', '12 fixed Templates', 'Ready-made route', 'Reviewed starting points across Quote Stages and result contexts', 'branch', [
+        textSection('Why Templates exist', 'They lower the learning curve with a reviewed starting point. Users change only approved values; they do not redesign the flow. Templates sit beside, not instead of, the Custom route.'),
+        listSection('Always fixed', ['Template name and identity','Quote context','Starts when','Rule and operator','Yes / No structure','Wait position','Step order','Action type','Duplicate prevention','Protected-lifecycle checkpoint']),
+        listSection('Editable only when declared', ['5 Next Action settings for the first Qualified Template','6 approved Note and follow-up fields for Note Templates','Wait duration for the two reminder Templates','2 thresholds for High-value approval','No settings for Accepted Quote → Draft Invoice']),
+        textSection('Scale', '12 reviewed flow shapes contain 63 control instances made from 14 field types and 5 reusable setting editors. Reusable UI does not make free combination logic equivalent.')
+      ], [
+        stageNode('Qualified'),
+        stageNode('In Progress'),
+        stageNode('In Review'),
+        stageNode('Passed Review'),
+        stageNode('Sent'),
+        stageNode('Won result', 'result'),
+        stageNode('Lost result', 'result')
+      ], ['Ready-made route', '12 fixed flows', '63 approved controls']),
+
+      node('quote-context-custom', 'Custom Automation in every Quote context', 'Latest product direction', 'Qualified, In Progress, In Review, Passed Review, Sent, Won and Lost', 'branch', [
+        textSection('What this changes', 'Custom is not limited to a Stage that the user adds. Every existing Quote Stage and Won/Lost result context can also start an Inactive Custom draft using only choices compatible with that context.'),
+        textSection('Creation flow', 'Choose the Quote context, select Custom, then choose a compatible Starts when event. The Builder opens with that Trigger placed. Wait and Rule are optional; at least one Action is required before activation.'),
+        textSection('What stays protected', 'The selected context stays fixed. The user can change the flow blocks and their allowed settings, but cannot change the meaning of a protected Quote Stage, directly move into it, send or approve a Quote, accept for the customer, or mark Won/Lost.'),
+        textSection('Implementation note', 'The Phase 1 PRD addendum and active prototype now expose both routes in all seven protected Quote contexts. Runtime event matching, due-state semantics and complete Rule evaluation still require engineering validation before production.')
+      ], quoteContexts.map(quoteContextNode), ['Latest direction', '7 Quote contexts', 'Prototype aligned']),
+
+      node('custom-stages', 'Add a Stage to the Quote Pipeline', 'Latest design target', 'Five allowed gaps; protected Quote Stages stay fixed', 'branch', [
+        textSection('What the user controls', 'Choose the gap, Stage name, icon, colour and probability; add more than one Stage in a gap; reorder only inside that same gap; build independent Custom Automations using allowed blocks.'),
+        textSection('What WeQuote controls', 'Qualified, In Progress, In Review, Passed Review, Sent, Won and Lost keep their meaning and Quote-driven movement. A Custom Stage cannot cross to another lifecycle gap.'),
+        textSection('Creation route', 'On a Custom Stage, Build from scratch is shown first. Choose a compatible Starts when event; WeQuote creates an Inactive draft with that Trigger already placed.'),
+        textSection('Release status', 'Custom Stages and blank-canvas authoring are outside the current Phase 1 PRD. They are included here so the team can review the full implementation scope.')
+      ], gaps.map(gapNode), ['Design target', '5 lifecycle gaps']),
+
+      node('new-quote-pipeline', 'Create another Pipeline with Quote Lifecycle', 'Wider design target', 'A new Pipeline that reuses the same protected Quote lifecycle', 'proposal', [
+        textSection('What stays the same', 'Qualified, In Progress, In Review, Passed Review, Sent, Won and Lost keep the same protected meanings and Quote-driven transitions. Each context still offers Templates and compatible Custom Automation.'),
+        textSection('What the user can define', 'Choose the Pipeline name and add named Custom Stages inside any of the five allowed lifecycle gaps. Reorder Custom Stages only inside their own gap.'),
+        textSection('Why this is a separate scope', 'A second Quote-connected Pipeline needs routing rules, permissions, reporting separation, Deal migration rules, lifecycle ownership and clear behaviour for existing multi-Quote Deals.'),
+        textSection('Release status', 'Creating another Quote lifecycle Pipeline is not part of the current Phase 1 baseline. It is shown here so it is not confused with simply adding Custom Automation to the existing Quote Pipeline.')
+      ], [
+        node('new-quote-pipeline-fixed', 'Protected Quote contexts', 'Fixed by WeQuote', 'Same seven contexts and lifecycle meaning', 'fixed', [listSection('Reused lifecycle', ['Qualified','In Progress','In Review','Passed Review','Sent','Won','Lost'])], [], ['Fixed']),
+        node('new-quote-pipeline-custom', 'Customise around the lifecycle', 'User-defined', 'Pipeline name, gap Stages and compatible Automation', 'editable', [listSection('Can be configured', ['Pipeline name','Custom Stages inside five gaps','Templates or Custom Automation in every Quote context','Custom Automation on inserted Stages'])], [], ['Can change']),
+        node('new-quote-pipeline-platform', 'Platform work needed', 'Engineering scope', 'Routing, migration, permissions, reporting and multi-Quote ownership', 'warning', [listSection('Must be agreed before build', ['Which Deals enter this Pipeline','Whether a Deal can move between Quote Pipelines','Which Pipeline owns a multi-Quote Deal','Permissions to create, edit and archive','Reporting and audit continuity','Effect on active Automation runs'])], [], ['Decision needed'])
+      ], ['With Quote lifecycle', 'New Pipeline'])
+      ], ['Quote-connected', 'Templates + Custom']),
+
+      node('without-quote-lifecycle', 'Without Quote Lifecycle', 'Main branch 2', 'Standalone Pipeline with Deal-only Automation choices', 'branch', [
+        textSection('What belongs here', 'This branch does not use protected Quote Stages or Quote-driven movement. The user defines the Pipeline name and working Stages, then builds Automation from shared Deal events, Rules and Actions.'),
+        textSection('What is deliberately absent', 'No Quote-specific Starts when, Quote Rules, Create Quote Actions or automatic Quote lifecycle movement appear in this branch.')
+      ], [
+      node('standalone', 'Create a Standalone Pipeline', 'Wider design target', 'User-defined working Stages without Quote lifecycle movement', 'branch', [
+        textSection('Example', 'New → In Progress → Complete → Won / Lost'),
+        textSection('Release status', 'Standalone Pipelines and blank-canvas authoring are outside the current Phase 1 PRD. The prototype demonstrates the concept only.')
+      ], [
+        node('standalone-define', 'You define the Pipeline', 'Can change', 'Pipeline name, working Stage names and order', 'editable', [listSection('Pipeline setup', ['Choose the Pipeline name','Add, rename, reorder or archive working Stages','Choose icon, colour and probability','Pipeline type is fixed after creation']), textSection('Results', 'Won stays at 100% probability and Lost at 0%. They remain protected results.')], [], ['You can change']),
+        node('standalone-flow', 'Every working Stage', 'Build from scratch', 'Stage entry + 9 starts · 11 Rules · 14 available Actions', 'category', commonCustomSections, [], ['Shared Deal library']),
+        node('standalone-move', 'Stage movement', 'Current guide position', 'Users move Deals between named working Stages', 'fixed', [textSection('Current position', 'Automatic Stage movement is not available in the Guide target yet. The team must agree allowed targets, permissions, repeat suppression and required-work protection.'), textSection('Prototype-ahead warning', 'The prototype demonstrates restricted Move Stage choices. Treat this as a proposal, not a committed production contract.')], [], ['Decision needed']),
+        node('standalone-noquote', 'Quote choices are not included', 'Not offered here', 'No Quote starts, Quote Rules, Create Quote or Quote-driven movement', 'blocked', [listSection('Not included', ['Quote-specific Starts when','Quote-specific Rules','Create first Quote','Create another Quote option','Automatic Quote lifecycle movement','Send, approve, accept, Won or Lost Actions'])], [], ['Not offered']),
+        node('standalone-build', 'New platform work needed', 'Engineering scope', 'Permissions, migration, routing, audit and runtime safety', 'proposal', [listSection('Before this is a real product', ['Durable Pipeline and Stage IDs','Ordering, versioning and permissions','Deal migration and deletion rules','Reporting continuity','Active-Automation impact handling','Runtime persistence, audit, retry and idempotency','Timezone-aware scheduling','Loop protection and post-Wait rechecks'])], [], ['New work needed'])
+      ], ['Design target', 'Deal-only Automation'])
+      ], ['Standalone', 'No Quote lifecycle']),
+
+      node('guardrails', 'Rules that apply everywhere', 'Safety and boundaries', 'Protect lifecycle meaning, data history and multi-Quote behaviour', 'branch', [
+        listSection('Always protect', ['Do not send or approve a Quote from a free-form Action','Do not accept on behalf of a customer','Do not mark Won or Lost directly','Do not write a protected Quote Stage','Do not let one event run twice','Recheck the Deal and Quote after a Wait','Keep one Automation run from creating duplicate Quotes']),
+        listSection('Multi-Quote rules', ['The first Quote starts at In Progress','Another Quote option is allowed only while the Deal is In Progress','Another option is not a revision or variation','The Quote furthest through the lifecycle leads the Deal Stage','An accepted option wins; other options become Lost']),
+        textSection('Interest and Labels', 'Add Interest needs clear structured evidence. Remove Interest remains a manual CRM operation and is withheld from general Automation. System-managed Labels may be added and removed as paired workflow signals; Automation must not remove a user-managed Label.'),
+        textSection('File Requests', 'A requested file is complete only when the named File Request is marked Received and linked to the supplied file. An unrelated upload does not count.')
+      ], [
+        node('guard-protected', 'Protected Quote changes', 'Fixed by WeQuote', 'Send, review, accept, Won/Lost and protected Stage movement', 'fixed', [listSection('Never free-form', ['Send or resend a Quote','Approve or accept a Quote','Mark Won or Lost','Move directly into a protected Quote Stage'])], [], ['Fixed']),
+        node('guard-multi', 'Multi-Quote safeguards', 'Required runtime rule', 'First Quote, options, lifecycle leader and duplicate protection', 'warning', [listSection('Required safeguards', ['Create first Quote only when none exists','Create another option only in In Progress','One run creates no more than one Quote','Do not guess option vs revision vs variation','Accepted option controls the Won result'])], [], ['Must resolve']),
+        node('guard-runtime', 'Runtime safety', 'New work needed', 'Audit, retry, rechecks, idempotency and loop protection', 'proposal', [listSection('Runtime contracts', ['One event runs once','Persist the exact Pipeline, Stage, Trigger and settings version','Cancel or recheck stale runs after a Wait','Record every Action result','Retry safely without duplicates','Prevent Automation loops'])], [], ['New work needed']),
+        node('guard-review', 'Items needing team review', 'Source conflicts', 'Create Quote, Move Stage and four Template details', 'warning', [listSection('Already decided', ['Remove Interest stays manual and is withheld from general Automation']), listSection('Confirm before implementation', ['Create first/another Quote: latest guarded proposal vs current Phase 1 exclusion','Automatic Move Stage: prototype is ahead of the Guide contract','Quote build start: created or edited vs first-created only','Sent follow-up Rule mismatch','Won handoff Rule is unresolved','Ready-to-send No path differs between views'])], [], ['Review required'])
+      ], ['Safety', 'Multi-Quote'])
+    ], ['White-background map', 'Verified 29 August 2026']);
+
+    const parentById = new Map();
+    const nodeById = new Map();
+    function indexTree(item, parent = null) {
+      nodeById.set(item.id, item);
+      if (parent) parentById.set(item.id, parent.id);
+      item.children.forEach(child => indexTree(child, item));
+    }
+    indexTree(tree);
+
+    const initialExpanded = new Set(['root','with-quote-lifecycle','without-quote-lifecycle']);
+    let expanded = new Set(initialExpanded);
+    let selectedId = 'root';
+    let searchMatches = [];
+    let searchIndex = 0;
+    let searchSnapshot = null;
+    let view = { x: 80, y: 40, scale: .72 };
+    let layout = new Map();
+    let worldSize = { width: 1800, height: 2600 };
+    const CARD_W = 258, CARD_H = 86, COL_GAP = 324, ROW_GAP = 20, PAD = 90;
+
+    const viewport = document.getElementById('viewport');
+    const world = document.getElementById('world');
+    const nodesEl = document.getElementById('nodes');
+    const connectors = document.getElementById('connectors');
+    const outlineTree = document.getElementById('outlineTree');
+    const live = document.getElementById('live');
+
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+    const visibleChildren = item => expanded.has(item.id) ? item.children : [];
+    function measure(item) {
+      const children = visibleChildren(item);
+      if (!children.length) return CARD_H;
+      return children.reduce((sum, child) => sum + measure(child), 0) + ROW_GAP * (children.length - 1);
+    }
+    function place(item, depth, top) {
+      const children = visibleChildren(item);
+      let y;
+      if (!children.length) y = top + CARD_H / 2;
+      else {
+        let cursor = top;
+        const childCentres = [];
+        children.forEach(child => {
+          const height = measure(child);
+          place(child, depth + 1, cursor);
+          childCentres.push(layout.get(child.id).y);
+          cursor += height + ROW_GAP;
+        });
+        y = (childCentres[0] + childCentres[childCentres.length - 1]) / 2;
+      }
+      layout.set(item.id, { x: PAD + depth * COL_GAP, y: y - CARD_H / 2, depth });
+    }
+    function calculateLayout() {
+      layout = new Map();
+      const height = measure(tree);
+      place(tree, 0, PAD);
+      let maxDepth = 0;
+      layout.forEach(pos => { maxDepth = Math.max(maxDepth, pos.depth); });
+      worldSize = { width: PAD * 2 + maxDepth * COL_GAP + CARD_W, height: height + PAD * 2 };
+    }
+    function nodeSearchText(item) {
+      return JSON.stringify({ title:item.title, eyebrow:item.eyebrow, summary:item.summary, sections:item.sections, tags:item.tags }).toLowerCase();
+    }
+    function renderMap() {
+      calculateLayout();
+      world.style.width = `${worldSize.width}px`;
+      world.style.height = `${worldSize.height}px`;
+      connectors.setAttribute('width', worldSize.width);
+      connectors.setAttribute('height', worldSize.height);
+      connectors.setAttribute('viewBox', `0 0 ${worldSize.width} ${worldSize.height}`);
+      nodesEl.style.width = `${worldSize.width}px`;
+      nodesEl.style.height = `${worldSize.height}px`;
+      const visibleIds = new Set(layout.keys());
+      const matchIds = new Set(searchMatches.map(item => item.id));
+      nodesEl.innerHTML = [...layout.entries()].map(([id, pos]) => {
+        const item = nodeById.get(id);
+        const hasChildren = item.children.length > 0;
+        const isOpen = expanded.has(id);
+        const dim = searchMatches.length && !matchIds.has(id) && !isAncestorOfMatch(id, matchIds);
+        return `<div class="map-node ${escapeHtml(item.kind)}${id === selectedId ? ' is-selected' : ''}${matchIds.has(id) ? ' is-match' : ''}${dim ? ' is-dim' : ''}" style="left:${pos.x}px;top:${pos.y}px" data-id="${escapeHtml(id)}">
+          <button class="node-main" type="button" data-select="${escapeHtml(id)}" aria-label="Open details for ${escapeHtml(item.title)}">
+            <span class="node-eyebrow">${escapeHtml(item.eyebrow)}</span>
+            <span class="node-title">${escapeHtml(item.title)}</span>
+            <span class="node-summary">${escapeHtml(item.summary)}</span>
+          </button>
+          ${hasChildren ? `<button class="node-toggle" type="button" data-toggle="${escapeHtml(id)}" aria-expanded="${isOpen}" aria-label="${isOpen ? 'Collapse' : 'Expand'} ${escapeHtml(item.title)}">${isOpen ? '−' : '+'}</button>` : ''}
+        </div>`;
+      }).join('');
+      const paths = [];
+      layout.forEach((pos, id) => {
+        const parentId = parentById.get(id);
+        if (!parentId || !visibleIds.has(parentId)) return;
+        const parent = layout.get(parentId);
+        const x1 = parent.x + CARD_W, y1 = parent.y + CARD_H / 2;
+        const x2 = pos.x, y2 = pos.y + CARD_H / 2;
+        const mid = x1 + (x2 - x1) * .48;
+        paths.push(`<path d="M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}" fill="none" stroke="#b7c4d5" stroke-width="2"/>`);
+      });
+      connectors.innerHTML = paths.join('');
+      applyView();
+      renderOutline();
+    }
+    function isAncestorOfMatch(id, matchIds) {
+      for (const matchId of matchIds) {
+        let cursor = parentById.get(matchId);
+        while (cursor) { if (cursor === id) return true; cursor = parentById.get(cursor); }
+      }
+      return false;
+    }
+    function applyView() {
+      world.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
+      document.getElementById('zoomReset').textContent = `${Math.round(view.scale * 100)}%`;
+    }
+    function setZoom(nextScale, anchorX = viewport.clientWidth / 2, anchorY = viewport.clientHeight / 2) {
+      const scale = Math.max(.2, Math.min(1.6, nextScale));
+      const worldX = (anchorX - view.x) / view.scale;
+      const worldY = (anchorY - view.y) / view.scale;
+      view.x = anchorX - worldX * scale;
+      view.y = anchorY - worldY * scale;
+      view.scale = scale;
+      applyView();
+      live.textContent = `Zoom ${Math.round(scale * 100)} percent`;
+    }
+    function fitAll() {
+      const rect = viewport.getBoundingClientRect();
+      const scale = Math.max(.2, Math.min(1, Math.min((rect.width - 60) / worldSize.width, (rect.height - 60) / worldSize.height)));
+      view.scale = scale;
+      view.x = (rect.width - worldSize.width * scale) / 2;
+      view.y = (rect.height - worldSize.height * scale) / 2;
+      applyView();
+      live.textContent = 'All visible branches fitted to the window';
+    }
+    function centreOn(id, keepScale = true) {
+      if (!layout.has(id)) expandAncestors(id);
+      renderMap();
+      const pos = layout.get(id);
+      if (!pos) return;
+      if (!keepScale) view.scale = .82;
+      view.x = viewport.clientWidth / 2 - (pos.x + CARD_W / 2) * view.scale;
+      view.y = viewport.clientHeight / 2 - (pos.y + CARD_H / 2) * view.scale;
+      applyView();
+    }
+    function expandAncestors(id) {
+      let cursor = parentById.get(id);
+      while (cursor) { expanded.add(cursor); cursor = parentById.get(cursor); }
+    }
+    function renderDetails() {
+      const item = nodeById.get(selectedId) || tree;
+      document.getElementById('detailEyebrow').textContent = item.eyebrow;
+      document.getElementById('detailTitle').textContent = item.title;
+      document.getElementById('detailSummary').textContent = item.summary;
+      document.getElementById('toggleBranch').hidden = !item.children.length;
+      document.getElementById('toggleBranch').textContent = expanded.has(item.id) ? 'Collapse branch' : 'Expand branch';
+      const chips = item.tags.length ? `<div class="chips">${item.tags.map(tag => `<span class="chip ${item.kind}">${escapeHtml(tag)}</span>`).join('')}</div>` : '';
+      const status = item.id === 'root' ? `<div class="status-card"><strong>Latest product direction</strong>CRM Automation has two main branches: with the Quote lifecycle and without it. Inside the Quote branch, every current Quote context offers both ready-made Templates and compatible Custom Automation.</div>` : '';
+      const sections = item.sections.map((section, index) => `<details class="detail-section" ${index < 2 ? 'open' : ''}><summary>${escapeHtml(section.title)}</summary><div class="detail-content">${section.copy ? `<p>${escapeHtml(section.copy)}</p>` : ''}${section.items ? `<ul>${section.items.map(value => `<li>${escapeHtml(value)}</li>`).join('')}</ul>` : ''}</div></details>`).join('');
+      const legend = item.id === 'root' ? `<details class="detail-section" open><summary>Legend</summary><div class="detail-content legend"><span><i></i><b>Fixed by WeQuote</b></span><span class="editable"><i></i><b>You can change</b></span><span class="proposal"><i></i><b>New work or design proposal</b></span><span class="blocked"><i></i><b>Not offered here</b></span></div></details>` : '';
+      document.getElementById('detailBody').innerHTML = `${chips}${status}${sections}${legend}<div class="source-note"><strong>Source status:</strong> checked against the current Phase 1 PRD, Quote Automation catalogue, Guide and prototype code on 29 August 2026. Warning cards show places where those sources do not yet agree.</div>`;
+      if (window.innerWidth <= 800) document.getElementById('detailPanel').classList.add('is-mobile-open');
+    }
+    function renderOutline() {
+      function itemMarkup(item, depth = 0) {
+        const hasChildren = item.children.length > 0;
+        const open = expanded.has(item.id);
+        return `<div class="outline-item" data-outline-id="${escapeHtml(item.id)}"><div class="outline-row"><button class="outline-select" type="button" data-outline-select="${escapeHtml(item.id)}"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.eyebrow)} · ${escapeHtml(item.summary)}</span></button>${hasChildren ? `<button class="outline-toggle" type="button" data-outline-toggle="${escapeHtml(item.id)}" aria-expanded="${open}" aria-label="${open ? 'Collapse' : 'Expand'} ${escapeHtml(item.title)}">${open ? '−' : '+'}</button>` : ''}</div>${hasChildren && open ? `<div class="outline-children">${item.children.map(child => itemMarkup(child, depth + 1)).join('')}</div>` : ''}</div>`;
+      }
+      outlineTree.innerHTML = itemMarkup(tree);
+    }
+    function selectNode(id, centre = false) {
+      if (!nodeById.has(id)) return;
+      selectedId = id;
+      renderMap();
+      renderDetails();
+      if (centre) centreOn(id);
+    }
+    function toggleNode(id) {
+      const item = nodeById.get(id);
+      if (!item || !item.children.length) return;
+      if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
+      renderMap();
+      renderDetails();
+    }
+    function expandEveryNode() { nodeById.forEach(item => { if (item.children.length) expanded.add(item.id); }); renderMap(); live.textContent = 'All branches expanded'; }
+    function collapseDetails() { expanded = new Set(initialExpanded); renderMap(); centreOn('root', false); live.textContent = 'Detail branches collapsed'; }
+
+    nodesEl.addEventListener('click', event => {
+      const toggle = event.target.closest('[data-toggle]');
+      if (toggle) { event.stopPropagation(); toggleNode(toggle.dataset.toggle); return; }
+      const select = event.target.closest('[data-select]');
+      if (select) selectNode(select.dataset.select);
+    });
+    nodesEl.addEventListener('dblclick', event => {
+      const select = event.target.closest('[data-select]');
+      if (select) toggleNode(select.dataset.select);
+    });
+    outlineTree.addEventListener('click', event => {
+      const toggle = event.target.closest('[data-outline-toggle]');
+      if (toggle) { toggleNode(toggle.dataset.outlineToggle); return; }
+      const select = event.target.closest('[data-outline-select]');
+      if (select) selectNode(select.dataset.outlineSelect, true);
+    });
+
+    let drag = null;
+    viewport.addEventListener('pointerdown', event => {
+      if (event.target.closest('.map-node, .zoom-dock')) return;
+      drag = { id:event.pointerId, x:event.clientX, y:event.clientY, startX:view.x, startY:view.y };
+      viewport.setPointerCapture(event.pointerId);
+      viewport.classList.add('is-panning');
+    });
+    viewport.addEventListener('pointermove', event => {
+      if (!drag || drag.id !== event.pointerId) return;
+      view.x = drag.startX + event.clientX - drag.x;
+      view.y = drag.startY + event.clientY - drag.y;
+      applyView();
+    });
+    function endDrag(event) {
+      if (!drag || drag.id !== event.pointerId) return;
+      drag = null; viewport.classList.remove('is-panning');
+    }
+    viewport.addEventListener('pointerup', endDrag);
+    viewport.addEventListener('pointercancel', endDrag);
+    viewport.addEventListener('wheel', event => {
+      event.preventDefault();
+      const rect = viewport.getBoundingClientRect();
+      const factor = Math.exp(-event.deltaY * .0013);
+      setZoom(view.scale * factor, event.clientX - rect.left, event.clientY - rect.top);
+    }, { passive:false });
+
+    document.getElementById('zoomIn').addEventListener('click', () => setZoom(view.scale * 1.16));
+    document.getElementById('zoomOut').addEventListener('click', () => setZoom(view.scale / 1.16));
+    document.getElementById('zoomReset').addEventListener('click', () => { view.scale = 1; centreOn(selectedId); });
+    document.getElementById('fitView').addEventListener('click', fitAll);
+    document.getElementById('expandAll').addEventListener('click', expandEveryNode);
+    document.getElementById('collapseAll').addEventListener('click', collapseDetails);
+    document.getElementById('centreNode').addEventListener('click', () => { showMode('map'); centreOn(selectedId, false); });
+    document.getElementById('toggleBranch').addEventListener('click', () => toggleNode(selectedId));
+
+    function showMode(mode) {
+      const map = mode === 'map';
+      document.getElementById('mapPane').hidden = !map;
+      document.getElementById('outlinePane').hidden = map;
+      document.getElementById('mapMode').setAttribute('aria-pressed', map);
+      document.getElementById('outlineMode').setAttribute('aria-pressed', !map);
+      if (map) { renderMap(); requestAnimationFrame(() => centreOn(selectedId)); }
+    }
+    document.getElementById('mapMode').addEventListener('click', () => showMode('map'));
+    document.getElementById('outlineMode').addEventListener('click', () => showMode('outline'));
+
+    function runSearch(query) {
+      const value = query.trim().toLowerCase();
+      if (!value) {
+        searchMatches = []; searchIndex = 0;
+        if (searchSnapshot) { expanded = searchSnapshot; searchSnapshot = null; }
+        document.getElementById('searchCount').textContent = '';
+        renderMap(); return;
+      }
+      if (!searchSnapshot) searchSnapshot = new Set(expanded);
+      const matchRank = item => {
+        const title = item.title.toLowerCase();
+        if (title === value) return 0;
+        if (title.startsWith(value)) return 1;
+        if (title.includes(value)) return 2;
+        return 3;
+      };
+      searchMatches = [...nodeById.values()]
+        .filter(item => nodeSearchText(item).includes(value))
+        .sort((a, b) => matchRank(a) - matchRank(b));
+      searchMatches.forEach(item => expandAncestors(item.id));
+      searchIndex = Math.min(searchIndex, Math.max(0, searchMatches.length - 1));
+      document.getElementById('searchCount').textContent = searchMatches.length ? `${searchIndex + 1}/${searchMatches.length}` : '0';
+      renderMap();
+      if (searchMatches.length) { selectedId = searchMatches[searchIndex].id; renderDetails(); centreOn(selectedId, false); }
+      live.textContent = `${searchMatches.length} search result${searchMatches.length === 1 ? '' : 's'}`;
+    }
+    const search = document.getElementById('search');
+    search.addEventListener('input', () => runSearch(search.value));
+    search.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' || !searchMatches.length) return;
+      event.preventDefault();
+      searchIndex = (searchIndex + (event.shiftKey ? -1 : 1) + searchMatches.length) % searchMatches.length;
+      document.getElementById('searchCount').textContent = `${searchIndex + 1}/${searchMatches.length}`;
+      selectedId = searchMatches[searchIndex].id; renderDetails(); centreOn(selectedId, false);
+    });
+    document.addEventListener('keydown', event => {
+      if (event.target.matches('input, textarea, select')) return;
+      if (event.key === '+' || event.key === '=') setZoom(view.scale * 1.16);
+      if (event.key === '-') setZoom(view.scale / 1.16);
+      if (event.key.toLowerCase() === 'f') fitAll();
+      if (event.key === '0') { view.scale = 1; centreOn(selectedId); }
+      if (event.key === 'Escape') document.getElementById('detailPanel').classList.remove('is-mobile-open');
+    });
+    window.addEventListener('resize', () => { renderMap(); if (window.innerWidth <= 800 && !document.getElementById('outlinePane').hidden) renderOutline(); });
+
+    renderMap();
+    renderDetails();
+    if (window.matchMedia('(max-width: 800px)').matches) showMode('outline');
+    else requestAnimationFrame(() => centreOn('root', false));
+  })();
+  </script>
+</body>
+</html>

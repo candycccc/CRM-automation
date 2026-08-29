@@ -1167,8 +1167,8 @@
   let scratchTriggerChoice = null;
   let selectedAutomationStage = null;
   let automationStageLocked = false;
-  let creatorStartMode = 'templates';
-  let contextualCreatorMode = 'templates';
+  let creatorStartMode = 'scratch';
+  let contextualCreatorMode = 'custom';
   const quotePlaygroundState = { stage: 'Qualified', triggerId: '', rule: '', yesActionIds: [], noActionIds: [] };
   let pendingAutomationName = '';
   let pendingAutomationDescription = '';
@@ -1266,7 +1266,7 @@
     }
     if (pageSubtitle && automationView.classList.contains('aut-builder-mode')) {
       pageSubtitle.textContent = isUntitledPhaseOneAutomation(config)
-        ? 'Draft · Choose a Stage and Template when you are ready.'
+        ? 'Draft · Choose a Stage and starting point when you are ready.'
         : unsaved
         ? 'Unpublished changes · Save this Draft before testing.'
         : (draftChanges
@@ -2519,19 +2519,22 @@
       result = deal.ownerName;
       genericAutomationHistory(deal, { kind: 'owner-changed', actionType: 'owner', title: 'Deal Owner changed · ' + previous + ' → ' + deal.ownerName });
     } else if ((action === 'Add Deal label' || action === 'Remove Deal label') && deal) {
+      if (action === 'Remove Deal label' && step.dealLabelOwnership !== 'automation-managed') return null;
       deal.labels = Array.isArray(deal.labels) ? deal.labels : [];
       const label = step.dealLabel || 'Hot';
       if (action.startsWith('Add') && !deal.labels.includes(label)) deal.labels.push(label);
       if (action.startsWith('Remove')) deal.labels = deal.labels.filter(function (item) { return item !== label; });
       result = label;
       genericAutomationHistory(deal, { kind: 'deal-data', actionType: 'label', title: action + ' · ' + label });
-    } else if ((action === 'Add Interest' || action === 'Remove Interest') && deal) {
+    } else if (action === 'Add Interest' && deal) {
+      if (step.interestEvidenceSource !== 'structured-source') return null;
       deal.interests = Array.isArray(deal.interests) ? deal.interests : [];
       const interest = step.interest || 'Television';
-      if (action.startsWith('Add') && !deal.interests.includes(interest)) deal.interests.push(interest);
-      if (action.startsWith('Remove')) deal.interests = deal.interests.filter(function (item) { return item !== interest; });
+      if (!deal.interests.includes(interest)) deal.interests.push(interest);
       result = interest;
       genericAutomationHistory(deal, { kind: 'deal-data', actionType: 'interest', title: action + ' · ' + interest });
+    } else if (action === 'Remove Interest') {
+      return null;
     } else if ((action === 'Add Deal watcher' || action === 'Remove Deal watcher') && deal) {
       deal.watchers = Array.isArray(deal.watchers) ? deal.watchers : [];
       const watcher = step.watcher || automationOwnerName('Deal owner', deal);
@@ -3608,9 +3611,7 @@
         : ensurePipelineAutomationGroup(contextPipeline);
       if (typeof window.showView === 'function') window.showView('automation');
       if (!selectedAutomationGroupKey) {
-        showAutomationGroupList();
-        showAutomationToast('No Automations yet. Choose one of the 12 fixed Templates to create the first one.');
-        return;
+        selectedAutomationGroupKey = createEmptyPipelineAutomationDefinition(contextPipeline);
       }
       showAutomationPipelineDetail(selectedAutomationGroupKey);
       const conceptByStage = {
@@ -3624,9 +3625,12 @@
       };
       const concept = context.quoteConnected && context.stageProtected ? conceptByStage[stageName] : null;
       if (concept && conceptAutomationDefinitions[concept]) {
-        renderConceptAutomation(concept);
-        requestAnimationFrame(function () { conceptPreview.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });
-        showAutomationToast(stageName + ' structure is protected. Its operational Automations remain editable.');
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            renderContextualTemplateSidebar(stageName, true, true, true);
+          });
+        });
+        showAutomationToast(stageName + ' is fixed by the Quote lifecycle. Build a compatible Custom Automation or use a matching Template.');
       } else {
         const customWorkflowKey = userWorkflowKeys().find(function (key) {
           return (workflows[key].triggerStageId === context.stageId || workflowStageName(workflows[key]) === stageName) &&
@@ -4517,8 +4521,8 @@
 
   // The handoff contains the 12 available Templates, but no pre-created
   // Automation setup. Create automation first makes an Untitled Automation
-  // setup and opens its Map. A named workflow is created only after a Template
-  // is added (or a Custom Stage starts from scratch).
+  // setup and opens its Map. A named workflow is created after a Template is
+  // added or a compatible Custom Automation is started in any Pipeline Stage.
   const automationGroupDefinitions = {};
   const AUTOMATION_GROUP_STORAGE_KEY = 'wequote-crm-pipeline-automation-groups-full-roadmap-v1';
   let blankAutomationGroupCounter = 0;
@@ -4870,11 +4874,11 @@
   function automationStageCreationPolicy(stageDefinition, pipeline) {
     const quoteConnected = automationPipelineUsesQuoteLifecycle(pipeline);
     const protectedQuoteStage = Boolean(stageDefinition && quoteConnected && !stageDefinition.custom);
-    const scratchAllowed = Boolean(stageDefinition && !protectedQuoteStage);
+    const scratchAllowed = Boolean(stageDefinition);
     const templateKeys = stageDefinition && Array.isArray(stageDefinition.templateKeys)
       ? stageDefinition.templateKeys.filter(function (templateKey) { return Boolean(templateDefinitions[templateKey]); })
       : [];
-    const templatesAllowed = Boolean(!stageDefinition || protectedQuoteStage || templateKeys.length);
+    const templatesAllowed = Boolean(!stageDefinition || templateKeys.length);
     const orderedModes = scratchAllowed
       ? (templatesAllowed ? ['custom', 'templates'] : ['custom'])
       : ['templates'];
@@ -4935,7 +4939,7 @@
       button.tabIndex = active ? 0 : -1;
       button.hidden = !available;
       button.disabled = !available;
-      if (isCustomButton) button.title = available ? 'Build an Automation from scratch in this Stage' : 'This protected Quote Stage uses Templates only';
+      if (isCustomButton) button.title = available ? 'Build a compatible Custom Automation in this Stage' : 'Choose a Pipeline Stage first';
     });
     if (contextTemplateList) contextTemplateList.hidden = contextualCreatorMode !== 'templates';
     const templateHelp = contextTemplateSidebar.querySelector('.aut-context-template-help');
@@ -4952,7 +4956,7 @@
     }
   }
 
-  function renderContextualTemplateSidebar(stageName, focusSidebar, centerStage) {
+  function renderContextualTemplateSidebar(stageName, focusSidebar, centerStage, lockStage) {
     if (!contextTemplateSidebar || !contextTemplateStage || !contextTemplateList) return;
     const pipeline = automationPipelineById(selectedTemplatePipelineId) || automationGroupPipeline() || automationPipelines()[0];
     if (!pipeline) return;
@@ -4962,7 +4966,7 @@
     if (!selectedDefinition) return;
     const selectedStage = selectedDefinition.name;
     selectedAutomationStage = selectedStage;
-    automationStageLocked = false;
+    automationStageLocked = Boolean(lockStage);
     selectedCompanyScopeMode = 'all';
     selectedCompanyScopeIds = [];
     if (contextTemplateTitle) contextTemplateTitle.textContent = 'Add automation for ' + selectedStage;
@@ -4971,6 +4975,14 @@
       return '<option value="' + escapeAutomationHtml(stage.name) + '">' + escapeAutomationHtml(stage.name) + '</option>';
     }).join('');
     contextTemplateStage.value = selectedStage;
+    contextTemplateStage.disabled = automationStageLocked;
+    contextTemplateStage.title = automationStageLocked ? 'This Quote Stage was selected from its Stage Automations entry and stays fixed.' : 'Choose a Pipeline Stage';
+    const contextStageLabel = contextTemplateStage.closest('label') && contextTemplateStage.closest('label').querySelector('span');
+    if (contextStageLabel) contextStageLabel.textContent = automationStageLocked ? 'Pipeline Stage · fixed' : 'Select Pipeline Stage';
+    const contextTemplateHelp = contextTemplateSidebar.querySelector('.aut-context-template-help span');
+    if (contextTemplateHelp) contextTemplateHelp.textContent = automationStageLocked
+      ? 'This Quote Stage stays fixed. Switch between Custom and its matching Templates above.'
+      : 'Select a Pipeline Stage to see matching Templates.';
     const quoteConnected = automationPipelineUsesQuoteLifecycle(pipeline);
     const fixedTemplateContext = quoteConnected && !selectedDefinition.custom;
     const customTemplateMeta = {
@@ -4984,8 +4996,8 @@
         })
       : (selectedDefinition.templateKeys || []).filter(function (templateKey) { return templateDefinitions[templateKey]; });
     const phaseNote = fixedTemplateContext
-      ? '<div class="aut-template-fixed-note"><i class="fai">&#xf023;</i><span><strong>This protected Quote Stage uses Templates only.</strong> The Template name, Stage and steps stay the same. You can change the settings shown inside it.</span></div>'
-      : '<div class="aut-template-custom-note"><i class="fai">&#xf303;</i><span><strong>' + escapeAutomationHtml(quoteConnected ? 'Custom Stage.' : 'Standalone Pipeline.') + '</strong> Build from scratch is shown first. You can also choose a ready-made starter from Templates.</span></div>';
+      ? '<div class="aut-template-fixed-note"><i class="fai">&#xf023;</i><span><strong>This Quote Stage stays fixed, but it supports both Custom Automations and Templates.</strong> Template names, Stages and recipe steps stay fixed; choose Custom above when you want to build your own compatible flow.</span></div>'
+      : '<div class="aut-template-custom-note"><i class="fai">&#xf303;</i><span><strong>' + escapeAutomationHtml(quoteConnected ? 'Custom Stage.' : 'Standalone Pipeline.') + '</strong> Custom Automation is shown first. You can also choose a ready-made starter from Templates.</span></div>';
     const templateMarkup = templateKeys.map(function (templateKey) {
       const template = templateDefinitions[templateKey];
       const meta = phaseOneContextTemplateMeta[templateKey] || customTemplateMeta[templateKey];
@@ -5021,7 +5033,7 @@
       requestAnimationFrame(function () {
         contextTemplateSidebar.classList.add('is-opening');
         showAutomationToast(creationPolicy.defaultMode === 'custom'
-          ? 'Build from scratch opened for ' + selectedStage + '. Choose what should start this Automation.'
+          ? 'Custom Automation opened for ' + selectedStage + '. Choose what should start this Automation.'
           : 'Templates opened for ' + selectedStage + '. Choose a ready-made flow and change its settings.');
         contextTemplateStage.focus();
         window.setTimeout(function () { contextTemplateSidebar.classList.remove('is-opening'); }, 460);
@@ -5076,7 +5088,7 @@
         renderContextualTemplateSidebar(firstStage, true, true);
       });
     });
-    showAutomationToast('Untitled Automation created. Choose a Stage, then choose a Template or build your own flow.');
+    showAutomationToast('Untitled Automation created. Choose a Stage, then build a Custom Automation or use a matching Template.');
   }
 
   function renderCreatorPipelineChoices() {
@@ -5098,7 +5110,7 @@
     selectedAutomationStageContext = null;
     automationStageLocked = false;
     scratchTriggerChoice = null;
-    creatorStartMode = 'templates';
+    creatorStartMode = 'scratch';
     renderCreatorPipelineChoices();
     templateOverlay.hidden = false;
     setCreatorScreen('pipeline');
@@ -5189,6 +5201,7 @@
       (!Array.isArray(config.steps) || config.steps.length === 0) ||
       !automationConfigHasPrimaryAction(config) ||
       !!workflowMoveStageBlocker(config) ||
+      automationActionSafetyIssues(config).length > 0 ||
       automationRuleCompatibilityIssues(config).length > 0
     );
   }
@@ -5854,7 +5867,7 @@
     document.getElementById('autGroupEmptyTitle').textContent = genuinelyEmpty ? 'No Automations yet' : 'No matching Automations';
     document.getElementById('autGroupEmptyCopy').textContent = genuinelyEmpty
       ? (automationPipelineUsesQuoteLifecycle(pipeline)
-        ? 'Open the Map to use a fixed Template or a Custom Stage starter for ' + pipeline.name + '.'
+        ? 'Open the Map to build a compatible Custom Automation in any Stage or use a matching fixed Template for ' + pipeline.name + '.'
         : 'Open the Map, choose a Stage and build the first Automation from scratch for ' + pipeline.name + '.')
       : 'Try another search or status filter.';
     document.getElementById('autGroupEmptyCreate').hidden = !genuinelyEmpty;
@@ -5934,7 +5947,7 @@
     renderAutomationGroupRows();
     showAutomationPipelineDetail(key);
     setAutomationGroupEditMode(true);
-    showAutomationToast('Untitled Automation created. Add fixed Templates Stage by Stage. WeQuote will still update Deal Stages from Quote activity.');
+    showAutomationToast('Untitled Automation created. Build a compatible Custom Automation or use a fixed Template in any Quote Stage. WeQuote will still update Deal Stages from Quote activity.');
   }
 
   function createAutomationFromGroupList() {
@@ -5949,7 +5962,7 @@
     selectedTemplatePipelineId = pipeline.id;
     setAutomationPipelineContext(pipeline);
     selectedAutomationGroupKey = createEmptyPipelineAutomationDefinition(pipeline);
-    creatorStartMode = automationPipelineUsesQuoteLifecycle(pipeline) ? 'templates' : 'scratch';
+    creatorStartMode = 'scratch';
     resetCreatorDetails();
     const firstStage = (automationPipelineStages(pipeline)[0] || {}).name || 'Qualified';
     selectedAutomationStage = firstStage;
@@ -7657,13 +7670,13 @@
     { id: 'action-notify', tab: 'action', group: 'Quote & CRM data', type: 'action', label: 'Send internal notification', detail: 'Notify selected internal recipients', capability: 'connect', capabilityLabel: 'CONNECT', icon: '&#xf0f3;' },
     { id: 'action-add-quote-label', tab: 'action', group: 'Quote & CRM data', type: 'action', label: 'Add Quote Label', detail: 'Write an existing Quote label', capability: 'connect', capabilityLabel: 'CONNECT', proof: 'Pattern proven on Quote', icon: '&#xf02b;' },
     { id: 'action-add-deal-label', tab: 'action', group: 'Deal data', type: 'action', label: 'Add Deal label', detail: 'Add one existing CRM label without creating a duplicate', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Labels · New CRM', icon: '&#xf02b;' },
-    { id: 'action-remove-deal-label', tab: 'action', group: 'Deal data', type: 'action', label: 'Remove Deal label', detail: 'Remove one existing CRM label when it is present', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Labels · New CRM', icon: '&#xf02b;' },
+    { id: 'action-remove-deal-label', tab: 'action', group: 'Deal data', type: 'action', label: 'Remove Deal label', detail: 'Remove only a system or Automation-managed label owned by this flow', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Labels · New CRM', icon: '&#xf02b;' },
     { id: 'action-set-next-action', tab: 'action', group: 'Deal activity', type: 'action', label: 'Set Deal Next Action', detail: 'Set the one visible next task, owner and due date', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Focus · New CRM', icon: '&#xf0ae;' },
     { id: 'action-clear-next-action', tab: 'action', group: 'Deal activity', type: 'action', label: 'Clear Deal Next Action', detail: 'Clear the current Next Action when it is no longer required', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Focus · New CRM', icon: '&#xf00c;' },
     { id: 'action-add-watcher', tab: 'action', group: 'Deal people', type: 'action', label: 'Add Deal watcher', detail: 'Add one person as a follower without changing Deal Owner', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Watchers · New CRM', icon: '&#xf06e;' },
     { id: 'action-remove-watcher', tab: 'action', group: 'Deal people', type: 'action', label: 'Remove Deal watcher', detail: 'Stop one person following the Deal', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Watchers · New CRM', icon: '&#xf070;' },
-    { id: 'action-add-interest', tab: 'action', group: 'Deal data', type: 'action', label: 'Add Interest', detail: 'Add one existing Interest without creating a duplicate', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Interests · New CRM', icon: '&#xf005;' },
-    { id: 'action-remove-interest', tab: 'action', group: 'Deal data', type: 'action', label: 'Remove Interest — manual only', detail: 'A person must confirm the customer no longer needs this system before removing it.', capability: 'future', capabilityLabel: 'MANUAL ONLY', proof: 'Deal Interests · New CRM', icon: '&#xf056;', disabled: true },
+    { id: 'action-add-interest', tab: 'action', group: 'Deal data', type: 'action', label: 'Add Interest', detail: 'Requires clear structured source evidence; free-text keyword matching is never used', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Interests · New CRM', icon: '&#xf005;' },
+    { id: 'action-remove-interest', tab: 'action', group: 'Deal data', type: 'action', label: 'Remove Interest — manual only', detail: 'Withheld from Automations. A person must confirm the customer no longer needs this system.', capability: 'future', capabilityLabel: 'MANUAL ONLY', proof: 'Deal Interests · New CRM', icon: '&#xf056;', disabled: true, hidden: true },
     { id: 'action-set-expected-close', tab: 'action', group: 'Deal data', type: 'action', label: 'Set Expected Close Date', detail: 'Set or move the approved Deal Expected Close field', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Expected Close · New CRM', icon: '&#xf073;' },
     { id: 'action-attach-deal-file', tab: 'action', group: 'CRM activity & files', type: 'action', label: 'Attach file to Deal', detail: 'Upload one Automation file, use a template or copy a related CRM file', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Files · New CRM', icon: '&#xf15b;' },
     { id: 'action-request-file', tab: 'action', group: 'CRM activity & files', type: 'action', label: 'Request a file', detail: 'Create a visible required-file activity with an owner and due date', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Focus + Files · New CRM', icon: '&#xf56f;' },
@@ -7697,13 +7710,13 @@
         'action-notify': ['Send an internal notification', 'Choose which colleagues should receive it.'],
         'action-add-quote-label': ['Add Quote Label', 'Add an existing Label to the Quote.'],
         'action-add-deal-label': ['Add Deal Label', 'Add an existing Label without making a duplicate.'],
-        'action-remove-deal-label': ['Remove Deal Label', 'Remove an existing Label if it is there.'],
+        'action-remove-deal-label': ['Remove Deal Label', 'Remove only a system or Automation-managed Label owned by this flow.'],
         'action-set-next-action': ['Set Deal Next Action', 'Set the next task, owner, due date and time.'],
         'action-clear-next-action': ['Clear Deal Next Action', 'Clear only the Next Action that is no longer needed.'],
         'action-add-watcher': ['Add Deal watcher', 'Let one more person follow the Deal without changing the owner.'],
         'action-remove-watcher': ['Remove Deal watcher', 'Stop one person from following the Deal.'],
-        'action-add-interest': ['Add Interest', 'Add a clear customer need, such as Lighting or AV.'],
-        'action-remove-interest': ['Remove Interest', 'Not recommended for general Quote Automations. A person should confirm the customer no longer needs it.'],
+        'action-add-interest': ['Add Interest', 'Add a clear customer need only from mapped structured evidence, never free text.'],
+        'action-remove-interest': ['Remove Interest', 'Manual only. A person must confirm the customer no longer needs it.'],
         'action-set-expected-close': ['Set Expected Close Date', 'Set or move the Deal Expected Close Date.'],
         'action-attach-deal-file': ['Attach file to Deal', 'Upload a file, use a template, or copy a related CRM file.'],
         'action-request-file': ['Request a file', 'Ask for a named file and choose its owner and due date.'],
@@ -7792,12 +7805,15 @@
     if (definition.quoteConnected && segment === 'In Progress' && !definition.protectedOutcome) {
       actions.push('action-create-quote-option');
     }
+    if (definition.quoteConnected && ['In Progress', 'In Review', 'Passed Review', 'Sent'].includes(segment)) {
+      actions.push('action-add-quote-label');
+    }
     if (definition.custom) actions.push('action-move-deal-stage');
     return actions;
   }
 
   function isWorkflowBlockCompatible(block, config) {
-    if (!block || !config) return false;
+    if (!block || !config || block.hidden || block.id === 'action-remove-interest') return false;
     if (block.type === 'trigger') {
       if (config.objectType === 'Lead') return block.id === 'trigger-new-lead';
       const stage = automationStageDefinition(workflowStageName(config), config.triggerPipelineId);
@@ -7843,7 +7859,7 @@
     const query = (blockSearch ? blockSearch.value : '').trim().toLowerCase();
     const blocks = workflowBlockCatalog.filter(function (block) {
       const copy = workflowBlockUserCopy(block, config);
-      return block.tab === activeLibraryTab && isWorkflowBlockCompatible(block, config) && (!query || (copy.label + ' ' + copy.detail + ' ' + workflowBlockUserGroup(block.group, config)).toLowerCase().includes(query));
+      return !block.hidden && block.tab === activeLibraryTab && isWorkflowBlockCompatible(block, config) && (!query || (copy.label + ' ' + copy.detail + ' ' + workflowBlockUserGroup(block.group, config)).toLowerCase().includes(query));
     });
     const groups = [];
     blocks.forEach(function (block) { if (!groups.includes(block.group)) groups.push(block.group); });
@@ -7882,7 +7898,7 @@
   function addWorkflowBlock(blockId, dropButton) {
     const config = activeConfig();
     const block = workflowBlock(blockId);
-    if (!config || !block || !hasEditableStepModel(config) || isPhaseOneTemplateRecipe(config)) return;
+    if (!config || !block || block.hidden || !hasEditableStepModel(config) || isPhaseOneTemplateRecipe(config)) return;
     if (block.disabled) {
       showAutomationToast(block.label + ' is not available yet.');
       return;
@@ -8757,9 +8773,27 @@
     return issues;
   }
 
+  function automationActionSafetyIssues(config) {
+    if (!config || !hasEditableStepModel(config) || isPhaseOneTemplateRecipe(config)) return [];
+    const issues = [];
+    automationWalkSteps(config.steps, function (step) {
+      if (!step || step.type !== 'action') return;
+      if (step.action === 'Remove Interest') {
+        issues.push({ kind: 'remove-interest-withheld', step: step, reason: 'Remove Interest is manual only and cannot be published in an Automation.' });
+      } else if (step.action === 'Add Interest' && step.interestEvidenceSource !== 'structured-source') {
+        issues.push({ kind: 'interest-evidence-required', step: step, reason: 'Confirm a mapped structured source for Add Interest. Free-text keyword matching is not allowed.' });
+      } else if (step.action === 'Remove Deal label' && step.dealLabelOwnership !== 'automation-managed') {
+        issues.push({ kind: 'label-ownership-required', step: step, reason: 'Confirm that this Label is system or Automation-managed and owned by this flow before removing it.' });
+      }
+    });
+    return issues;
+  }
+
   function automationSetupMessage(config) {
     if (!config) return 'This Automation is not ready.';
     if (!automationConfigHasPrimaryAction(config)) return 'Add an Action to the main flow or under If Yes.';
+    const actionIssue = automationActionSafetyIssues(config)[0];
+    if (actionIssue) return actionIssue.reason;
     const ruleIssue = automationRuleCompatibilityIssues(config)[0];
     if (ruleIssue) return (ruleIssue.kind === 'missing-yes-action' ? 'Finish this Rule. ' : (ruleIssue.kind === 'unsupported-group' ? 'Remove this unfinished group. ' : 'Choose a different Rule. ')) + ruleIssue.reason;
     return workflowMoveStageBlocker(config) || '';
@@ -8850,6 +8884,7 @@
     }
     if (isDealLabelAction(step.action)) {
       step.dealLabel = step.dealLabel || automationDealLabels()[0] || 'Hot';
+      if (step.action === 'Add Deal label') step.dealLabelOwnership = 'automation-managed';
       step.completionMode = 'optional';
       step.blockedEvent = '';
     }
@@ -8990,8 +9025,7 @@
     ['action-remove-watcher', 'Remove someone from Watching this Deal'],
     ['action-add-deal-label', 'Add a Deal Label'],
     ['action-remove-deal-label', 'Remove a Deal Label'],
-    ['action-add-interest', 'Add an Interest'],
-    ['action-remove-interest', 'Remove an Interest'],
+    ['action-add-interest', 'Add an Interest · structured evidence required'],
     ['action-request-file', 'Request a file'],
     ['action-attach-deal-file', 'Attach a file to the Deal'],
     ['action-set-expected-close', 'Set the Expected Close Date'],
@@ -9035,8 +9069,8 @@
     return '<option value="">Choose an Action…</option>' + QUOTE_PLAYGROUND_ACTIONS.filter(function (action) {
       return compatibleIds.has(action[0]);
     }).map(function (action) {
-      const withheld = action[0] === 'action-remove-interest';
-      return '<option value="' + escapeAutomationHtml(action[0]) + '"' + (withheld ? ' disabled' : '') + '>' + escapeAutomationHtml(action[1] + (withheld ? ' — not available for Quote Automations' : '')) + '</option>';
+      const needsBuilderEvidence = action[0] === 'action-add-interest';
+      return '<option value="' + escapeAutomationHtml(action[0]) + '"' + (needsBuilderEvidence ? ' disabled' : '') + '>' + escapeAutomationHtml(action[1] + (needsBuilderEvidence ? ' — configure in the Builder' : '')) + '</option>';
     }).join('');
   }
 
@@ -9250,14 +9284,30 @@
         ? { kicker: 'ACTION', title: 'Create another Quote option · ' + (step.quoteName || '{{Deal title}} · Option'), detail: 'Creates one separate draft Quote each time this Automation runs', icon: '&#xf0c5;', nodeClass: 'action' }
         : { kicker: 'ACTION', title: 'Create the first Quote · ' + (step.quoteName || '{{Deal title}} · Quote'), detail: 'Creates an empty Quote and moves the Deal to In Progress. Does nothing if an active Quote already exists.', icon: '&#xf15c;', nodeClass: 'action' };
     }
-    if (isDealLabelAction(step.action)) return { kicker: 'ACTION', title: step.action + ' · ' + (step.dealLabel || 'Select label'), detail: step.action === 'Add Deal label' ? 'No duplicate is created when the Deal already has it' : 'Skipped safely when the Deal does not have it', icon: '&#xf02b;', nodeClass: 'action' };
+    if (isDealLabelAction(step.action)) return {
+      kicker: 'ACTION',
+      title: step.action + ' · ' + (step.dealLabel || 'Select label'),
+      detail: step.action === 'Add Deal label'
+        ? 'No duplicate is created when the Deal already has it'
+        : (step.dealLabelOwnership === 'automation-managed' ? 'Automation-managed Label confirmed · skips safely when absent' : 'Confirm that this flow owns the Label'),
+      icon: '&#xf02b;',
+      nodeClass: 'action' + (step.action === 'Remove Deal label' && step.dealLabelOwnership !== 'automation-managed' ? ' invalid' : '')
+    };
     if (isQuoteLabelAction(step.action)) return { kicker: 'ACTION', title: 'Add Quote Label · ' + (step.quoteLabel || 'Select label'), detail: 'Applied to the related Quote without creating a duplicate', icon: '&#xf02b;', nodeClass: 'action' };
     if (isAutomaticFileAction(step.action)) return { kicker: 'ACTION', title: 'Attach file · ' + automationAttachedFileName(step), detail: 'Deal Files · ' + ({ skip: 'Skip when it already exists', version: 'Add a new version', replace: 'Replace the existing file' }[step.fileDuplicatePolicy] || 'Skip duplicates'), icon: '&#xf15b;', nodeClass: 'action' };
     if (isFileRequestAction(step.action)) return { kicker: 'ACTION', title: 'Request file · ' + (step.fileRequestName || 'Required document'), detail: (step.fileRequestFrom || 'Primary Deal contact') + ' · Managed by ' + (step.owner || 'Deal owner') + ' · Due in ' + (step.fileRequestDueDays || 3) + ' days', icon: '&#xf56f;', nodeClass: 'action' };
     if (step.action === 'Set Deal Next Action') return { kicker: 'ACTION', title: 'Set Next Action · ' + (step.nextActionTitle || 'Follow up this Deal'), detail: (step.owner || 'Deal owner') + ' · Due in ' + (step.nextActionDueDays || 1) + ' ' + ((step.nextActionDueUnit || 'working-days') === 'working-days' ? 'working day(s)' : 'calendar day(s)') + ' at ' + (step.nextActionDueTime || '17:00'), icon: '&#xf0ae;', nodeClass: 'action' };
     if (step.action === 'Clear Deal Next Action') return { kicker: 'ACTION', title: 'Clear Deal Next Action', detail: step.nextActionClearPolicy === 'always' ? 'Clear the current Next Action' : 'Only clear a Next Action created by Automation', icon: '&#xf00c;', nodeClass: 'action' };
     if (isWatcherAction(step.action)) return { kicker: 'ACTION', title: step.action + ' · ' + (step.watcher || 'Select person'), detail: step.action === 'Add Deal watcher' ? 'Follow Deal updates without changing Owner' : 'Stop following Deal updates', icon: step.action === 'Add Deal watcher' ? '&#xf06e;' : '&#xf070;', nodeClass: 'action' };
-    if (isInterestAction(step.action)) return { kicker: 'ACTION', title: step.action + ' · ' + (step.interest || 'Select Interest'), detail: step.action === 'Add Interest' ? 'No duplicate is created' : 'Skipped safely when absent', icon: step.action === 'Add Interest' ? '&#xf005;' : '&#xf056;', nodeClass: 'action' };
+    if (isInterestAction(step.action)) return {
+      kicker: 'ACTION',
+      title: step.action + ' · ' + (step.interest || 'Select Interest'),
+      detail: step.action === 'Add Interest'
+        ? (step.interestEvidenceSource === 'structured-source' ? 'Structured source confirmed · no duplicate is created' : 'Structured source evidence required')
+        : 'Manual only · change this Action before publishing',
+      icon: step.action === 'Add Interest' ? '&#xf005;' : '&#xf056;',
+      nodeClass: 'action' + ((step.action === 'Add Interest' && step.interestEvidenceSource === 'structured-source') ? '' : ' invalid')
+    };
     if (isExpectedCloseAction(step.action)) return { kicker: 'ACTION', title: 'Set Expected Close Date', detail: step.expectedCloseMode === 'fixed' && step.expectedCloseDate ? step.expectedCloseDate : 'In ' + (step.expectedCloseDays || 30) + ' days', icon: '&#xf073;', nodeClass: 'action' };
     if (isMoveDealStageAction(step.action)) {
       const config = activeConfig();
@@ -10558,7 +10608,7 @@
       });
       applyScratchActionDefaults(step, config);
       const actionChoices = workflowBlockCatalog.filter(function (block) {
-        return block.tab === 'action' && !block.disabled && isWorkflowBlockCompatible(block, config);
+        return block.tab === 'action' && !block.disabled && !block.hidden && isWorkflowBlockCompatible(block, config);
       }).map(function (block) { return block.label; });
       if (actionChoices.indexOf(step.action) < 0) actionChoices.unshift(step.action);
       if (earlierSteps.length || step.action === 'Return to earlier step') actionChoices.push('Return to earlier step');
@@ -10600,7 +10650,10 @@
           : 'Available only while the Deal is <strong>Qualified</strong> and has no active Quote. After it is created, WeQuote moves the Deal to <strong>In Progress</strong>.') + '</span></div>' +
         (quoteContractAllowed ? '' : '<div class="aut-info-note"><i class="fai">&#xf071;</i><span>This older step will not run in this Stage. Choose the Create Quote Action shown for this Stage.</span></div>');
       const labelSettings = '<div class="aut-rule aut-data-action-rule"><strong>Deal Label result</strong><div class="aut-help" style="margin-top:5px;">Labels are flexible CRM tags. Hot, Warm, Cold, VIP and custom Labels use the same field.</div></div>' +
-        '<div class="aut-field"><label for="autScratchDealLabel">Deal label</label><select id="autScratchDealLabel">' + dealLabelOptions(step.dealLabel) + '</select><span class="aut-help">Choose an existing CRM Label. Add never creates a duplicate; Remove skips safely when the Label is absent.</span></div>';
+        '<div class="aut-field"><label for="autScratchDealLabel">Deal label</label><select id="autScratchDealLabel">' + dealLabelOptions(step.dealLabel) + '</select><span class="aut-help">Choose an existing CRM Label. Add never creates a duplicate.</span></div>' +
+        (step.action === 'Remove Deal label'
+          ? '<div class="aut-field"><label><input id="autScratchDealLabelManaged" type="checkbox"' + (step.dealLabelOwnership === 'automation-managed' ? ' checked' : '') + '> This is a system or Automation-managed Label owned by this flow</label><span class="aut-help">Required. Automations cannot remove a salesperson\'s manual Label or a Label owned by another process.</span></div>'
+          : '<div class="aut-info-note"><i class="fai">&#xf05a;</i><span>This flow owns the Label it adds. A later Remove Label Action may remove only that managed Label.</span></div>');
       const quoteLabelSettings = '<div class="aut-rule aut-data-action-rule"><strong>Quote Label result</strong><div class="aut-help" style="margin-top:5px;">Choose an existing Quote Label for the related Quote. This does not change the Deal Labels field.</div></div>' +
         '<div class="aut-field"><label for="autScratchQuoteLabel">Quote label</label><select id="autScratchQuoteLabel">' + quoteLabelOptions(step.quoteLabel) + '</select><span class="aut-help">If the related Quote already has this Label, the Action skips safely.</span></div>';
       const fileSelectionSetting = step.fileSource === 'upload'
@@ -10626,7 +10679,11 @@
           '<div class="aut-field"><label for="autScratchNextActionDueTime">Due time</label><input id="autScratchNextActionDueTime" type="time" value="' + escapeAutomationHtml(step.nextActionDueTime || config.nextActionDueTime || '17:00') + '"></div>' +
           (phaseOneRecipe ? '' : '<div class="aut-field"><label for="autScratchNextActionPolicy">If a Next Action already exists</label><select id="autScratchNextActionPolicy"><option value="replace-if-overdue"' + (step.nextActionPolicy === 'replace-if-overdue' ? ' selected' : '') + '>Replace only when overdue · Recommended</option><option value="skip"' + (step.nextActionPolicy === 'skip' ? ' selected' : '') + '>Keep existing and do nothing</option><option value="replace"' + (step.nextActionPolicy === 'replace' ? ' selected' : '') + '>Replace current Next Action</option></select></div>');
       const watcherSettings = '<div class="aut-stage-lock-summary"><i class="fai">&#xf06e;</i><span><small>DEAL PEOPLE</small><strong>' + escapeAutomationHtml(step.action) + '</strong><em>Owner remains unchanged</em></span></div><div class="aut-field"><label for="autScratchWatcher">Person</label><select id="autScratchWatcher">' + specificDealOwnerOptions(step.watcher || 'Lee Roche') + '</select><span class="aut-help">Add skips an existing watcher; Remove skips safely when the person is not following.</span></div>';
-      const interestSettings = '<div class="aut-stage-lock-summary"><i class="fai">&#xf005;</i><span><small>DEAL DATA</small><strong>' + escapeAutomationHtml(step.action) + '</strong><em>Interests remain multi-select</em></span></div><div class="aut-field"><label for="autScratchInterest">Interest</label><select id="autScratchInterest">' + dealInterestOptions(step.interest) + '</select><span class="aut-help">Interests describe what the customer needs; flexible Deal Labels remain separate.</span></div>';
+      const interestSettings = step.action === 'Remove Interest'
+        ? '<div class="aut-info-note danger"><i class="fai">&#xf071;</i><span><strong>Remove Interest is manual only.</strong><br>Change this Action before publishing. Rejecting or removing a Quote line must never erase customer-need history.</span></div>'
+        : '<div class="aut-stage-lock-summary"><i class="fai">&#xf005;</i><span><small>DEAL DATA</small><strong>Add Interest</strong><em>Interests remain multi-select</em></span></div>' +
+          '<div class="aut-field"><label for="autScratchInterest">Interest</label><select id="autScratchInterest">' + dealInterestOptions(step.interest) + '</select><span class="aut-help">Interests describe what the customer needs; flexible Deal Labels remain separate.</span></div>' +
+          '<div class="aut-field"><label for="autScratchInterestEvidence">Structured source evidence</label><select id="autScratchInterestEvidence"><option value="">Choose evidence contract…</option><option value="structured-source"' + (step.interestEvidenceSource === 'structured-source' ? ' selected' : '') + '>A mapped structured source explicitly supplies this Interest</option></select><span class="aut-help">Required. Never infer an Interest from free-text keywords.</span></div>';
       const expectedCloseSettings = '<div class="aut-stage-lock-summary"><i class="fai">&#xf073;</i><span><small>APPROVED DEAL FIELD</small><strong>Expected Close Date</strong><em>Forecast timing only · it never changes Stage</em></span></div>' +
         '<div class="aut-field"><label for="autScratchExpectedCloseMode">Date rule</label><select id="autScratchExpectedCloseMode"><option value="relative"' + (step.expectedCloseMode === 'relative' ? ' selected' : '') + '>Set relative to run date</option><option value="fixed"' + (step.expectedCloseMode === 'fixed' ? ' selected' : '') + '>Use a fixed date</option></select></div>' +
         '<div class="aut-field"><label for="autScratchExpectedCloseDays">Relative days</label><input id="autScratchExpectedCloseDays" type="number" min="1" max="365" value="' + Number(step.expectedCloseDays || 30) + '"></div>' +
@@ -11037,14 +11094,14 @@
       '<section class="aut-untitled-builder-start" aria-labelledby="autUntitledBuilderTitle">' +
         '<span class="aut-untitled-builder-icon"><i class="fai">&#xf542;</i></span>' +
         '<small>NEW QUOTE PIPELINE AUTOMATION</small>' +
-        '<h2 id="autUntitledBuilderTitle">Choose a Stage and Template</h2>' +
-        '<p>Choose a protected Quote Pipeline Stage to see only its matching Phase 1 Templates.</p>' +
-        '<button class="aut-btn primary" type="button" id="autUntitledChooseTemplate">Choose Stage &amp; Template</button>' +
+        '<h2 id="autUntitledBuilderTitle">Choose a Stage and starting point</h2>' +
+        '<p>Choose any Quote Pipeline Stage, then build a compatible Custom Automation or use a matching Template.</p>' +
+        '<button class="aut-btn primary" type="button" id="autUntitledChooseTemplate">Choose Stage &amp; Starting Point</button>' +
       '</section>';
     workflowTitle.textContent = config.title || 'New Quote Pipeline Automation';
     workflowMeta.textContent = 'Draft · Quote Pipeline · Setup not complete';
     summaryLabel.textContent = 'Setup status:';
-    plainSummary.textContent = 'Choose a Stage and one matching Phase 1 Template before testing or publishing.';
+    plainSummary.textContent = 'Choose a Stage, then build a compatible Custom Automation or use a matching Template before testing or publishing.';
     if (draftBanner) draftBanner.hidden = true;
     if (blockLibrary) blockLibrary.hidden = true;
     if (automationInspector) automationInspector.hidden = true;
@@ -11064,7 +11121,7 @@
       rightFlowSummary.hidden = false;
       rightFlowSummary.innerHTML = '<header><span class="aut-inspector-summary-icon"><i class="fai">&#xf542;</i></span><div><strong>Automation setup</strong><span>Untitled Draft</span></div></header>' +
         '<div class="aut-inspector-summary-row"><small>STATUS</small><strong>Setup not complete</strong><span>No Stage or Template has been selected yet.</span></div>' +
-        '<div class="aut-inspector-summary-row"><small>NEXT</small><strong>Choose a protected Stage</strong><span>Only matching Phase 1 Templates will then be shown.</span></div>';
+        '<div class="aut-inspector-summary-row"><small>NEXT</small><strong>Choose a Quote Stage</strong><span>Custom starts first; matching Templates remain available.</span></div>';
     }
     updateWorkflowList();
     syncAutomationDraftUi();
@@ -11206,7 +11263,7 @@
       else if (isWonHandoff(config)) activity = 'Runs on future ' + (config.triggerToStage || 'Won') + ' Deals';
       else if (isQuoteInvoice(config)) activity = 'Runs on future acceptances';
       else if (isProposalApproval(config)) activity = config.setupComplete ? 'Starts in ' + config.stageMap.qualify : 'Setup required';
-      else if (isUntitledPhaseOneAutomation(config)) activity = 'Choose Stage and Template';
+      else if (isUntitledPhaseOneAutomation(config)) activity = 'Choose Stage and starting point';
       else if (hasEditableStepModel(config)) activity = isPhaseOneTemplateRecipe(config) ? 'Configurable inactive template' : (config.templateKey ? 'Editable inactive template' : 'Inactive custom Automation');
       if (config.editingVersion) activity = 'Live version keeps running';
       return '<button class="aut-workflow' + (key === activeWorkflowKey ? ' active' : '') + '" type="button" data-aut-workflow="' + escapeAutomationHtml(key) + '">' +
@@ -11354,7 +11411,9 @@
           step.owner = quoteOwner.value;
         }
         const dealLabel = document.getElementById('autScratchDealLabel');
+        const dealLabelManaged = document.getElementById('autScratchDealLabelManaged');
         if (dealLabel) step.dealLabel = dealLabel.value;
+        if (dealLabelManaged) step.dealLabelOwnership = dealLabelManaged.checked ? 'automation-managed' : '';
         const quoteLabel = document.getElementById('autScratchQuoteLabel');
         if (quoteLabel) step.quoteLabel = quoteLabel.value;
         const fileSource = document.getElementById('autScratchFileSource');
@@ -11391,8 +11450,10 @@
         if (nextActionClearPolicy) step.nextActionClearPolicy = nextActionClearPolicy.value;
         const watcher = document.getElementById('autScratchWatcher');
         const interest = document.getElementById('autScratchInterest');
+        const interestEvidence = document.getElementById('autScratchInterestEvidence');
         if (watcher) step.watcher = watcher.value;
         if (interest) step.interest = interest.value;
+        if (interestEvidence) step.interestEvidenceSource = interestEvidence.value;
         const expectedCloseMode = document.getElementById('autScratchExpectedCloseMode');
         const expectedCloseDays = document.getElementById('autScratchExpectedCloseDays');
         const expectedCloseDate = document.getElementById('autScratchExpectedCloseDate');
@@ -12453,7 +12514,7 @@
     const canReturn = scratchInsertIndex > 0;
     const config = activeConfig();
     const availableActions = workflowBlockCatalog.filter(function (block) {
-      return block.tab === 'action' && !block.disabled && isWorkflowBlockCompatible(block, config);
+      return block.tab === 'action' && !block.disabled && !block.hidden && isWorkflowBlockCompatible(block, config);
     });
     const actionMarkup = availableActions.map(function (block) {
       const copy = workflowBlockUserCopy(block, config);
@@ -12641,9 +12702,9 @@
     if (templatesButton) templatesButton.hidden = !creationPolicy.templatesAllowed;
     const creatorHelp = creatorTemplates.querySelector('.aut-creator-toolbar .aut-help');
     if (creatorHelp) creatorHelp.textContent = scratchOnly
-      ? 'Choose a Stage to build from scratch'
+      ? 'Choose a Stage for a Custom Automation'
       : (selectedAutomationStage
-        ? (canBuildFromScratch ? 'Use a Template, or build from scratch' : 'Showing only matching Templates')
+        ? (canBuildFromScratch ? 'Use a Template, or build a Custom Automation' : 'Showing matching Templates')
         : 'Choose a Stage before Templates are shown');
     renderTemplateStageNav();
     creatorTemplates.querySelectorAll('[data-aut-template]').forEach(function (card) {
@@ -12790,7 +12851,7 @@
       creatorCopy.textContent = 'Select the existing Pipeline where this Automation belongs.';
     } else if (screen === 'home') {
       creatorTitle.textContent = 'Create automation';
-      creatorCopy.textContent = 'Name this Automation and choose which Companies it applies to.';
+      creatorCopy.textContent = 'Choose Custom Automation or a matching Template for this Stage.';
       if (creatorAutomationName && creatorAutomationName.value !== pendingAutomationName) creatorAutomationName.value = pendingAutomationName;
       if (creatorAutomationDescription && creatorAutomationDescription.value !== pendingAutomationDescription) creatorAutomationDescription.value = pendingAutomationDescription;
       renderCreatorCompanyPicker();
@@ -12801,7 +12862,7 @@
       creatorCopy.textContent = scratchOnly
         ? 'Select where this Automation belongs. The next screen shows the Starts when choices for that Stage.'
         : (selectedAutomationStage
-          ? 'Choose a ready-made Template for ' + selectedAutomationStage + ', or build from scratch using choices that work in this Stage.'
+          ? 'Choose a ready-made Template for ' + selectedAutomationStage + ', or build a Custom Automation using choices that work in this Stage.'
           : 'Select the Pipeline Stage first. Its matching Templates will then appear.');
     } else if (screen === 'template-preview') {
       creatorTitle.textContent = 'Preview template';
@@ -13071,7 +13132,10 @@
     const triggerChoice = stage && stage.triggerChoices.find(function (item) { return item[0] === scratchTriggerChoice; });
     if (!triggerChoice) return;
     draftCounter += 1;
-    const creationGroupKey = ensureSalesPipelineAutomationGroupForCreation();
+    const pipeline = automationPipelineById(selectedTemplatePipelineId) || automationPipelines()[0];
+    const creationGroupKey = pipeline && pipeline.id !== 'sales-pipeline'
+      ? ensurePipelineAutomationGroup(pipeline)
+      : ensureSalesPipelineAutomationGroupForCreation();
     const config = {
       kind: 'scratch',
       title: 'Custom Automation ' + draftCounter,
@@ -13124,7 +13188,7 @@
     if (!automationPipelineUsesQuoteLifecycle(pipeline) && !isGenericStageStarter) {
       creatorStartMode = 'scratch';
       setCreatorScreen(selectedAutomationStage ? 'triggers' : 'templates');
-      showAutomationToast('Quote Templates need a Quote Pipeline. Build from scratch in this Stage instead.');
+      showAutomationToast('Quote Templates need a Quote Pipeline. Build a Custom Automation in this Stage instead.');
       return;
     }
     const templateStage = automationStageForTemplateKey(templateKey, selectedAutomationStage);
@@ -13614,7 +13678,7 @@
       selectedAutomationStage = null;
       selectedAutomationStageContext = null;
       automationStageLocked = false;
-      creatorStartMode = 'templates';
+      creatorStartMode = 'scratch';
       resetCreatorDetails();
       openTemplatePicker('templates');
       return;
@@ -13796,7 +13860,12 @@
       const step = reference.step;
       if (!step || step.type !== 'action') return;
       beginEditableDraftVersion(config);
+      const previousAction = step.action;
       step.action = event.target.value;
+      if (step.action !== previousAction) {
+        delete step.interestEvidenceSource;
+        delete step.dealLabelOwnership;
+      }
       applyScratchActionDefaults(step, config);
       if (step.action === 'Return to earlier step') {
         const targetIndex = Math.max(0, reference.index - 1);
@@ -13999,7 +14068,7 @@
     if (!modeButton || modeButton.disabled) return;
     setContextualCreatorMode(modeButton.dataset.autContextMode, false);
     if (modeButton.dataset.autContextMode === 'custom') {
-      showAutomationToast('Build from scratch selected. Choose what should start this Automation.');
+      showAutomationToast('Custom selected. Choose what should start this Automation.');
       requestAnimationFrame(function () {
         const firstChoice = contextCustomTriggerList && contextCustomTriggerList.querySelector('[data-aut-context-trigger-choice]');
         if (firstChoice) firstChoice.focus();
@@ -14325,7 +14394,7 @@
       selectedAutomationStage = null;
       selectedAutomationStageContext = null;
       automationStageLocked = false;
-      creatorStartMode = automationPipelineUsesQuoteLifecycle(pipeline) ? 'templates' : 'scratch';
+      creatorStartMode = 'scratch';
       setAutomationPipelineContext(pipeline);
       if (pipeline.id !== 'sales-pipeline') selectedAutomationGroupKey = ensurePipelineAutomationGroup(pipeline);
       setCreatorScreen('templates');
@@ -14411,7 +14480,7 @@
       if (!automationPipelineUsesQuoteLifecycle(pipeline)) {
         creatorStartMode = 'scratch';
         setCreatorScreen(selectedAutomationStage ? 'triggers' : 'templates');
-        showAutomationToast('This Pipeline has no Quote Templates. Build from scratch instead.');
+        showAutomationToast('This Pipeline has no Quote Templates. Build a Custom Automation instead.');
         return;
       }
       if (template.dataset.autTemplate === 'client-proposal-approval') {

@@ -2,6 +2,18 @@
 
 **Extracted from `WeQuote-CRM-Phase-1-PRD.html` · 25 August 2026.**
 
+> **Current product-direction addendum · 29 August 2026**
+> Every existing Quote lifecycle placement context — Qualified, In Progress, In Review, Passed Review, Sent, Won and
+> Lost — now supports two separate Automation creation routes: **Templates** and **Custom**. Templates remain managed,
+> structurally locked flows with only declared settings editable. Custom uses a context-compatible Trigger-first journey
+> and creates an **Inactive Custom Automation draft** in the selected fixed context. This addendum supersedes the
+> Template-only/no-blank-canvas statements retained below from the 25 August extraction, including the introductory
+> Automation-scope paragraph, the one-route creation journey and AC-BLD-03 wherever they deny the Custom route.
+> Template-specific lock rules and protected Quote lifecycle boundaries remain valid. See
+> [`quote-automation/QUOTE-LIFECYCLE-AUTOMATION-PRODUCT-DIRECTION-2026-08-29.md`](quote-automation/QUOTE-LIFECYCLE-AUTOMATION-PRODUCT-DIRECTION-2026-08-29.md).
+> The historical extraction remains below for traceability; product direction, current prototype implementation and
+> production runtime readiness must be reported separately.
+
 This is the **committed Phase 1 scope only**. Phase 2 (customer-defined stages), Phase 3
 (fully custom pipelines) and all 26 figures have been removed. Where the full PRD showed a
 diagram, its caption is kept as a quoted note, because the captions carry the rule and the

@@ -1879,7 +1879,7 @@
         <div class="aut-group-toolbar"><label><i class="fai">&#xf002;</i><input type="search" id="autGroupSearch" placeholder="Search Quote Pipeline Automations" autocomplete="off"></label><span><b id="autGroupVisibleCount">0</b> Automation setups in Quote Pipeline</span></div>
         <div class="aut-group-columns" aria-hidden="true"><span>Automation and status</span><span>Setup summary</span><span>Created</span><span>Last updated</span><span>Preview · Edit · Active</span></div>
         <div class="aut-group-list" id="autGroupList"></div>
-        <div class="aut-group-empty" id="autGroupEmpty"><i class="fai">&#xf0e7;</i><strong id="autGroupEmptyTitle">No Automations yet</strong><span id="autGroupEmptyCopy">Use a Template or build from scratch.</span><button class="aut-btn primary" type="button" id="autGroupEmptyCreate"><i class="fai">&#xf067;</i> Create first Automation</button></div>
+        <div class="aut-group-empty" id="autGroupEmpty"><i class="fai">&#xf0e7;</i><strong id="autGroupEmptyTitle">No Automations yet</strong><span id="autGroupEmptyCopy">Build a Custom Automation or use a Template.</span><button class="aut-btn primary" type="button" id="autGroupEmptyCreate"><i class="fai">&#xf067;</i> Create first Automation</button></div>
       </section>
 
       <div class="aut-group-preview-overlay" id="autGroupPreviewOverlay" hidden>
@@ -1961,7 +1961,7 @@
           <div class="aut-pipeline-zero-content">
             <small>READY TO CUSTOMISE</small>
             <h3 id="autPipelineZeroTitle">Create the first Automation</h3>
-            <p id="autPipelineZeroCopy">Choose a Pipeline Stage, then use a Template or build from scratch.</p>
+            <p id="autPipelineZeroCopy">Choose a Pipeline Stage, then build a Custom Automation or use a Template.</p>
             <div class="aut-pipeline-zero-library" aria-label="Available workflow blocks">
               <span class="starts"><i class="fai">&#xf11e;</i><b>Starts when</b><em>Stage entry, activity, files, owner or close date</em></span>
               <span class="rules"><i class="fai">&#xf126;</i><b>Rules</b><em>Required work, labels, interests, value or activity</em></span>
@@ -1981,8 +1981,8 @@
               <button type="button" id="autContextTemplateClose" aria-label="Close Add automation panel" title="Close panel"><i class="fai">&#xf00d;</i></button>
             </div>
             <div class="aut-context-mode-tabs" role="tablist" aria-label="Automation start mode">
-              <button id="autContextTemplatesTab" class="active" type="button" role="tab" aria-selected="true" aria-controls="autContextTemplateList" data-aut-context-mode="templates">Templates</button>
-              <button id="autContextScratchTab" type="button" role="tab" aria-selected="false" aria-controls="autContextCustomPanel" data-aut-context-mode="custom">Build from scratch</button>
+              <button id="autContextScratchTab" class="active" type="button" role="tab" aria-selected="true" aria-controls="autContextCustomPanel" data-aut-context-mode="custom">Custom</button>
+              <button id="autContextTemplatesTab" type="button" role="tab" aria-selected="false" aria-controls="autContextTemplateList" data-aut-context-mode="templates">Templates</button>
             </div>
           </header>
           <label class="aut-context-template-stage" for="autContextTemplateStage">
@@ -1991,13 +1991,13 @@
               <option>Qualified</option><option>In Progress</option><option>In Review</option><option>Passed Review</option><option>Sent</option><option>Won</option><option>Lost</option>
             </select>
           </label>
-          <div class="aut-context-template-list" id="autContextTemplateList" role="tabpanel" aria-labelledby="autContextTemplatesTab" aria-live="polite"></div>
-          <p class="aut-context-template-help"><i class="fai">&#xf05a;</i><span>Select a Pipeline Stage to see matching Templates.</span></p>
+          <div class="aut-context-template-list" id="autContextTemplateList" role="tabpanel" aria-labelledby="autContextTemplatesTab" aria-live="polite" hidden></div>
+          <p class="aut-context-template-help" hidden><i class="fai">&#xf05a;</i><span>Select a Pipeline Stage to see matching Templates.</span></p>
 
-          <section class="aut-context-custom-panel" id="autContextCustomPanel" role="tabpanel" aria-labelledby="autContextScratchTab autContextCustomTitle" hidden>
+          <section class="aut-context-custom-panel" id="autContextCustomPanel" role="tabpanel" aria-labelledby="autContextScratchTab autContextCustomTitle">
             <header>
               <div>
-                <span class="aut-context-custom-eyebrow">Build from scratch</span>
+                <span class="aut-context-custom-eyebrow">Custom Automation</span>
                 <h2 id="autContextCustomTitle">Choose what starts this Automation</h2>
                 <p>Choose the change or date that starts this Automation.</p>
               </div>
@@ -2212,7 +2212,7 @@
           <div class="aut-list-title"><strong>Automations</strong><span class="aut-count">0</span></div>
           <div class="aut-list-section">Your automations</div>
           <div id="autYourAutomations"></div>
-          <div class="aut-list-empty" id="autYourEmpty"><strong>No automations yet</strong><span>Use a Template for this Stage, or build from scratch.</span><button class="aut-btn small" type="button" id="autEmptyNewWorkflow">Create automation</button></div>
+          <div class="aut-list-empty" id="autYourEmpty"><strong>No automations yet</strong><span>Build a Custom Automation for this Stage, or use a matching Template.</span><button class="aut-btn small" type="button" id="autEmptyNewWorkflow">Create automation</button></div>
           <div class="aut-list-section">Recommended templates</div>
           <button class="aut-workflow template" type="button" data-aut-list-template="qualified-owner-first-action"><span class="aut-workflow-line"><span class="aut-workflow-name">Qualified owner &amp; first action</span><span class="aut-object-badge deal">DEAL</span></span><span class="aut-workflow-meta"><span>Qualified</span><span>Use template →</span></span></button>
           <button class="aut-workflow template" type="button" data-aut-list-template="qualified-inactivity"><span class="aut-workflow-line"><span class="aut-workflow-name">Qualified inactivity reminder</span><span class="aut-object-badge deal">DEAL</span></span><span class="aut-workflow-meta"><span>Qualified · Wait 7 days</span><span>Use template →</span></span></button>
@@ -2429,14 +2429,14 @@
             </div>
             <div class="aut-creator-screen" id="autCreatorHome" hidden>
               <div class="aut-creator-entry">
+                <button class="aut-creator-choice" type="button" data-aut-creator="scratch"><span class="aut-template-card-icon"><i class="fai">&#xf303;</i></span><strong>Custom Automation</strong><span>Choose Starts when, add a Rule only if needed, then choose an Action.</span><em>Build your Automation →</em></button>
                 <button class="aut-creator-choice" type="button" data-aut-creator="templates"><span class="aut-template-card-icon"><i class="fai">&#xf00a;</i></span><strong>Use a Template</strong><span>Start with a ready-made flow for this Stage.</span><em>Choose a Template →</em></button>
-                <button class="aut-creator-choice" type="button" data-aut-creator="scratch"><span class="aut-template-card-icon"><i class="fai">&#xf303;</i></span><strong>Build from scratch</strong><span>Choose Starts when, add a Rule only if needed, then choose an Action.</span><em>Build your Automation →</em></button>
               </div>
-              <div class="aut-template-note"><i class="fai">&#xf023;</i><span>Global Create starts with Templates. Build from scratch only shows choices that work in the Stage you choose.</span></div>
+              <div class="aut-template-note"><i class="fai">&#xf023;</i><span>Custom Automation starts first after you choose a Stage. Templates remain available when a matching ready-made flow exists.</span></div>
             </div>
 
             <div class="aut-creator-screen" id="autCreatorTemplates" hidden>
-              <div class="aut-creator-toolbar"><div><button class="aut-creator-back" type="button" data-aut-template-cancel><i class="fai">&#xf00d;</i> Cancel</button><button class="aut-btn small" type="button" data-aut-creator="scratch"><i class="fai">&#xf303;</i> Build from scratch</button></div><span class="aut-help">Step 1 · Choose the Pipeline Stage</span></div>
+              <div class="aut-creator-toolbar"><div><button class="aut-creator-back" type="button" data-aut-template-cancel><i class="fai">&#xf00d;</i> Cancel</button><button class="aut-btn small" type="button" data-aut-creator="scratch"><i class="fai">&#xf303;</i> Custom Automation</button></div><span class="aut-help">Step 1 · Choose the Pipeline Stage</span></div>
               <div class="aut-template-stage-nav" id="autTemplateStageNav" aria-label="Choose a Quote Pipeline Stage"></div>
               <div class="aut-scratch-only-notice" id="autStageTemplatePrompt"><span><i class="fai">&#xf279;</i></span><div><small>QUOTE PIPELINE</small><h3>Choose a Stage first</h3><p>Matching fixed Templates will appear after you select the Stage where this Automation belongs.</p></div></div>
               <div class="aut-scratch-only-notice" id="autScratchOnlyNotice" hidden><span><i class="fai">&#xf303;</i></span><div><small>CUSTOM AUTOMATION</small><h3>Choose the Stage first</h3><p>After you choose the Stage, WeQuote shows how the Automation can start, what it can check, and what it can do.</p></div></div>

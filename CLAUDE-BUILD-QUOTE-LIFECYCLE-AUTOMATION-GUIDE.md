@@ -19,7 +19,8 @@ The Guide must help a non-technical colleague understand:
 5. which combinations are allowed, unavailable or still awaiting a product/runtime decision; and
 6. how a simple flow is assembled from **Starts when**, optional **Wait**, optional **Rule**, **Yes**, optional **No**, and **Action** blocks.
 
-This is a decision-support and learning Guide. It must not silently change the committed Phase 1 scope or claim that unbuilt runtime capabilities already work.
+This is a decision-support and learning Guide. It must follow the current product-direction record while clearly stating
+where the prototype and production runtime are still behind; it must not claim that unbuilt runtime capabilities already work.
 
 ---
 
@@ -39,11 +40,12 @@ It must remain at the repository root so colleagues can find it immediately and 
 
 Use these sources in this order:
 
-1. `docs/WeQuote-CRM-Phase-1-PRD.html` — the formal Phase 1 authority.
-2. `docs/quote-automation/QUOTE-LIFECYCLE-FROM-SCRATCH-STAGE-CATALOGUE.md` — the detailed lifecycle, Trigger, Rule, Action and candidate-recipe evidence.
-3. The existing root `QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html` — interaction and content reference, not an authority where it conflicts with the PRD or catalogue.
-4. `docs/visuals/template-vs-scratch-scope.html` — the verified scope calculations and colleague-facing comparison.
-5. `assets/js/automation.js` — the current prototype Creator choices and compatibility behaviour.
+1. `docs/quote-automation/QUOTE-LIFECYCLE-AUTOMATION-PRODUCT-DIRECTION-2026-08-29.md` — the current product decision and precedence record.
+2. `docs/WeQuote-CRM-Phase-1-PRD.html` — the formal Phase 1 authority, read together with its 29 August current-direction addendum.
+3. `docs/quote-automation/QUOTE-LIFECYCLE-FROM-SCRATCH-STAGE-CATALOGUE.md` — the detailed lifecycle, Trigger, Rule, Action and candidate-recipe evidence.
+4. The existing root `QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html` — interaction and content reference, not an authority where it conflicts with the decision record, PRD addendum or catalogue.
+5. `docs/visuals/template-vs-scratch-scope.html` — the verified scope calculations and colleague-facing comparison.
+6. `assets/js/automation.js` — evidence of current prototype implementation, not authority for preserving the superseded protected-context Custom gate.
 
 Do not use the older PRD under a dated `handoff/` folder. The repository-level `docs/WeQuote-CRM-Phase-1-PRD.html` is the current PRD.
 
@@ -58,21 +60,27 @@ Do not use the older PRD under a dated `handoff/` folder. The repository-level `
 
 ## 3. Product position that the Guide must state clearly
 
-The Guide compares three layers. It must never merge them into one promise.
+The Guide compares three layers and three kinds of status. It must not confuse approved product direction, current prototype
+implementation or production runtime readiness.
 
-### Layer 1 — committed Phase 1 baseline
+### Layer 1 — managed Templates
 
-The committed Phase 1 baseline is:
+The managed Template pack is:
 
 > Quote lifecycle + 12 fixed Templates + 63 approved editable controls.
 
 For each fixed Template, WeQuote locks the Template name, Quote context, Starts when event, Rule and branch structure, Wait position, Action types and step order. A user changes only the approved setting values exposed by that Template.
 
-### Layer 2 — Start from scratch in the current Quote contexts
+### Layer 2 — compatible Custom Automation in every existing Quote context
 
-The current prototype demonstrates a much wider authoring model. A user may choose compatible Starts when events, optional Rules, Waits, Yes/No paths and Actions in existing Quote contexts.
+The 29 August product direction selects a separate **Custom** route in Qualified, In Progress, In Review, Passed Review,
+Sent, Won and Lost. A user may choose compatible Starts when events, optional Rules, Waits, Yes/No paths and permitted
+Actions in the selected context. Choosing the Starts when event creates an **Inactive Custom Automation draft** with that
+Trigger placed.
 
-This is an expanded product scope. It is not made part of the committed Phase 1 baseline merely because it reuses some Template setting controls.
+This does not unlock or convert a managed Template. The selected Quote context stays fixed, and protected Quote lifecycle
+operations remain unavailable. The current runnable prototype's old protected-context gate is an implementation gap, not
+the desired product rule.
 
 ### Layer 3 — Custom Stages and new Pipelines
 
@@ -86,26 +94,32 @@ Custom Stages and standalone/new Pipelines add further product decisions:
 - multi-Quote behaviour; and
 - which Stages WeQuote controls automatically.
 
-The Guide can let colleagues explore this layer, but it must label it as an expansion/proposal unless a newer approved product decision says otherwise.
+The Guide can let colleagues explore this layer, but it must label its product and release status separately from the
+approved seven-context Custom decision. That decision does not by itself approve every Custom Stage or Standalone Pipeline
+management capability for production.
 
 ### Required status banner
 
 Show a visible banner near the top:
 
 > **Decision-support Guide**  
-> Phase 1 is the 12 fixed Templates. Start from scratch, Custom Stages and new Pipelines are shown so the team can review their additional product and QA scope.
+> Every existing Quote context offers two product routes: 12 managed fixed Templates or compatible Custom Automation.
+> The current prototype and production runtime may still be behind this direction. Custom Stages and Standalone Pipelines
+> are shown separately so the team can review their additional product and QA scope.
 
 ### Decision locked for this Guide build
 
-Use the safest interpretation unless the product owner gives a newer written decision:
+Use the 29 August decision record unless the product owner gives a newer written decision:
 
-- the 12 managed Templates remain the only committed Phase 1 Templates;
+- the 12 managed Templates remain the complete managed Template set;
 - rename the current 79-row “Templates” explorer to **Reviewed examples**;
 - the 79 examples may be loaded into the practice Builder for learning, but they are not promoted to approved Templates;
-- protected Quote lifecycle scratch authoring remains an expansion/proposal; and
+- every existing Quote lifecycle context offers a separate compatible Custom route that creates an Inactive draft; and
 - Custom Stage and Standalone Pipeline behaviour remains a reviewable product guideline rather than live runtime behaviour.
 
-Do not silently choose the alternative model in which every reviewed example becomes an editable recipe or protected-stage Custom Automation. That would be a product-scope decision, not a copy change.
+Do not turn the 79 reviewed examples into managed Templates and do not unlock the twelve fixed Templates. Managed Templates
+and Custom Automation remain separate product types. Do not treat the 28 August prototype's Custom-disabled gate as the
+latest authority.
 
 ---
 
@@ -354,9 +368,11 @@ Make the Guide explain that this is **UI reuse only**. It does not include choic
 
 ---
 
-## 8. Current prototype Start-from-scratch calculations
+## 8. Seven-context Custom compatibility calculations
 
-These figures describe the **current prototype Creator** for the seven existing Quote contexts. They are a scope comparison, not the approved Phase 1 contract and not a delivery-time multiplier.
+These figures preserve the measured seven-context Creator matrix used to size and review the selected Custom route. They
+are a compatibility/scope comparison, not proof that the current runnable prototype exposes the route or that production
+runtime support exists, and not a delivery-time multiplier.
 
 ### 8.1 Eighteen Starts when types
 
@@ -396,9 +412,11 @@ Qualified 6
 
 One Starts when type can appear in more than one context, which is why 18 unique types become 33 placements.
 
-### 8.2 Sixteen Action types
+### 8.2 Sixteen Action types requiring compatibility decisions
 
-Fourteen Actions are available in every current Quote context:
+Fourteen candidate Action types enter the shared context-compatibility calculation. Do not describe all fourteen as
+universally selectable: Remove Deal label is limited to an owned system/Automation-managed Label, and Add Interest
+requires approved structured evidence. Remove Interest is not one of these Action types.
 
 1. Create Note
 2. Schedule Meeting or Site Visit
@@ -421,13 +439,13 @@ Two additional Quote-creation Actions are placement-specific:
 16. Create another Quote option — In Progress only
 
 ```text
-14 shared Actions × 7 Quote contexts = 98 placements
+14 candidate shared Action types × 7 Quote contexts = 98 context/type checks
 + Create the first Quote in Qualified = 1
 + Create another Quote option in In Progress = 1
-= 100 Action placements
+= 100 static Action compatibility decisions
 ```
 
-Do not add **Remove Interest** to this list. Removing a product/system Interest can destroy useful customer-history information. It remains a manual CRM operation or a withheld Automation idea. Label removal is different: an Automation may remove only a system-managed Label that it owns.
+Do not add **Remove Interest** to this list. Removing a product/system Interest can destroy useful customer-history information. It remains a manual CRM operation, withheld from general Automation and recommended recipes. Label removal is different: an Automation may remove only a system-managed Label that it owns. Visible picker totals must be derived after those conditions are applied; do not present 14 as an always-selectable card count.
 
 ### 8.3 Minimum 1,300 static compatibility decisions
 
@@ -456,7 +474,7 @@ The current prototype allows 1,026 of the 1,062 Starts-when × Rule pairs. Count
 
 > one Starts when + no Rule or one compatible Rule + one compatible Action
 
-| Context | Starts when | Actions | Allowed Starts-when × Rule pairs | Formula | Simple shapes |
+| Context | Starts when | Maximum candidate Action types | Allowed Starts-when × Rule pairs | Formula | Simple shapes |
 |---|---:|---:|---:|---|---:|
 | Qualified | 6 | 15 | 179 | `15 × (6 + 179)` | 2,775 |
 | In Progress | 7 | 15 | 220 | `15 × (7 + 220)` | 3,405 |
@@ -465,11 +483,11 @@ The current prototype allows 1,026 of the 1,062 Starts-when × Rule pairs. Count
 | Sent | 6 | 14 | 188 | `14 × (6 + 188)` | 2,716 |
 | Won | 4 | 14 | 125 | `14 × (4 + 125)` | 1,806 |
 | Lost | 3 | 14 | 95 | `14 × (3 + 95)` | 1,372 |
-| **Total** | **33** | **100 placements** | **1,026** |  | **15,238** |
+| **Total** | **33** | **100 context/type checks** | **1,026** |  | **15,238** |
 
 Required explanatory note:
 
-> **15,238 is not the total possible configuration space and is not a time estimate.** It is a controlled comparison using only one Starts when, zero or one compatible Rule and one Action. Multiple Rules, AND/OR groups, Waits, multiple Actions and Yes/No paths make the real QA space larger and not usefully represented by one finite headline number.
+> **15,238 is not the total possible configuration space, a visible picker count or a time estimate.** It is an upper-bound controlled comparison using only one Starts when, zero or one compatible Rule and one candidate Action type. It excludes Remove Interest but counts conditional Remove Label/Add Interest types before record-level eligibility is applied. Multiple Rules, AND/OR groups, Waits, multiple Actions and Yes/No paths make the real QA space larger and not usefully represented by one finite headline number.
 
 ### 8.5 Separate source-catalogue counts
 
@@ -478,7 +496,7 @@ Do not mix the Creator comparison above with the detailed source catalogue. Show
 - 7 Quote contexts
 - 23 Starts-when definitions; 22 currently marked selectable
 - 35 Rule definitions; 30 currently marked selectable
-- 15 shared Actions in the detailed catalogue
+- 15 historical Action identifiers in the detailed catalogue; A11 Remove Interest is now withheld, while A09/A10 are conditional, so the current selectable total must be recalculated
 - 79 reviewed **candidate examples**, made from 18 shared and 61 context-specific examples
 - 5 additional withheld ideas, outside the 79
 - 0 of 79 live end-to-end at the reviewed baseline
@@ -489,13 +507,15 @@ Visible reviewed-example counts by context are Qualified 25, In Progress 30, In 
 
 Never call the 79 candidate examples Templates. Phase 1 has exactly 12 fixed Templates.
 
-For orientation only, the shared catalogue alone has this raw one-Rule/one-Action product:
+For historical orientation only, the earlier shared-catalogue calculation was:
 
 ```text
-9 shared Starts when × 11 shared Rules × 15 shared Actions = 1,485 raw triples
+9 shared Starts when × 11 shared Rules × 15 historical Action identifiers = 1,485 raw triples
 ```
 
-This is not a recommended-example count and not the complete configuration space.
+This number is superseded and must be recalculated from canonical availability data. It is not a recommended-example
+count, a current picker total or the complete configuration space, and Remove Interest must not be retained merely to
+preserve 1,485.
 
 ---
 
@@ -510,7 +530,7 @@ For a Quote-connected Custom Stage, explain the count accurately:
 - 9 shared Deal Starts when choices;
 - plus **Deal enters this Custom Stage** as the Stage-specific entry choice;
 - 11 shared Rules;
-- 15 shared catalogue Actions;
+- the current eligible shared Action set derived from the historical catalogue, with Remove Interest excluded and Remove Label/Add Interest conditions applied;
 - plus a conditional Quote-creation Action only in an approved early gap.
 
 Do not say “9 ways to start in total” while displaying ten cards. Say **9 shared choices, plus the Custom Stage entry choice**.
@@ -529,15 +549,18 @@ Do not say “9 ways to start in total” while displaying ten cards. Say **9 sh
 
 Show this table so colleagues can see why each inserted Stage is not the same:
 
-| Custom Stage gap | Starts when shown | Rules shown | Actions shown | Raw one-Rule/one-Action triples |
+| Custom Stage gap | Starts when shown | Rules shown | Maximum candidate Action types | Upper-bound raw one-Rule/one-Action triples |
 |---|---:|---:|---:|---:|
-| Qualified → In Progress | 10 | 13 | 16 | `10 × 13 × 16 = 2,080` |
-| In Progress → In Review | 12 | 13 | 16 | `12 × 13 × 16 = 2,496` |
-| In Review → Passed Review | 12 | 14 | 15 | `12 × 14 × 15 = 2,520` |
-| Passed Review → Sent | 11 | 15 | 15 | `11 × 15 × 15 = 2,475` |
-| Sent → Won/Lost | 13 | 16 | 15 | `13 × 16 × 15 = 3,120` |
+| Qualified → In Progress | 10 | 13 | 15 | `10 × 13 × 15 = 1,950` |
+| In Progress → In Review | 12 | 13 | 15 | `12 × 13 × 15 = 2,340` |
+| In Review → Passed Review | 12 | 14 | 14 | `12 × 14 × 14 = 2,352` |
+| Passed Review → Sent | 11 | 15 | 14 | `11 × 15 × 14 = 2,310` |
+| Sent → Won/Lost | 13 | 16 | 14 | `13 × 16 × 14 = 2,912` |
 
-These are raw triples for explaining scope, not recommended recipes. They exclude no-Rule flows, Waits, multiple Rules, AND/OR groups, branches and multiple Actions.
+These recalculated maxima exclude Remove Interest. They include Remove Label and Add Interest only as candidate types;
+an actual picker/flow must apply their ownership and structured-evidence conditions and may therefore show fewer Actions.
+The triples explain an upper scope bound, not recommended recipes. They exclude no-Rule flows, Waits, multiple Rules,
+AND/OR groups, branches and multiple Actions.
 
 ### Quote creation rules
 
@@ -608,7 +631,7 @@ For a Standalone Pipeline:
 - use a simple example such as New → In Progress → Complete;
 - Won and Lost remain protected results;
 - each working Stage gets 9 shared Deal Starts when choices, plus **Deal enters this Stage**;
-- each working Stage gets 11 shared Rules and 15 shared Deal Actions;
+- each working Stage gets 11 shared Rules and the current eligible shared Deal Action set;
 - Quote-specific Starts when, Quote Rules, Create Quote Actions and automatic Quote lifecycle movement are not shown;
 - users may move Deals manually between named working Stages; and
 - automatic Stage movement remains unavailable until Stage targets, permissions, duplicate prevention and required-work rules are approved.
@@ -618,11 +641,12 @@ The simple Standalone picker baseline is:
 ```text
 10 Starts when choices
 × 11 Rules
-× 15 Deal Actions
-= 1,650 raw one-Rule/one-Action triples
+× the dynamically eligible Deal Action set
+= a total that must be derived from canonical availability data
 ```
 
-The ten Starts when choices are the nine shared Deal choices plus **Deal enters this Stage**. Again, 1,650 is a raw scope illustration, not a list of recommended flows.
+The ten Starts when choices are the nine shared Deal choices plus **Deal enters this Stage**. The earlier 1,650 figure
+used all fifteen historical Action identifiers and is superseded; do not preserve it by counting Remove Interest.
 
 Explain the additional scope clearly:
 
@@ -688,9 +712,10 @@ Do not claim any of the following exists unless a current source proves it:
 
 Use separate labels for:
 
-1. **Phase 1 scope** — committed, proposed or out of scope;
-2. **Build readiness** — live, adapter required, new build, contract required or withheld; and
-3. **Readiness blocker** — the exact missing model, event, scheduler, decision or connection.
+1. **Product direction** — selected, proposed or out of scope;
+2. **Prototype implementation** — exposed, hidden/disabled, partially demonstrated or not built;
+3. **Build readiness** — live, adapter required, new build, contract required or withheld; and
+4. **Readiness blocker** — the exact missing model, event, scheduler, decision or connection.
 
 ---
 
@@ -722,7 +747,7 @@ Store behaviour as structured data. Never infer control state by parsing transla
 - `ruleJoin: "and" | "or"`;
 - explicit Yes and No branch arrays;
 - pricing subtype where relevant;
-- Phase 1 scope, build readiness and blocker fields; and
+- product-direction, prototype-implementation, build-readiness and blocker fields; and
 - a stable example ID.
 
 The existing Guide currently misreads the display text **Start at once** as a days-based Wait and can misread lowercase “or” as AND. The rebuild must remove both translation-coupling bugs. All 79 reviewed examples must load into the Builder and round-trip back to the same structured flow without changing Wait or AND/OR meaning.
@@ -774,8 +799,8 @@ Claude must complete all of these before handing back the file.
 - [ ] Exactly 12 fixed Templates are shown.
 - [ ] Editable settings total exactly 63.
 - [ ] The 14 field types and 12/14 = 86% explanation are visible.
-- [ ] The current Creator shows 18 unique Starts when types and 33 placements.
-- [ ] The current Creator shows 16 Action types and 100 placements.
+- [ ] The seven-context Custom compatibility matrix shows 18 unique Starts when types and 33 placements.
+- [ ] The seven-context Custom compatibility matrix shows 16 Action types and 100 placements.
 - [ ] The 1,300 minimum compatibility calculation is rendered exactly.
 - [ ] The seven-context simple-shape rows total 15,238.
 - [ ] The 15,238 caveat is visible next to the number.
@@ -824,15 +849,15 @@ When finished, report:
 6. whether any source conflict remains unresolved; and
 7. a short list of decisions that still require product approval.
 
-Do not claim the Guide is production behaviour. Say whether it is:
+Do not claim the Guide is production behaviour. Say separately whether an item is:
 
-- committed Phase 1;
-- current prototype behaviour;
-- proposed guarded behaviour; or
-- not available yet.
+- selected product direction;
+- exposed or still disabled in the current prototype;
+- live, new-build, contract-required or withheld in the runtime; and
+- proposed guarded behaviour or not available yet where a block-level decision remains open.
 
 ---
 
 ## 17. Copy-paste instruction for Claude
 
-> Build the repository-root `QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html` exactly from this brief. Use the repository PRD as authority and the detailed Quote lifecycle catalogue as evidence. Keep the Guide self-contained, white-background, interactive, responsive and understandable to a new user. Preserve the distinction between the 12 committed fixed Templates, current prototype scratch choices, proposed Custom Stage behaviour and new Pipeline scope. Derive every visible count from one embedded dataset, show the full calculation for 63, 86%, 33, 100, 1,300 and 15,238, and complete every acceptance test before handing the file back. Do not modify the PRD or runnable CRM prototype as part of this Guide task.
+> Build the repository-root `QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html` exactly from this brief. Use the 29 August product-direction record first, then the repository PRD with its current-direction addendum, and use the detailed Quote lifecycle catalogue as compatibility evidence. Keep the Guide self-contained, white-background, interactive, responsive and understandable to a new user. Show two separate routes in every existing Quote context: 12 managed fixed Templates and compatible Custom Automation that creates an Inactive draft. Keep the 79 reviewed examples separate from the 12 Templates, and keep Custom Stage and Standalone Pipeline scope separately labelled. Report product direction, prototype implementation and runtime readiness independently. Derive every visible count from one embedded dataset, show the full calculation for 63, 86%, 33, 100, 1,300 and 15,238, and complete every acceptance test before handing the file back. Do not modify the PRD or runnable CRM prototype as part of this Guide task.

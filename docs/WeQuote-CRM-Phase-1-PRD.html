@@ -501,6 +501,24 @@ html { scroll-behavior: smooth; }
     </dl>
   </header>
 
+  <section id="current-automation-direction" class="flag flag--stop" aria-labelledby="current-automation-direction-title">
+    <div class="flag__t" id="current-automation-direction-title">Current product-direction addendum &middot; 29 August 2026</div>
+    <p><strong>Every existing Quote lifecycle placement context now has two Automation creation routes: Templates and Custom.</strong>
+    This applies to Qualified, In Progress, In Review, Passed Review, Sent, Won and Lost. Templates remain managed and
+    structurally locked, with only their declared setting values editable. Custom uses a context-compatible Trigger-first
+    journey and creates an <strong>Inactive Custom Automation draft</strong> in the selected fixed context.</p>
+    <p>This addendum supersedes the Template-only creation-route wording in &sect;A3, &sect;A10, &sect;A17, FR-05 to FR-07 and
+    AC-BLD-03 to AC-BLD-07 wherever those clauses say that every Automation must begin from one of the twelve Templates,
+    that no second route exists, or that customer-facing compatible block authoring is unavailable. The twelve-Template
+    count and every Template-specific lock rule remain valid. Custom Automation still cannot directly write a protected
+    Quote Stage or result, send or approve a Quote, accept for the customer, or mark a Deal Won or Lost.</p>
+    <p>This is a product-direction correction, not a claim that the current prototype or production runtime already
+    implements the route. Product direction, prototype implementation and runtime readiness must be reported separately.
+    See the dated <a href="quote-automation/QUOTE-LIFECYCLE-AUTOMATION-PRODUCT-DIRECTION-2026-08-29.md"><strong>Quote
+    Lifecycle Automation product-direction record</strong></a> for the complete precedence, compatibility and
+    Quote-connected-versus-Standalone Pipeline rules.</p>
+  </section>
+
   <div class="pillkey">
     <span>Evidence labels</span>
     <span class="pill pill--cur">Current WeQuote UI</span>
