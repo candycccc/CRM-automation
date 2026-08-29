@@ -282,8 +282,8 @@
     ];
 
     const gaps = [
-      { id:'gap-qualified', title:'Qualified → In Progress', subtitle:'Before the first Quote', counts:'10 starts · 13 checks · 15 actions', examples:'Site Ready, Discovery Complete, Requirements Confirmed', starts:[], rules:['Deal still has no current Quote','Deal is still Qualified'], action:'Create the first Quote for this Deal', actionStatus:'Latest guarded design proposal', next:'First Quote is created or linked → WeQuote moves the Deal to In Progress', unavailable:'No later Quote revision, variation or direct protected-Stage movement.' },
-      { id:'gap-progress', title:'In Progress → In Review', subtitle:'While Quote options are being prepared', counts:'12 starts · 13 checks · 15 actions', examples:'Costing Complete, Scope Confirmed, Ready for Review', starts:['A Quote for this Deal is saved','Saved Quote price changes'], rules:['Quote can still be edited','Quote Review is enabled or disabled'], action:'Create another Quote option', actionStatus:'Latest guarded design proposal', next:'Submit a Quote for review → WeQuote moves the Deal to In Review', unavailable:'Another option is not a revision or variation. One run creates no more than one option.' },
+      { id:'gap-qualified', title:'Qualified → In Progress', subtitle:'Before the first Quote', counts:'10 starts · 13 checks · 14 shared + 1 guarded Quote Action', examples:'Site Ready, Discovery Complete, Requirements Confirmed', starts:[], rules:['Deal still has no current Quote','Deal is still Qualified'], action:'Create the first Quote for this Deal', actionStatus:'Latest guarded design proposal', next:'First Quote is created or linked → WeQuote moves the Deal to In Progress', unavailable:'No later Quote revision, variation or direct protected-Stage movement.' },
+      { id:'gap-progress', title:'In Progress → In Review', subtitle:'While Quote options are being prepared', counts:'12 starts · 13 checks · 14 shared + 1 guarded Quote Action', examples:'Costing Complete, Scope Confirmed, Ready for Review', starts:['A Quote for this Deal is saved','Saved Quote price changes'], rules:['Quote can still be edited','Quote Review is enabled or disabled'], action:'Create another Quote option', actionStatus:'Latest guarded design proposal', next:'Submit a Quote for review → WeQuote moves the Deal to In Review', unavailable:'Another option is not a revision or variation. One run creates no more than one option.' },
       { id:'gap-review', title:'In Review → Passed Review', subtitle:'While the Quote is being reviewed', counts:'12 starts · 14 checks · 14 actions', examples:'Commercial Check, Technical Check, Director Sign-off', starts:['Quote is submitted for internal review','Quote Review Note changes'], rules:['Quote is still In Review','Nobody can review','Technical review Note status'], action:'No Create Quote Action', next:'Pass → Passed Review; changes requested → the relevant Quote returns to In Progress', unavailable:'Creating another Quote here would require a clear option/revision/variation choice, which is not available yet.' },
       { id:'gap-passed', title:'Passed Review → Sent', subtitle:'After review, before sending', counts:'11 starts · 15 checks · 14 actions', examples:'Final Pack Check, Customer Details Check, Ready to Send', starts:['Quote passes internal review'], rules:['Quote still counts for this Deal','Quote total threshold','Discount threshold','Another approval is needed'], action:'No Create Quote Action', next:'Successful send → WeQuote moves the Deal to Sent', unavailable:'Automation cannot send a Quote or move the Deal directly to Sent.' },
       { id:'gap-sent', title:'Sent → Won / Lost', subtitle:'After sending, before the result', counts:'13 starts · 16 checks · 14 actions', examples:'Follow-up, Negotiation, Decision Pending', starts:['Quote is sent','Customer views a Sent Quote','Quote expiry date approaches'], rules:['Quote is still Sent','Customer has viewed it','No related Quote has been viewed','Quote still counts for the Deal','Quote has not expired'], action:'No Create Quote Action', next:'Accepted option → Won; when no option can continue → Lost', unavailable:'Automation cannot accept for the customer, mark Won/Lost or create a new Quote after the result.' }
@@ -380,7 +380,7 @@
       listSection('Starts when available in every Custom working Stage', ['Deal enters this Custom Stage', ...sharedStarts]),
       listSection('Rules available in every Custom working Stage', sharedRules),
       listSection('Actions in the design-guide library', sharedActions),
-      textSection('Wait and branches', 'Wait is optional. The first scratch contract supports 1–90 whole calendar days. A Rule is optional and automatically creates If Yes and If No paths. No Rule means the flow can go directly to Actions.'),
+      textSection('Wait and branches', 'Wait is optional. The first scratch contract supports 1–90 whole calendar days. Rules may combine confirmed checks using AND / OR. Adding a Rule automatically creates If Yes and If No paths. No Rule means the flow can go directly to Actions.'),
       textSection('Activation check', 'The draft stays Inactive until the main path, or the If Yes path after a Rule, contains at least one Action.')
     ];
 
@@ -429,19 +429,24 @@
       textSection('How to read this map', 'The first main branch uses the Quote lifecycle. It contains the 12 ready-made Templates, Custom Automation in every existing Quote context, Custom Stages inserted between protected Quote Stages, and the wider option of another Quote-connected Pipeline. The second main branch is a Standalone Pipeline without Quote lifecycle behaviour.'),
       textSection('Two main branches', '1. With Quote Lifecycle: Templates or compatible Custom Automation in existing Quote contexts, optional inserted Custom Stages, and later another Pipeline using the same protected lifecycle. 2. Without Quote Lifecycle: a Standalone Pipeline with user-defined working Stages and Deal-only Automation choices.'),
       textSection('Source alignment', 'The 29 August product-direction record now overrides the older Templates-only gate, and the active prototype exposes both routes in all seven Quote contexts. Dated handoff snapshots remain historical evidence only.'),
-      textSection('Important count note', 'The 79 catalogue examples are candidate recipes. They are not the 12 fixed Templates, and zero are live end-to-end today.')
+      textSection('Important count note', 'The 79 catalogue examples are candidate recipes. They are not the 12 fixed Templates, and zero are live end-to-end today.'),
+      listSection('Shared flow model — applies to both branches', [
+        'Starts when is required and chooses the event that begins the Automation.',
+        'Wait is optional and pauses the run before the next step.',
+        'Rules are optional and may combine confirmed checks using AND / OR.',
+        'Adding a Rule creates editable If Yes and If No branches automatically.',
+        'At least one Action is required before activation.'
+      ]),
+      listSection('Shared guardrails — applies to both branches', [
+        'Do not let the same event run twice or create duplicate work.',
+        'Recheck the current Deal, Pipeline and Stage after a Wait.',
+        'Record Action results and retry safely without repeating completed work.',
+        'Remove Interest remains a manual CRM operation.',
+        'Automation may remove only system-managed Labels, not user-managed Labels.',
+        'A named File Request is complete only when that request is marked Received and linked to the supplied file.'
+      ]),
+      textSection('Shared items still needing team review', 'Create Quote and automatic Stage movement remain guarded design proposals. The Quote build start, Sent follow-up Rule, Won handoff Rule and Ready-to-send No path still need one agreed contract before implementation.')
     ], [
-      node('flow-grammar', 'How every flow works', 'Shared grammar', 'Starts when → Wait → Rule → Yes / No → Action', 'branch', [
-        textSection('Simple model', 'Starts when is required. Wait and Rule are optional. A Rule creates If Yes and If No paths. At least one Action is required before activation.'),
-        textSection('Plain-language terms', '“Starts when” says what event begins the flow. “Wait” pauses it. “Rule” asks a Yes/No question. “Action” says what WeQuote does next.')
-      ], [
-        node('grammar-start', 'Starts when', 'Required', 'Choose one event that starts the Automation', 'category', [listSection('Shared Deal events', sharedStarts), textSection('Stage-specific choices', 'Quote-connected Stages add only the Quote events that make sense in that lifecycle context.')], [], ['Required']),
-        node('grammar-wait', 'Wait', 'Optional', '1–90 whole calendar days in the first scratch contract', 'category', [textSection('What it does', 'Pauses this run before the next step. After waiting, WeQuote must check that the Deal and Quote are still in the right context.')], [], ['Optional']),
-        node('grammar-rule', 'Rule', 'Optional check', 'One Yes / No question; both paths are added automatically', 'category', [listSection('Shared Rule families', sharedRules), textSection('Current limit', 'Use one Rule for now. AND / OR groups and Wait-until-event are later scope.')], [], ['Optional']),
-        node('grammar-branches', 'If Yes / If No', 'Built automatically', 'Each branch can run Actions or stop', 'fixed', [textSection('Branch behaviour', 'If Yes normally runs the saved Action. If No can stop or run its own allowed Actions in a Custom flow. A fixed Template keeps its approved branch shape.')], [], ['Engine behaviour']),
-        node('grammar-action', 'Action', 'Required before activation', 'Run one or more visible CRM results', 'category', [listSection('Shared Action families', sharedActions)], [], ['At least one'])
-      ], ['Shared model']),
-
       node('with-quote-lifecycle', 'With Quote Lifecycle', 'Main branch 1', 'Templates and Custom Automation connected to protected Quote contexts', 'branch', [
         textSection('What belongs here', 'The protected Quote lifecycle stays intact. Users may choose a ready-made Template or build a compatible Custom Automation in every existing Quote context. They may also add Custom Stages inside the five allowed lifecycle gaps, and later create another Pipeline that uses the same protected Quote lifecycle.'),
         textSection('Protected lifecycle', 'Qualified → In Progress → In Review → Passed Review → Sent → Won / Lost. WeQuote controls the meaning and Quote-driven movement; Automation works around it without rewriting it.')
@@ -502,19 +507,7 @@
         node('standalone-noquote', 'Quote choices are not included', 'Not offered here', 'No Quote starts, Quote Rules, Create Quote or Quote-driven movement', 'blocked', [listSection('Not included', ['Quote-specific Starts when','Quote-specific Rules','Create first Quote','Create another Quote option','Automatic Quote lifecycle movement','Send, approve, accept, Won or Lost Actions'])], [], ['Not offered']),
         node('standalone-build', 'New platform work needed', 'Engineering scope', 'Permissions, migration, routing, audit and runtime safety', 'proposal', [listSection('Before this is a real product', ['Durable Pipeline and Stage IDs','Ordering, versioning and permissions','Deal migration and deletion rules','Reporting continuity','Active-Automation impact handling','Runtime persistence, audit, retry and idempotency','Timezone-aware scheduling','Loop protection and post-Wait rechecks'])], [], ['New work needed'])
       ], ['Design target', 'Deal-only Automation'])
-      ], ['Standalone', 'No Quote lifecycle']),
-
-      node('guardrails', 'Rules that apply everywhere', 'Safety and boundaries', 'Protect lifecycle meaning, data history and multi-Quote behaviour', 'branch', [
-        listSection('Always protect', ['Do not send or approve a Quote from a free-form Action','Do not accept on behalf of a customer','Do not mark Won or Lost directly','Do not write a protected Quote Stage','Do not let one event run twice','Recheck the Deal and Quote after a Wait','Keep one Automation run from creating duplicate Quotes']),
-        listSection('Multi-Quote rules', ['The first Quote starts at In Progress','Another Quote option is allowed only while the Deal is In Progress','Another option is not a revision or variation','The Quote furthest through the lifecycle leads the Deal Stage','An accepted option wins; other options become Lost']),
-        textSection('Interest and Labels', 'Add Interest needs clear structured evidence. Remove Interest remains a manual CRM operation and is withheld from general Automation. System-managed Labels may be added and removed as paired workflow signals; Automation must not remove a user-managed Label.'),
-        textSection('File Requests', 'A requested file is complete only when the named File Request is marked Received and linked to the supplied file. An unrelated upload does not count.')
-      ], [
-        node('guard-protected', 'Protected Quote changes', 'Fixed by WeQuote', 'Send, review, accept, Won/Lost and protected Stage movement', 'fixed', [listSection('Never free-form', ['Send or resend a Quote','Approve or accept a Quote','Mark Won or Lost','Move directly into a protected Quote Stage'])], [], ['Fixed']),
-        node('guard-multi', 'Multi-Quote safeguards', 'Required runtime rule', 'First Quote, options, lifecycle leader and duplicate protection', 'warning', [listSection('Required safeguards', ['Create first Quote only when none exists','Create another option only in In Progress','One run creates no more than one Quote','Do not guess option vs revision vs variation','Accepted option controls the Won result'])], [], ['Must resolve']),
-        node('guard-runtime', 'Runtime safety', 'New work needed', 'Audit, retry, rechecks, idempotency and loop protection', 'proposal', [listSection('Runtime contracts', ['One event runs once','Persist the exact Pipeline, Stage, Trigger and settings version','Cancel or recheck stale runs after a Wait','Record every Action result','Retry safely without duplicates','Prevent Automation loops'])], [], ['New work needed']),
-        node('guard-review', 'Items needing team review', 'Source conflicts', 'Create Quote, Move Stage and four Template details', 'warning', [listSection('Already decided', ['Remove Interest stays manual and is withheld from general Automation']), listSection('Confirm before implementation', ['Create first/another Quote: latest guarded proposal vs current Phase 1 exclusion','Automatic Move Stage: prototype is ahead of the Guide contract','Quote build start: created or edited vs first-created only','Sent follow-up Rule mismatch','Won handoff Rule is unresolved','Ready-to-send No path differs between views'])], [], ['Review required'])
-      ], ['Safety', 'Multi-Quote'])
+      ], ['Standalone', 'No Quote lifecycle'])
     ], ['White-background map', 'Verified 29 August 2026']);
 
     const parentById = new Map();

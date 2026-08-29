@@ -729,6 +729,13 @@ html { scroll-behavior: smooth; }
       <p class="lede">What Phase 1 commits to, and the three increments it is built in. Everything this document does
       not commit to is gathered in one place &mdash; &sect;A17.</p>
 
+      <div class="flag flag--stop">
+        <div class="flag__t">Superseded by the 29 August Automation product-direction addendum</div>
+        <p>The Template-only and no-second-route wording in this section is historical. Every existing Quote lifecycle
+        context now offers both managed Templates and compatible Custom Automation. The twelve-Template count and all
+        Template-specific lock rules remain valid.</p>
+      </div>
+
       <div class="panel">
         <div class="cap">Phase 1 in six statements</div>
         <ul>
@@ -1526,6 +1533,13 @@ html { scroll-behavior: smooth; }
       <p class="lede">The authoritative definition of what Phase 1 offers a customer: twelve Fixed Templates, and
       nothing else.</p>
 
+      <div class="flag flag--stop">
+        <div class="flag__t">Superseded by the 29 August Automation product-direction addendum</div>
+        <p>This section remains authoritative for the identity, settings and lock rules of the twelve managed Templates.
+        Its claim that Templates are the only creation route is superseded: compatible Custom Automation is a separate
+        route in every existing Quote lifecycle context.</p>
+      </div>
+
       <div class="panel">
         <div class="cap">What a Fixed Template is</div>
         <p>Phase 1 provides <strong>exactly twelve WeQuote Fixed Templates</strong> for the Quote Pipeline. A Fixed
@@ -2147,6 +2161,13 @@ html { scroll-behavior: smooth; }
       boundary from a silence &mdash; and so that nothing here can be mistaken for a promise.</p>
 
       <div class="flag flag--stop">
+        <div class="flag__t">Superseded by the 29 August Automation product-direction addendum</div>
+        <p>The exclusion of compatible Custom Automation and customer-facing block authoring inside the seven existing
+        Quote contexts is superseded. Other exclusions in this section, including customer-created Stages and new or
+        Standalone Pipeline structure, are not changed by that Automation addendum.</p>
+      </div>
+
+      <div class="flag flag--stop">
         <div class="flag__t">How to read this section</div>
         <p>Everything below is <strong>not committed by this PRD</strong>. This document does not say when any of it
         will ship, or in what order, and it does not assign any of it a release number. Some of these capabilities are
@@ -2341,9 +2362,9 @@ html { scroll-behavior: smooth; }
             <tr><td class="num">FR-02</td><td>WeQuote ships exactly twelve approved Quote Pipeline templates. A template is a <strong>locked recipe</strong>: its identity, placement context, start event, rule and branch structure, wait placement, step order, action type and protected-lifecycle checkpoint cannot be changed by the customer. <em>Supersedes the earlier &ldquo;managed recipe as a form&rdquo; definition.</em></td></tr>
             <tr><td class="num">FR-03</td><td>The stored template instance and the builder view read one workflow definition and run on one engine. Two engines are not permitted.</td></tr>
             <tr><td class="num">FR-04</td><td>The builder is a <strong>visual configuration and review surface</strong> for a locked template. It does not produce an editable structural copy, and there is no one-way conversion. <em>Supersedes the earlier editable-copy model.</em></td></tr>
-            <tr><td class="num">FR-05</td><td>Every Phase 1 Automation begins as one of the twelve Fixed Templates. There is <strong>no blank-canvas creation route and no customer-facing block catalogue</strong>, and a customer never adds, deletes, duplicates, unlocks or structurally reorders the blocks inside a Template. <em>Blank-canvas authoring is not committed by this document (&sect;A17).</em></td></tr>
-            <tr><td class="num">FR-06</td><td>Shared core block identifiers are an <strong>internal compatibility contract</strong> across placement contexts. They are not a Phase 1 customer authoring entitlement.</td></tr>
-            <tr><td class="num">FR-07</td><td>Placement-context compatibility is encoded by the approved template mapping. A template belongs to exactly one context and cannot be moved to another.</td></tr>
+            <tr><td class="num">FR-05</td><td>Every Phase 1 Automation begins as one of the twelve Fixed Templates. There is <strong>no blank-canvas creation route and no customer-facing block catalogue</strong>, and a customer never adds, deletes, duplicates, unlocks or structurally reorders the blocks inside a Template. <em>Blank-canvas authoring is not committed by this document (&sect;A17).</em><br><span class="pill pill--stop">Superseded by 29 August addendum</span> <em>The no-second-route claim is superseded; Template lock rules remain valid.</em></td></tr>
+            <tr><td class="num">FR-06</td><td>Shared core block identifiers are an <strong>internal compatibility contract</strong> across placement contexts. They are not a Phase 1 customer authoring entitlement.<br><span class="pill pill--stop">Superseded by 29 August addendum</span> <em>Compatible shared and context-specific blocks are now customer-selectable through Custom Automation.</em></td></tr>
+            <tr><td class="num">FR-07</td><td>Placement-context compatibility is encoded by the approved template mapping. A template belongs to exactly one context and cannot be moved to another.<br><span class="pill pill--stop">Superseded in part by 29 August addendum</span> <em>The Template mapping remains valid, but it is no longer the only creation-route compatibility contract.</em></td></tr>
             <tr><td class="num">FR-08</td><td>Protected quote progression stays outside editable actions.</td></tr>
             <tr><td class="num">FR-09</td><td>A Phase 1 Fixed Template applies according to its fixed Quote Pipeline event, <strong>for the whole account</strong>. Automation Company scope must not appear in Template creation, the Template Library, map or list cards, list columns, outcome cards, or the initial builder context. This removes <strong>Automation scope only</strong> &mdash; Deal and Quote owning company, CRM record visibility, cross-company link protection and account isolation are unaffected and remain mandatory (FR-35, FR-36). <em>Company-specific Automation scope or policy is not committed by this document (&sect;A17).</em></td></tr>
             <tr><td class="num">FR-10</td><td>A template instance shows its <strong>placement context</strong> &mdash; one protected stage or one derived outcome &mdash; in the map, the list, the builder and its history.</td></tr>
@@ -2430,11 +2451,11 @@ html { scroll-behavior: smooth; }
           <tbody>
             <tr><td class="num">AC-BLD-01</td><td>A user can open every pipeline shown in Deals from the Automation pipeline chooser.</td></tr>
             <tr><td class="num">AC-BLD-02</td><td>A pipeline with zero Automations opens to an empty state and Create Automation.</td></tr>
-            <tr><td class="num">AC-BLD-03</td><td>Create Automation on the Quote Pipeline list sits immediately right of Global Search, creates a setup named Quote Pipeline Automation and opens its focused map &mdash; with no builder, no template chooser and no placeholder card. Inside, selecting a placement context filters the Template Library to that context&rsquo;s templates, and + Add or a legal drag creates the instance without leaving the current view.</td></tr>
-            <tr><td class="num">AC-BLD-04</td><td>A newly added instance is saved <strong>Inactive &middot; Using defaults</strong> with a complete valid default set, carries the locked template name, offers no rename control and appends to that context&rsquo;s run order. <em>Replaces the withdrawn company-scope criterion (FR-09).</em></td></tr>
-            <tr><td class="num">AC-BLD-05</td><td>Every placement context resolves the same shared core block identifiers <em>internally</em>. This is an engineering compatibility check, not a customer-facing authoring surface.</td></tr>
-            <tr><td class="num">AC-BLD-06</td><td>Context compatibility comes from the approved template mapping: each of the twelve templates resolves to exactly one protected stage or derived outcome, and to no other.</td></tr>
-            <tr><td class="num">AC-BLD-07</td><td>A customer cannot add a generic action that writes a protected stage &mdash; in Phase 1 they cannot add any action at all.</td></tr>
+            <tr><td class="num">AC-BLD-03</td><td>Create Automation on the Quote Pipeline list sits immediately right of Global Search, creates a setup named Quote Pipeline Automation and opens its focused map &mdash; with no builder, no template chooser and no placeholder card. Inside, selecting a placement context filters the Template Library to that context&rsquo;s templates, and + Add or a legal drag creates the instance without leaving the current view.<br><span class="pill pill--stop">Superseded in part by 29 August addendum</span> <em>The focused context now offers Custom first and Templates as the second route.</em></td></tr>
+            <tr><td class="num">AC-BLD-04</td><td>A newly added instance is saved <strong>Inactive &middot; Using defaults</strong> with a complete valid default set, carries the locked template name, offers no rename control and appends to that context&rsquo;s run order. <em>Replaces the withdrawn company-scope criterion (FR-09).</em><br><span class="pill pill--stop">Superseded in part by 29 August addendum</span> <em>This remains the Template contract; Trigger selection creates a separately identified Inactive Custom draft.</em></td></tr>
+            <tr><td class="num">AC-BLD-05</td><td>Every placement context resolves the same shared core block identifiers <em>internally</em>. This is an engineering compatibility check, not a customer-facing authoring surface.<br><span class="pill pill--stop">Superseded by 29 August addendum</span> <em>The compatibility contract now also drives the customer-facing Custom picker.</em></td></tr>
+            <tr><td class="num">AC-BLD-06</td><td>Context compatibility comes from the approved template mapping: each of the twelve templates resolves to exactly one protected stage or derived outcome, and to no other.<br><span class="pill pill--stop">Superseded in part by 29 August addendum</span> <em>Template placement remains fixed; Custom uses a separate context-compatible block contract.</em></td></tr>
+            <tr><td class="num">AC-BLD-07</td><td>A customer cannot add a generic action that writes a protected stage &mdash; in Phase 1 they cannot add any action at all.<br><span class="pill pill--stop">Superseded in part by 29 August addendum</span> <em>Customers may add compatible Actions in Custom Automation, but no Action may write a protected Stage or result.</em></td></tr>
             <tr><td class="num">AC-BLD-08</td><td>Saving a draft leaves the live Automation running unchanged, and an Inactive instance stays Inactive.</td></tr>
             <tr><td class="num">AC-BLD-09</td><td>A test creates no live CRM data, and the timeline supports Play, Step, Reset and Speed. A missing or outdated test never blocks activation.</td></tr>
             <tr><td class="num">AC-BLD-10</td><td>Publish remains available when a test is missing or outdated, provided validation is clean. For a new instance the action is Activate automation; for an edited active Automation it is Publish changes.</td></tr>

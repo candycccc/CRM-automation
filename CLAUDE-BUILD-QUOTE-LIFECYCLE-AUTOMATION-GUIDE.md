@@ -79,12 +79,13 @@ Actions in the selected context. Choosing the Starts when event creates an **Ina
 Trigger placed.
 
 This does not unlock or convert a managed Template. The selected Quote context stays fixed, and protected Quote lifecycle
-operations remain unavailable. The current runnable prototype's old protected-context gate is an implementation gap, not
-the desired product rule.
+operations remain unavailable. At the **28 August baseline**, the runnable front end still used the old protected-context
+gate. The **29 August front end has now been updated** to expose the separate Custom route in all seven contexts. This is
+prototype implementation evidence only; production runtime readiness remains unproven.
 
 ### Layer 3 — Custom Stages and new Pipelines
 
-Custom Stages and standalone/new Pipelines add further product decisions:
+Custom Stages and new Pipelines add further product decisions:
 
 - where a Stage sits in the Quote lifecycle;
 - which Quote-specific choices are safe at that point;
@@ -95,8 +96,9 @@ Custom Stages and standalone/new Pipelines add further product decisions:
 - which Stages WeQuote controls automatically.
 
 The Guide can let colleagues explore this layer, but it must label its product and release status separately from the
-approved seven-context Custom decision. That decision does not by itself approve every Custom Stage or Standalone Pipeline
-management capability for production.
+approved seven-context Custom decision. In particular, **another Pipeline that still uses the protected Quote lifecycle**
+is a review proposal, separate from a Standalone Pipeline without Quote lifecycle, and is **not confirmed Phase 1 scope**.
+The seven-context decision does not by itself approve either Pipeline-management route for production.
 
 ### Required status banner
 
@@ -104,8 +106,9 @@ Show a visible banner near the top:
 
 > **Decision-support Guide**  
 > Every existing Quote context offers two product routes: 12 managed fixed Templates or compatible Custom Automation.
-> The current prototype and production runtime may still be behind this direction. Custom Stages and Standalone Pipelines
-> are shown separately so the team can review their additional product and QA scope.
+> The 29 August front end now demonstrates this direction, while production runtime readiness remains unproven. Custom
+> Stages, another Quote-lifecycle Pipeline and Standalone Pipelines are shown separately so the team can review their
+> additional product and QA scope. The additional Pipeline routes are not confirmed Phase 1 scope.
 
 ### Decision locked for this Guide build
 
@@ -115,7 +118,8 @@ Use the 29 August decision record unless the product owner gives a newer written
 - rename the current 79-row “Templates” explorer to **Reviewed examples**;
 - the 79 examples may be loaded into the practice Builder for learning, but they are not promoted to approved Templates;
 - every existing Quote lifecycle context offers a separate compatible Custom route that creates an Inactive draft; and
-- Custom Stage and Standalone Pipeline behaviour remains a reviewable product guideline rather than live runtime behaviour.
+- Custom Stage behaviour, another Quote-lifecycle Pipeline and Standalone Pipeline behaviour remain reviewable product
+  guidance rather than confirmed Phase 1 runtime scope.
 
 Do not turn the 79 reviewed examples into managed Templates and do not unlock the twelve fixed Templates. Managed Templates
 and Custom Automation remain separate product types. Do not treat the 28 August prototype's Custom-disabled gate as the
@@ -288,6 +292,7 @@ Nothing is saved or activated. The result is educational only.
 First ask:
 
 - **Add a Stage to the Quote Pipeline**, or
+- **Create another Pipeline with Quote Lifecycle** — review proposal, not confirmed Phase 1, or
 - **Create a Standalone Pipeline**.
 
 For a Quote-connected Custom Stage, ask where it sits and show the relevant boundary:
@@ -298,7 +303,13 @@ For a Quote-connected Custom Stage, ask where it sits and show the relevant boun
 4. Between Passed Review and Sent
 5. Between Sent and Won/Lost
 
-For a Standalone Pipeline, show user-defined working Stages and protected Won/Lost results. Quote-specific choices must disappear.
+For another Pipeline with Quote Lifecycle, keep the protected Quote Stages and Quote-driven outcomes, then show how its own
+Quote-connected Custom Stages would use the same five lifecycle gaps. Mark the entire route **Review proposal — not
+confirmed for Phase 1** and list the unresolved Pipeline, migration, permission, reporting, deletion and active-Automation
+contracts.
+
+For a Standalone Pipeline without Quote lifecycle, show user-defined working Stages and protected Won/Lost results.
+Quote-specific choices must disappear.
 
 ### I. Scope comparison
 
@@ -370,9 +381,9 @@ Make the Guide explain that this is **UI reuse only**. It does not include choic
 
 ## 8. Seven-context Custom compatibility calculations
 
-These figures preserve the measured seven-context Creator matrix used to size and review the selected Custom route. They
-are a compatibility/scope comparison, not proof that the current runnable prototype exposes the route or that production
-runtime support exists, and not a delivery-time multiplier.
+These figures preserve the measured seven-context Creator matrix used to size and review the selected Custom route. The
+29 August front end now demonstrates that route, but these figures remain a compatibility/scope comparison, not proof that
+production runtime support exists, and not a delivery-time multiplier.
 
 ### 8.1 Eighteen Starts when types
 
@@ -625,6 +636,11 @@ Keep a visible **Decision still required** note for the exact treatment of templ
 
 ## 11. Standalone and new Pipelines
 
+Show **another Pipeline with Quote Lifecycle** as a separate review proposal before the Standalone route. It keeps protected
+Quote Stages, Quote-driven movement, multi-Quote rules and the five Quote-connected Custom Stage gaps, but it requires its
+own Pipeline name, permissions, Deal migration, reporting continuity, deletion safeguards and active-Automation impact
+contracts. This route is **not confirmed Phase 1 scope**.
+
 For a Standalone Pipeline:
 
 - users define the Pipeline name, working Stage names and order;
@@ -806,6 +822,8 @@ Claude must complete all of these before handing back the file.
 - [ ] The 15,238 caveat is visible next to the number.
 - [ ] The 79 candidate examples are not called Templates.
 - [ ] The 79/5/75/4/0 readiness figures come from one dataset.
+- [ ] Another Pipeline with Quote Lifecycle is visibly separate from Standalone/without Quote lifecycle and is labelled
+      as a review proposal that is not confirmed for Phase 1.
 
 ### Interaction tests
 
