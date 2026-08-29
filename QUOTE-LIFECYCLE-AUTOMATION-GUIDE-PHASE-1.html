@@ -512,7 +512,7 @@
   const PRE_QUOTE_RULE_IDS = ['R07', 'R09'];
   const PHASE1_ACTION_IDS = ['A01', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A12', 'P1-A-MOVE'];
   data.source.reviewVerdict = 'Phase 1 choices confirmed from the 29 August meeting';
-  data.source.reviewCoverage = '1 guided Template · 3 Rule types · 10 Actions · Wait in hours or days · Custom Stages and Pipelines';
+  data.source.reviewCoverage = '1 guided Template · Up to 3 Rule types by context · 10 Actions · Wait in hours or days · Custom Stages and Pipelines';
   if (data.customStageGuide?.creationRoutes?.custom) {
     data.customStageGuide.creationRoutes.custom.label = 'Start from scratch';
     data.customStageGuide.creationRoutes.custom.detail = 'Build a Phase 1 Automation with an optional Yes / No Rule, an optional Wait in hours or days, and the Actions allowed in this Stage.';
@@ -592,7 +592,7 @@
   if (data.customStageGuide) {
     data.customStageGuide.kicker = 'CUSTOM STAGES AND PIPELINES';
     data.customStageGuide.tabs = { actions: 'Actions', rules: 'Rules', movement: 'Stage movement' };
-    data.customStageGuide.intro = 'Phase 1 includes Custom Stages in the Quote Pipeline, another Quote-lifecycle Pipeline, and a Standalone Pipeline. Choose a type and placement to see the same approved Rules, Wait and Actions.';
+    data.customStageGuide.intro = 'Phase 1 includes Custom Stages in the Quote Pipeline, another Quote-lifecycle Pipeline, and a Standalone Pipeline. Choose a type and placement to see the Rules available there, plus Wait and the approved Actions.';
     data.customStageGuide.kinds.quotePipeline.help = 'Included in Phase 1: create another Pipeline that keeps the protected Quote lifecycle and supports approved Custom Stages.';
     data.customStageGuide.kinds.quotePipeline.status = 'phase-1';
     data.customStageGuide.kinds.standalone.help = 'Included in Phase 1: create your own working Stages without using the Quote lifecycle.';
@@ -788,6 +788,11 @@
   };
 
   const context = () => data.contexts.find((item) => item.id === state.stageId);
+  const rulesForQuoteContext = (contextId) => contextId === 'qualified' ? PRE_QUOTE_RULE_IDS : PHASE1_RULE_IDS;
+  const rulesForCustomStage = () => {
+    if (state.customStageKind === 'standalone') return PRE_QUOTE_RULE_IDS;
+    return state.customPlacementId === 'qualified-to-in-progress' ? PRE_QUOTE_RULE_IDS : PHASE1_RULE_IDS;
+  };
   const selectedTrigger = () => data.triggers[state.triggerId];
   const recipeById = (id) => [...data.recipes, ...data.withheldRecipes].find((item) => item.id === id);
   const setEqual = (left, right) => left.size === right.size && [...left].every((value) => right.has(value));
@@ -1263,7 +1268,8 @@
 
   const buildMode = () => {
     const current = context();
-    const ruleItems = PHASE1_RULE_IDS.map((id) => data.rules[id]);
+    const availableRuleIds = rulesForQuoteContext(current.id);
+    const ruleItems = availableRuleIds.map((id) => data.rules[id]);
     const unavailableRuleIds = [];
     const actionItems = current.actionIds.map((id) => data.actions[id]);
     const ruleSummary = state.ruleIds.size
@@ -1292,7 +1298,7 @@
 
             <section class="qlce-guided-step">
               <div class="qlce-guided-step-heading"><span>2</span><div><h3>Add a Rule <em>Optional</em></h3><p>${esc(ruleSummary)}</p></div></div>
-              <div class="qlce-check-notice"><strong>A Rule is one Yes or No question</strong><span>Choose Deal Label, Deal Value or Margin Value. Deal Value and Margin Value can use a fixed value, minimum, maximum or range.</span></div>
+              <div class="qlce-check-notice"><strong>A Rule is one Yes or No question</strong><span>${current.id === 'qualified' ? 'Qualified has no current Quote, so choose Deal Label or Deal Value. Margin Value becomes available from In Progress.' : 'Choose Deal Label, Deal Value or Margin Value. Deal Value and Margin Value can use a fixed value, minimum, maximum or range.'}</span></div>
               ${state.ruleIds.size ? `<div class="qlce-selected-list">${selectedItemRows(state.ruleIds, 'rule')}</div>` : `<div class="qlce-guided-empty">${beginnerView ? 'A Rule is a check. If you do not add one, the Automation always continues to Actions.' : 'A Rule is a check. If you do not add one, the Automation always continues to Actions.'}</div>`}
               <div class="qlce-rule-picker"><label><span>Rule (optional)</span>${addOptionSelect(ruleItems, state.ruleIds, 'rule', 'Choose one Rule…', unavailableRuleIds)}</label></div>
             </section>
@@ -1356,13 +1362,13 @@
     ];
     return [
       { label: 'Build the flow', tag: 'Build the flow', items: ruleFlowControls },
-      { label: 'Phase 1 Rules', tag: 'Every supported Stage', items: PHASE1_RULE_IDS.map((id) => data.rules[id]) },
+      { label: 'Rules available here', tag: current.id === 'qualified' ? 'Before the first Quote' : 'Quote-backed context', items: rulesForQuoteContext(current.id).map((id) => data.rules[id]) },
     ];
   };
 
   const catalogueHelp = () => ({
     actions: 'Choose from the 10 approved Phase 1 Actions. The same catalogue is shown in each supported Stage, with Stage movement guardrails applied.',
-    rules: 'Phase 1 has three Yes / No Rules and an optional Wait in hours or days. AND / OR and Stop Branch are not included.',
+    rules: 'Phase 1 has three Yes / No Rule types and an optional Wait in hours or days. Qualified shows only Deal Label and Deal Value because no current Quote exists yet. AND / OR and Stop Branch are not included.',
   }[state.catalogueType]);
 
   const catalogueItemDetail = (item) => {
@@ -1415,7 +1421,7 @@
   if (state.customBlockType === 'rules') {
     return [
       { id: 'flow-wait', label: 'Wait', detail: 'Pause before the next step.', settings: 'Enter a positive number and choose Hours or Days.', scopeLabel: 'Flow control' },
-      ...guide.shared.ruleIds.map((id) => ({ id, label: data.rules[id].label, detail: data.rules[id].settings, settings: data.rules[id].evaluation, scopeLabel: 'Shared CRM' })),
+      ...rulesForCustomStage().map((id) => ({ id, label: data.rules[id].label, detail: data.rules[id].settings, settings: data.rules[id].evaluation, scopeLabel: id === 'P1-R-MARGIN' ? 'Quote-backed' : 'Shared CRM' })),
     ];
   }
   if (state.customBlockType === 'actions') {
@@ -1450,6 +1456,7 @@
     const constant = usesQuoteLifecycle ? guide.quote : guide.standalone;
     const movement = usesQuoteLifecycle ? guide.movement.quote : guide.movement.standalone;
     const blockItems = customStageBlockItems();
+    const availableRuleIds = rulesForCustomStage();
     const typeLabel = guide.tabs[state.customBlockType] || '';
 
     const kindButtons = Object.entries(guide.kinds).map(([id, item]) =>
@@ -1518,7 +1525,7 @@
         '<article class="is-different"><span>↔</span><div><strong>' + esc(constant.changesTitle) + '</strong><p>' + esc(constant.changesBody) + '</p></div></article>' +
       '</div>' +
       '<div class="qlce-custom-metrics" aria-label="Shared Block counts">' +
-        '<div><strong>' + guide.shared.ruleIds.length + '</strong><span>Rules at every Stage</span></div>' +
+        '<div><strong>' + availableRuleIds.length + '</strong><span>Rules available here</span></div>' +
         '<div><strong>Hours / days</strong><span>Wait options</span></div>' +
         '<div><strong>' + guide.shared.actionIds.filter((id) => data.actions[id]?.availability !== 'withheld').length + '</strong><span>Available Actions at every Stage</span></div>' +
       '</div>' +
@@ -1543,14 +1550,14 @@
           <div class="qlce-source-card"><strong>${esc(data.source.reviewVerdict)}</strong><span>${esc(data.source.reviewCoverage)}</span><small>Source ${esc(data.source.sha256.slice(0, 12))}…</small></div>
         </div>
         <div class="qlce-disclaimer"><strong>Interactive guide.</strong> You can try different choices here. Nothing is saved or turned on. <strong>Draft never runs.</strong> Publish validates the Draft and creates or replaces its published version. A first Publish is Inactive; Activate makes it Active. Editing an Active Automation creates unpublished Draft changes while the published version keeps running. Publishing those changes replaces the running version atomically; Deactivate returns it to Inactive.</div>
-        <section class="qlce-language-guide" aria-labelledby="qlceLanguageGuideTitle"><div><span>HOW TO READ A PHASE 1 FLOW</span><h2 id="qlceLanguageGuideTitle">Four simple parts</h2></div><div><article><strong>Rule (optional)</strong><span>One Yes or No question: Deal Label, Deal Value or Margin Value.</span></article><article><strong>If Yes / If No</strong><span>Choose what WeQuote should do for the answer.</span></article><article><strong>Wait (optional)</strong><span>Pause for a chosen number of hours or days.</span></article><article><strong>Action</strong><span>Choose from the 10 approved results, such as create a Note, request a file or move to a permitted Stage.</span></article></div></section>
+        <section class="qlce-language-guide" aria-labelledby="qlceLanguageGuideTitle"><div><span>HOW TO READ A PHASE 1 FLOW</span><h2 id="qlceLanguageGuideTitle">Four simple parts</h2></div><div><article><strong>Rule (optional)</strong><span>One Yes or No question. Margin Value is shown only after a current Quote exists.</span></article><article><strong>If Yes / If No</strong><span>Choose what WeQuote should do for the answer.</span></article><article><strong>Wait (optional)</strong><span>Pause for a chosen number of hours or days.</span></article><article><strong>Action</strong><span>Choose from the 10 approved results, such as create a Note, request a file or move to a permitted Stage.</span></article></div></section>
         ${data.customStageGuide ? `<div class="qlce-creation-routes">${['custom', 'templates'].map((key) => data.customStageGuide.creationRoutes[key]).filter(Boolean).map((route) => `<article><strong>${esc(route.label)}</strong><span>${esc(route.detail)}</span></article>`).join('')}</div>` : ''}
-        <section class="qlce-scope-facts" aria-label="Automation scope facts"><article><strong>1 guided Template</strong><span>Its purpose is to lower the learning curve. The exact recipe and editable settings still require Product confirmation.</span></article><article><strong>3 Rules · 10 Actions</strong><span>Deal Label, Deal Value and Margin Value; plus the 10 approved Actions shown in this guide.</span></article><article><strong>Wait: hours or days</strong><span>One Rule asks one Yes / No question. AND / OR and Stop Branch are outside Phase 1.</span></article><article><strong>Custom Stages and Pipelines included</strong><span>Phase 1 includes Custom Stages in the Quote Pipeline, another Quote-lifecycle Pipeline, a Standalone Pipeline and Publish.</span></article></section>
+        <section class="qlce-scope-facts" aria-label="Automation scope facts"><article><strong>1 guided Template</strong><span>Its purpose is to lower the learning curve. The exact recipe and editable settings still require Product confirmation.</span></article><article><strong>Up to 3 Rule types · 10 Actions</strong><span>Qualified and pre-Quote Stages use Deal Label and Deal Value. Margin Value starts only after a current Quote exists.</span></article><article><strong>Wait: hours or days</strong><span>One Rule asks one Yes / No question. AND / OR and Stop Branch are outside Phase 1.</span></article><article><strong>Custom Stages and Pipelines included</strong><span>Phase 1 includes Custom Stages in the Quote Pipeline, another Quote-lifecycle Pipeline, a Standalone Pipeline and Publish.</span></article></section>
         <div class="qlce-toolbar">${modeNav()}${(state.mode === 'build' && beginnerView) || customModeActive || templateModeActive || scopeModeActive ? '' : `<label class="qlce-search"><span>Search</span><input type="search" value="${esc(state.search)}" placeholder="${state.mode === 'catalogue' ? 'Search these choices' : (beginnerView ? 'Search example flows' : 'Search examples, checks, or actions')}" data-search></label>`}<button type="button" data-print>Print</button></div>
         ${customModeActive || templateModeActive || scopeModeActive ? '' : stageNav()}
       </header>
       <main>${state.mode === 'templates' ? templatesMode() : state.mode === 'recipes' ? recipesMode() : state.mode === 'scope' ? scopeCalculationMode() : state.mode === 'build' ? buildMode() : state.mode === 'custom-stages' ? customStageMode() : catalogueMode()}</main>
-      <footer class="qlce-footer">${customModeActive ? '<span>Choose a Pipeline type and placement to see exactly what stays the same and what changes.</span><span>Phase 1 guide — nothing is saved or run.</span>' : '<span>1 guided Template · 3 Rules · 10 Actions · Wait in hours or days</span><span>Custom Stages · another Quote-lifecycle Pipeline · Standalone Pipeline · Publish</span>'}</footer>`;
+      <footer class="qlce-footer">${customModeActive ? '<span>Choose a Pipeline type and placement to see exactly what stays the same and what changes.</span><span>Phase 1 guide — nothing is saved or run.</span>' : '<span>1 guided Template · Up to 3 Rule types by context · 10 Actions · Wait in hours or days</span><span>Margin Value begins only after a current Quote exists</span>'}</footer>`;
   };
 
   const copyText = async (text) => {
