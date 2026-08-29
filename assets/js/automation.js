@@ -1258,13 +1258,15 @@
     }
     if (saveStatus) saveStatus.classList.toggle('draft-saved', draftChanges && !unsaved);
     if (activationState) {
-      activationState.textContent = config.enabled ? 'Active' : 'Inactive';
-      activationState.classList.toggle('active', !!config.enabled);
+      const runtimeLabel = automationRuntimeStateLabel(config);
+      activationState.textContent = runtimeLabel;
+      activationState.classList.toggle('active', runtimeLabel === 'Active');
+      activationState.classList.toggle('draft', runtimeLabel === 'Draft');
       activationState.hidden = !!config.protected;
     }
     if (pageSubtitle && automationView.classList.contains('aut-builder-mode')) {
       pageSubtitle.textContent = isUntitledPhaseOneAutomation(config)
-        ? 'Inactive Draft · Choose a Stage and Template to complete setup.'
+        ? 'Draft · Choose a Stage and Template when you are ready.'
         : unsaved
         ? 'Unpublished changes · Save this Draft before testing.'
         : (draftChanges
@@ -3643,7 +3645,7 @@
           renderInspector(activeNode);
           showAutomationToast(stageName + ' has its own Automation settings. The choices shown depend on where this Stage sits.');
         } else {
-          openStageAutomationCreator(stageName, true, 'templates', context.pipelineId);
+          openStageAutomationCreator(stageName, true, null, context.pipelineId);
           showAutomationToast(stageName + ' is ready. Choose Starts when, then add an optional Rule and an Action.');
         }
       }
@@ -4387,7 +4389,7 @@
 
   const conceptAutomationDefinitions = {
     proposal: {
-      title: 'Client Proposal & Approval', status: 'Needs setup', start: 'Qualified', end: 'Technical Review is passed',
+      title: 'Client Proposal & Approval', status: 'Draft', start: 'Qualified', end: 'Technical Review is passed',
       outcome: 'Move safely from site readiness into Quote build, SOW and Technical Review at the correct lifecycle stages.',
       steps: [
         ['trigger', 'TRIGGER', 'Deal enters Qualified', 'Quote Pipeline'],
@@ -4423,7 +4425,7 @@
       note: 'A Wait is flow control, not a while-loop. Re-enrolment rules decide whether the Automation can run again.'
     },
     'high-value': {
-      title: 'High-value approval', status: 'Needs setup', start: 'Passed Review', end: 'Additional approval recorded',
+      title: 'High-value approval', status: 'Draft', start: 'Passed Review', end: 'Additional approval recorded',
       outcome: 'Add final commercial governance when a reviewed Quote carries higher risk.',
       steps: [
         ['trigger', 'TRIGGER', 'Quote reaches Passed Review', 'Quote Pipeline'],
@@ -4865,8 +4867,28 @@
     return true;
   }
 
+  function automationStageCreationPolicy(stageDefinition, pipeline) {
+    const quoteConnected = automationPipelineUsesQuoteLifecycle(pipeline);
+    const protectedQuoteStage = Boolean(stageDefinition && quoteConnected && !stageDefinition.custom);
+    const scratchAllowed = Boolean(stageDefinition && !protectedQuoteStage);
+    const templateKeys = stageDefinition && Array.isArray(stageDefinition.templateKeys)
+      ? stageDefinition.templateKeys.filter(function (templateKey) { return Boolean(templateDefinitions[templateKey]); })
+      : [];
+    const templatesAllowed = Boolean(!stageDefinition || protectedQuoteStage || templateKeys.length);
+    const orderedModes = scratchAllowed
+      ? (templatesAllowed ? ['custom', 'templates'] : ['custom'])
+      : ['templates'];
+    return {
+      protectedQuoteStage: protectedQuoteStage,
+      scratchAllowed: scratchAllowed,
+      templatesAllowed: templatesAllowed,
+      orderedModes: orderedModes,
+      defaultMode: scratchAllowed ? 'custom' : 'templates'
+    };
+  }
+
   function contextualCustomAvailable(stageDefinition, pipeline) {
-    return Boolean(stageDefinition && (stageDefinition.quoteConnected || stageDefinition.custom || !automationPipelineUsesQuoteLifecycle(pipeline)));
+    return automationStageCreationPolicy(stageDefinition, pipeline).scratchAllowed;
   }
 
   function renderContextualCustomTriggers(stageDefinition, pipeline) {
@@ -4886,16 +4908,34 @@
     if (!pipelineDetail || !contextTemplateSidebar) return;
     const pipeline = automationPipelineById(selectedTemplatePipelineId) || automationGroupPipeline() || automationPipelines()[0];
     const stageDefinition = automationStageDefinition(selectedAutomationStage, pipeline && pipeline.id);
-    const customAvailable = contextualCustomAvailable(stageDefinition, pipeline);
-    contextualCreatorMode = mode === 'custom' && customAvailable ? 'custom' : 'templates';
+    const policy = automationStageCreationPolicy(stageDefinition, pipeline);
+    const requestedModeAllowed = mode === 'custom' ? policy.scratchAllowed : policy.templatesAllowed;
+    contextualCreatorMode = requestedModeAllowed ? mode : policy.defaultMode;
     const modeButtons = Array.from(contextTemplateSidebar.querySelectorAll('[data-aut-context-mode]'));
+    const modeTabs = contextTemplateSidebar.querySelector('.aut-context-mode-tabs');
+    if (modeTabs) {
+      const buttonsByMode = modeButtons.reduce(function (result, button) {
+        result[button.dataset.autContextMode] = button;
+        return result;
+      }, {});
+      policy.orderedModes.forEach(function (modeName) {
+        if (buttonsByMode[modeName]) modeTabs.appendChild(buttonsByMode[modeName]);
+      });
+      modeButtons.forEach(function (button) {
+        if (policy.orderedModes.indexOf(button.dataset.autContextMode) < 0) modeTabs.appendChild(button);
+      });
+      modeTabs.classList.toggle('single-mode', policy.orderedModes.length === 1);
+    }
     modeButtons.forEach(function (button) {
       const isCustomButton = button.dataset.autContextMode === 'custom';
+      const available = isCustomButton ? policy.scratchAllowed : policy.templatesAllowed;
       const active = button.dataset.autContextMode === contextualCreatorMode;
       button.classList.toggle('active', active);
       button.setAttribute('aria-selected', String(active));
-      button.disabled = isCustomButton && !customAvailable;
-      if (isCustomButton) button.title = customAvailable ? 'Choose Starts when for this Stage' : 'A Custom Automation is not available for this Stage';
+      button.tabIndex = active ? 0 : -1;
+      button.hidden = !available;
+      button.disabled = !available;
+      if (isCustomButton) button.title = available ? 'Build an Automation from scratch in this Stage' : 'This protected Quote Stage uses Templates only';
     });
     if (contextTemplateList) contextTemplateList.hidden = contextualCreatorMode !== 'templates';
     const templateHelp = contextTemplateSidebar.querySelector('.aut-context-template-help');
@@ -4944,8 +4984,8 @@
         })
       : (selectedDefinition.templateKeys || []).filter(function (templateKey) { return templateDefinitions[templateKey]; });
     const phaseNote = fixedTemplateContext
-      ? '<div class="aut-template-fixed-note"><i class="fai">&#xf023;</i><span><strong>Ready-made Templates.</strong> The Template name, Stage and steps stay the same. You can change the settings shown inside it.</span></div>'
-      : '<div class="aut-template-custom-note"><i class="fai">&#xf303;</i><span><strong>' + escapeAutomationHtml(quoteConnected ? 'Custom Stage.' : 'Standalone Pipeline.') + '</strong> Choose a ready-made starter, or open Custom to choose how the Automation starts.</span></div>';
+      ? '<div class="aut-template-fixed-note"><i class="fai">&#xf023;</i><span><strong>This protected Quote Stage uses Templates only.</strong> The Template name, Stage and steps stay the same. You can change the settings shown inside it.</span></div>'
+      : '<div class="aut-template-custom-note"><i class="fai">&#xf303;</i><span><strong>' + escapeAutomationHtml(quoteConnected ? 'Custom Stage.' : 'Standalone Pipeline.') + '</strong> Build from scratch is shown first. You can also choose a ready-made starter from Templates.</span></div>';
     const templateMarkup = templateKeys.map(function (templateKey) {
       const template = templateDefinitions[templateKey];
       const meta = phaseOneContextTemplateMeta[templateKey] || customTemplateMeta[templateKey];
@@ -4974,12 +5014,15 @@
         selectedCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
       }
     }
-    setContextualCreatorMode(contextualCreatorMode, false);
+    const creationPolicy = automationStageCreationPolicy(selectedDefinition, pipeline);
+    setContextualCreatorMode(creationPolicy.defaultMode, false);
     if (focusSidebar) {
       contextTemplateSidebar.classList.remove('is-opening');
       requestAnimationFrame(function () {
         contextTemplateSidebar.classList.add('is-opening');
-        showAutomationToast('Add automation opened for ' + selectedStage + '. Choose Templates or Custom in the left panel.');
+        showAutomationToast(creationPolicy.defaultMode === 'custom'
+          ? 'Build from scratch opened for ' + selectedStage + '. Choose what should start this Automation.'
+          : 'Templates opened for ' + selectedStage + '. Choose a ready-made flow and change its settings.');
         contextTemplateStage.focus();
         window.setTimeout(function () { contextTemplateSidebar.classList.remove('is-opening'); }, 460);
       });
@@ -5134,7 +5177,7 @@
   }
 
   function automationStateLabel(state, groupStatus) {
-    if (state === 'draft') return 'Needs setup';
+    if (state === 'draft') return 'Draft';
     return state === 'on' && groupStatus === 'active' ? 'Active' : 'Inactive';
   }
 
@@ -5148,6 +5191,17 @@
       !!workflowMoveStageBlocker(config) ||
       automationRuleCompatibilityIssues(config).length > 0
     );
+  }
+
+  function automationRuntimeStateLabel(config) {
+    if (!config) return 'Draft';
+    if (workflowNeedsSetup(config) && !automationHasPublishedVersion(config)) return 'Draft';
+    return config.enabled ? 'Active' : 'Inactive';
+  }
+
+  function automationBuilderStatusLabel(config) {
+    const runtimeLabel = automationRuntimeStateLabel(config);
+    return config && config.editingVersion ? runtimeLabel + ' · Unpublished changes' : runtimeLabel;
   }
 
   function automationWorkflowSetupReason(config) {
@@ -5189,6 +5243,17 @@
     return null;
   }
 
+  function activationBlockingAutomationGroupSetupIssue(definition) {
+    if (!definition) return null;
+    const counts = automationGroupStateCounts(definition);
+    if ((counts.on || 0) + (counts.off || 0) > 0) return null;
+    return firstAutomationGroupSetupIssue(definition) || {
+      empty: true,
+      title: definition.name || 'Automation Draft',
+      reason: 'Add and complete at least one Automation.'
+    };
+  }
+
   function automationSetupNode(config) {
     if (!config) return 'trigger';
     if (isProposalApproval(config)) return 'proposal-technical-review';
@@ -5214,14 +5279,16 @@
     });
   }
 
-  function resolveAutomationGroupSetup(key) {
+  function resolveAutomationGroupSetup(key, activationOnly) {
     const definition = automationGroupDefinitions[key];
-    const issue = firstAutomationGroupSetupIssue(definition);
+    const issue = activationOnly
+      ? activationBlockingAutomationGroupSetupIssue(definition)
+      : firstAutomationGroupSetupIssue(definition);
     if (!definition || !issue) return false;
     closeAutomationGroupInspect();
     if (issue.workflowKey) {
       openAutomationWorkflowForSetup(issue.workflowKey);
-      showAutomationToast('“' + issue.title + '” needs attention — ' + issue.reason + ' Opening it now.');
+      showAutomationToast('“' + issue.title + '” is still a Draft — ' + issue.reason + ' Opening it now.');
       return true;
     }
     showAutomationPipelineDetail(key);
@@ -5232,8 +5299,8 @@
       });
     }
     showAutomationToast(issue.empty
-      ? 'This setup has no Automations yet. Add one before turning it on.'
-      : '“' + issue.title + '” needs attention — ' + issue.reason);
+      ? 'This Draft has no complete Automations yet. Add one before turning it on.'
+      : '“' + issue.title + '” is still a Draft — ' + issue.reason);
     return true;
   }
 
@@ -5265,7 +5332,7 @@
       '<strong>' + escapeAutomationHtml(config.title) + '</strong>' +
       '<span>' + escapeAutomationHtml(config.triggerEvent || config.triggerStage || 'Saved Starts when choice') + '</span>' +
       '<span>' + escapeAutomationHtml(config.actionName || 'Saved business outcome') + '</span>' +
-      '<em class="' + (config.enabled ? 'on' : (needsSetup ? 'draft' : 'off')) + '">' + (config.enabled ? 'Active' : (needsSetup ? 'Needs setup' : 'Inactive')) + '</em>' +
+      '<em class="' + (config.enabled ? 'on' : (needsSetup ? 'draft' : 'off')) + '">' + (config.enabled ? 'Active' : (needsSetup ? 'Draft' : 'Inactive')) + '</em>' +
       '</button>';
   }
 
@@ -5284,7 +5351,7 @@
     const config = workflows[workflowKey];
     if (!config) return '';
     const needsSetup = workflowNeedsSetup(config);
-    const status = config.enabled ? 'Active' : (needsSetup ? 'Needs setup' : 'Inactive');
+    const status = config.enabled ? 'Active' : (needsSetup ? 'Draft' : 'Inactive');
     return '<button class="aut-train-outcome-card ' + type + '" type="button" data-aut-list-workflow-preview="' + escapeAutomationHtml(workflowKey) + '">' +
       '<small>USER AUTOMATION</small>' +
       '<strong>' + escapeAutomationHtml(eventTitle) + '</strong>' +
@@ -5346,6 +5413,7 @@
   }
 
   function setAutomationGroupView(view) {
+    const previousView = activeAutomationGroupView;
     activeAutomationGroupView = view === 'list' ? 'list' : 'map';
     document.querySelectorAll('[data-aut-group-view]').forEach(function (button) {
       const active = button.dataset.autGroupView === activeAutomationGroupView;
@@ -5362,7 +5430,7 @@
       renderAutomationGroupListView();
       syncListTemplateStageSelection(selectedAutomationStage || 'Qualified', false);
     }
-    else requestAnimationFrame(function () {
+    else if (previousView !== activeAutomationGroupView) requestAnimationFrame(function () {
       const map = document.getElementById('autSemanticMap');
       if (map) map.dispatchEvent(new CustomEvent('aut-map-center'));
     });
@@ -5390,10 +5458,22 @@
     }, { on: 0, off: 0, draft: 0 });
     if (definition && definition.key) {
       workflowsForAutomationGroup(definition.key).forEach(function (workflowKey) {
-        counts[workflows[workflowKey].enabled ? 'on' : 'off'] += 1;
+        const config = workflows[workflowKey];
+        counts[config.enabled ? 'on' : (workflowNeedsSetup(config) ? 'draft' : 'off')] += 1;
       });
     }
     return counts;
+  }
+
+  function automationGroupDisplayState(definition, counts) {
+    if (definition && definition.status === 'active') return 'active';
+    const stateCounts = counts || automationGroupStateCounts(definition);
+    return (stateCounts.on || 0) + (stateCounts.off || 0) > 0 ? 'inactive' : 'draft';
+  }
+
+  function automationGroupDisplayLabel(definition, counts) {
+    const state = automationGroupDisplayState(definition, counts);
+    return state === 'active' ? 'Active' : (state === 'draft' ? 'Draft' : 'Inactive');
   }
 
   function automationGroupInspectAutomationMarkup(conceptKey, definition) {
@@ -5408,7 +5488,7 @@
     if (!config) return '';
     const needsSetup = workflowNeedsSetup(config);
     const state = config.enabled ? 'on' : (needsSetup ? 'draft' : 'off');
-    return '<div class="aut-inspect-automation user"><strong>' + escapeAutomationHtml(config.title) + '</strong><em class="' + state + '">' + (config.enabled ? 'Active' : (needsSetup ? 'Needs setup' : 'Inactive')) + '</em><small>' + escapeAutomationHtml(config.actionName || 'Saved business outcome') + '</small><b class="aut-inspect-company-scope"><i class="fai">&#xf1ad;</i> ' + escapeAutomationHtml(automationCompanyScopeLabel(config)) + '</b>' + automationCompanyScopePillsMarkup(config, 'compact') + '</div>';
+    return '<div class="aut-inspect-automation user"><strong>' + escapeAutomationHtml(config.title) + '</strong><em class="' + state + '">' + (config.enabled ? 'Active' : (needsSetup ? 'Draft' : 'Inactive')) + '</em><small>' + escapeAutomationHtml(config.actionName || 'Saved business outcome') + '</small><b class="aut-inspect-company-scope"><i class="fai">&#xf1ad;</i> ' + escapeAutomationHtml(automationCompanyScopeLabel(config)) + '</b>' + automationCompanyScopePillsMarkup(config, 'compact') + '</div>';
   }
 
   function automationGroupInspectMapMarkup(definition) {
@@ -5573,18 +5653,22 @@
     inspectedAutomationGroupKey = key;
     const counts = automationGroupStateCounts(definition);
     const templateDefaults = automationGroupTemplateDefaultsCount(definition);
-    const setupIssue = firstAutomationGroupSetupIssue(definition);
-    const statusLabel = definition.status === 'active' ? 'Active' : (setupIssue ? 'Needs setup' : 'Inactive');
-    const needsSetup = definition.status !== 'active' && !!setupIssue;
+    const activationIssue = activationBlockingAutomationGroupSetupIssue(definition);
+    const displayState = automationGroupDisplayState(definition, counts);
+    const statusLabel = automationGroupDisplayLabel(definition, counts);
+    const activationBlocked = definition.status !== 'active' && !!activationIssue;
     document.getElementById('autGroupInspectTitle').textContent = definition.name;
     const status = document.getElementById('autGroupInspectStatus');
     status.textContent = statusLabel;
-    status.className = definition.status === 'active' ? 'active' : (setupIssue ? 'draft' : '');
+    status.className = displayState === 'active' ? 'active' : (displayState === 'draft' ? 'draft' : '');
     document.getElementById('autGroupInspectPurpose').textContent = definition.description;
     document.getElementById('autGroupInspectPolicy').textContent = definition.policy;
-    document.getElementById('autGroupInspectMetrics').innerHTML = '<span><strong>' + definition.automations + '</strong>Automations</span><span><strong>' + counts.on + '</strong>Active</span><span><strong>' + counts.off + '</strong>Inactive</span><span><strong>' + counts.draft + '</strong>Needs setup</span>';
-    document.getElementById('autGroupInspectFit').innerHTML = definition.fit.map(function (item) {
-      const label = item === 'Needs setup' ? (templateDefaults ? 'Template defaults ready' : 'Inactive') : item;
+    document.getElementById('autGroupInspectMetrics').innerHTML = '<span><strong>' + definition.automations + '</strong>Automations</span><span><strong>' + counts.on + '</strong>Active</span><span><strong>' + counts.off + '</strong>Inactive</span><span><strong>' + counts.draft + '</strong>Draft</span>';
+    document.getElementById('autGroupInspectFit').innerHTML = definition.fit.reduce(function (labels, item) {
+      if (item === 'Needs setup' && templateDefaults) labels.push('Template defaults ready');
+      else if (item !== 'Needs setup' && item !== 'Inactive' && item !== 'Active') labels.push(item);
+      return labels;
+    }, []).map(function (label) {
       return '<span>' + escapeAutomationHtml(label) + '</span>';
     }).join('');
     document.getElementById('autGroupInspectImpact').innerHTML = definition.salesImpact.map(function (impact) { return '<span><b>' + escapeAutomationHtml(impact[1]) + '</b><strong>' + escapeAutomationHtml(impact[0]) + '</strong></span>'; }).join('');
@@ -5593,15 +5677,15 @@
     edit.innerHTML = '<i class="fai">&#xf303;</i> Edit';
     const activate = document.getElementById('autGroupInspectActivate');
     activate.disabled = false;
-    activate.innerHTML = definition.status === 'active' ? '<i class="fai">&#xf04c;</i> Turn off' : (needsSetup ? '<i class="fai">&#xf071;</i> Finish setup' : '<i class="fai">&#xf04b;</i> Turn on');
+    activate.innerHTML = definition.status === 'active' ? '<i class="fai">&#xf04c;</i> Turn off' : (activationBlocked ? '<i class="fai">&#xf303;</i> Edit Draft' : '<i class="fai">&#xf04b;</i> Turn on');
     const toggle = document.getElementById('autGroupInspectToggle');
     toggle.setAttribute('aria-checked', String(definition.status === 'active'));
     toggle.setAttribute('aria-disabled', 'false');
-    toggle.classList.toggle('has-setup-issue', needsSetup);
-    toggle.setAttribute('aria-label', definition.status === 'active' ? 'Turn off this Automation' : (needsSetup ? 'Finish ' + setupIssue.title + ' before turning on this setup' : 'Turn on this Automation'));
+    toggle.classList.remove('has-setup-issue');
+    toggle.setAttribute('aria-label', definition.status === 'active' ? 'Turn off this Automation setup' : (activationBlocked ? 'This Draft has no complete Automation to run' : 'Turn on this Automation setup; Drafts stay saved and off'));
     document.getElementById('autGroupInspectSwitchCopy').textContent = definition.status === 'active'
       ? 'Active · receiving new events'
-      : (needsSetup ? 'Cannot turn on yet · ' + setupIssue.title + ': ' + setupIssue.reason : 'Inactive · no new events');
+      : (activationBlocked ? 'Draft · saved, but no complete Automation can run yet' : 'Inactive · complete Automations can be turned on; Drafts stay saved and off');
     document.getElementById('autGroupInspectOverlay').hidden = false;
     setAutomationGroupInspectZoom(90);
     document.getElementById('autGroupInspectClose').focus();
@@ -5610,7 +5694,7 @@
   function previewInspectedAutomationStatusChange() {
     const definition = automationGroupDefinitions[inspectedAutomationGroupKey];
     if (!definition) return;
-    if (definition.status !== 'active' && resolveAutomationGroupSetup(inspectedAutomationGroupKey)) return;
+    if (definition.status !== 'active' && resolveAutomationGroupSetup(inspectedAutomationGroupKey, true)) return;
     closeAutomationGroupInspect();
     openAutomationGroupPreview(definition.status === 'active' ? null : inspectedAutomationGroupKey, definition.status === 'active' ? 'deactivate' : 'activate');
   }
@@ -5673,34 +5757,33 @@
     if (!definition) return '';
     const counts = automationGroupStateCounts(definition);
     const templateDefaults = automationGroupTemplateDefaultsCount(definition);
-    const setupIssue = firstAutomationGroupSetupIssue(definition);
     const isSalesPipeline = !pipeline || pipeline.id === 'sales-pipeline';
     definition.status = isSalesPipeline
       ? (key === activeAutomationGroupKey ? 'active' : 'inactive')
       : (counts.on ? 'active' : 'inactive');
     definition.automations = counts.on + counts.off + counts.draft;
-    const iconClass = key === 'high-value' ? ' high-value' : (definition.status === 'active' ? '' : ' draft');
-    const fit = (definition.fit || [pipeline.name, definition.automations + ' Automations']).map(function (item) {
-      const label = item === 'Needs setup' ? (templateDefaults ? 'Template defaults ready' : 'Inactive') : item;
+    const displayState = automationGroupDisplayState(definition, counts);
+    const activationIssue = activationBlockingAutomationGroupSetupIssue(definition);
+    const iconClass = key === 'high-value' ? ' high-value' : (displayState === 'active' ? '' : ' draft');
+    const fit = (definition.fit || [pipeline.name, definition.automations + ' Automations']).reduce(function (labels, item) {
+      if (item === 'Needs setup' && templateDefaults) labels.push('Template defaults ready');
+      else if (item !== 'Needs setup' && item !== 'Inactive' && item !== 'Active') labels.push(item);
+      return labels;
+    }, []).map(function (label) {
       return '<span>' + escapeAutomationHtml(label) + '</span>';
     }).join('');
-    const blocked = definition.status !== 'active' && !!setupIssue;
-    const setupIssueMarkup = blocked
-      ? '<button class="aut-group-setup-issue" type="button" data-aut-group-resolve="' + escapeAutomationHtml(key) + '"><i class="fai">&#xf071;</i><span><b>Finish before turning on:</b> ' + escapeAutomationHtml(setupIssue.title) + ' · ' + escapeAutomationHtml(setupIssue.reason) + '</span></button>'
-      : '';
-    const statusText = definition.status === 'active' ? 'Active' : (blocked ? 'Needs setup' : 'Inactive');
-    const editAction = blocked
-      ? '<button class="aut-group-open aut-group-finish" type="button" data-aut-group-resolve="' + escapeAutomationHtml(key) + '"><i class="fai">&#xf071;</i> Finish setup</button>'
-      : '<button class="aut-group-open" type="button" data-aut-group-open="' + escapeAutomationHtml(key) + '"><i class="fai">&#xf303;</i> Edit</button>';
+    const activationBlocked = definition.status !== 'active' && !!activationIssue;
+    const statusText = automationGroupDisplayLabel(definition, counts);
+    const editAction = '<button class="aut-group-open" type="button" data-aut-group-open="' + escapeAutomationHtml(key) + '"><i class="fai">&#xf303;</i> Edit</button>';
     const toggleLabel = definition.status === 'active'
       ? 'Turn off ' + definition.name
-      : (blocked ? 'Finish ' + setupIssue.title + ' before turning on ' + definition.name : 'Turn on ' + definition.name);
+      : (activationBlocked ? 'This Draft has no complete Automation to run' : 'Turn on ' + definition.name + '; Drafts stay saved and off');
     const actions = isSalesPipeline
-      ? '<button class="aut-group-preview" type="button" data-aut-group-preview="' + escapeAutomationHtml(key) + '"><i class="fai">&#xf06e;</i> Preview</button>' + editAction + '<button class="aut-group-toggle' + (blocked ? ' has-setup-issue' : '') + '" type="button" role="switch" aria-checked="' + String(definition.status === 'active') + '" aria-label="' + escapeAutomationHtml(toggleLabel) + '" title="' + escapeAutomationHtml(toggleLabel) + '" data-aut-group-toggle="' + escapeAutomationHtml(key) + '"><span></span></button>'
+      ? '<button class="aut-group-preview" type="button" data-aut-group-preview="' + escapeAutomationHtml(key) + '"><i class="fai">&#xf06e;</i> Preview</button>' + editAction + '<button class="aut-group-toggle" type="button" role="switch" aria-checked="' + String(definition.status === 'active') + '" aria-label="' + escapeAutomationHtml(toggleLabel) + '" title="' + escapeAutomationHtml(toggleLabel) + '" data-aut-group-toggle="' + escapeAutomationHtml(key) + '"><span></span></button>'
       : '<button class="aut-group-open" type="button" data-aut-group-open="' + escapeAutomationHtml(key) + '" aria-label="Edit ' + escapeAutomationHtml(definition.name) + '" title="Edit this Automation"><i class="fai">&#xf303;</i> Edit</button>';
-    return '<article class="aut-group-row" data-aut-group-row="' + escapeAutomationHtml(key) + '" data-status="' + definition.status + '">' +
-      '<div class="aut-group-main"><div class="aut-group-icon' + iconClass + '"><i class="fai">&#xf0ae;</i></div><div><div class="aut-group-title"><strong>' + escapeAutomationHtml(definition.name) + '</strong><span class="' + (definition.status === 'active' ? 'active' : (blocked ? 'draft' : '')) + '">' + statusText + '</span></div><p>' + escapeAutomationHtml(definition.description || ('Automation setup for ' + pipeline.name + '.')) + '</p><div class="aut-group-fit">' + fit + (templateDefaults ? '<span>' + templateDefaults + ' using Template defaults</span>' : '') + '</div>' + setupIssueMarkup + '</div></div>' +
-      '<div class="aut-group-counts"><div class="aut-group-metric total"><strong>' + definition.automations + '</strong><span>Automations</span></div><div class="aut-group-metric on"><strong>' + counts.on + '</strong><span>Active</span></div><div class="aut-group-metric off"><strong>' + counts.off + '</strong><span>Inactive</span></div><div class="aut-group-metric draft"><strong>' + counts.draft + '</strong><span>Needs setup</span></div></div>' +
+    return '<article class="aut-group-row" data-aut-group-row="' + escapeAutomationHtml(key) + '" data-status="' + displayState + '">' +
+      '<div class="aut-group-main"><div class="aut-group-icon' + iconClass + '"><i class="fai">&#xf0ae;</i></div><div><div class="aut-group-title"><strong>' + escapeAutomationHtml(definition.name) + '</strong><span class="' + (displayState === 'active' ? 'active' : (displayState === 'draft' ? 'draft' : '')) + '">' + statusText + '</span></div><p>' + escapeAutomationHtml(definition.description || ('Automation setup for ' + pipeline.name + '.')) + '</p><div class="aut-group-fit">' + fit + (templateDefaults ? '<span>' + templateDefaults + ' using Template defaults</span>' : '') + '</div></div></div>' +
+      '<div class="aut-group-counts"><div class="aut-group-metric total"><strong>' + definition.automations + '</strong><span>Automations</span></div><div class="aut-group-metric on"><strong>' + counts.on + '</strong><span>Active</span></div><div class="aut-group-metric off"><strong>' + counts.off + '</strong><span>Inactive</span></div><div class="aut-group-metric draft"><strong>' + counts.draft + '</strong><span>Draft</span></div></div>' +
       '<div class="aut-group-audit"><strong>Candy</strong><span>Today</span><small>Creator</small></div><div class="aut-group-audit"><strong>Candy</strong><span>Just now</span><small>Last edited by</small></div>' +
       '<div class="aut-group-actions">' + actions + '</div></article>';
   }
@@ -5734,31 +5817,31 @@
       const key = row.dataset.autGroupRow;
       const definition = automationGroupDefinitions[key];
       const counts = automationGroupStateCounts(definition);
-      const templateDefaults = automationGroupTemplateDefaultsCount(definition);
-      const setupIssue = firstAutomationGroupSetupIssue(definition);
+      const activationIssue = activationBlockingAutomationGroupSetupIssue(definition);
       definition.status = pipeline && pipeline.id === 'sales-pipeline'
         ? (key === activeAutomationGroupKey ? 'active' : 'inactive')
         : (counts.on ? 'active' : 'inactive');
-      row.dataset.status = definition.status;
+      const displayState = automationGroupDisplayState(definition, counts);
+      row.dataset.status = displayState;
       const status = row.querySelector('.aut-group-title span');
-      status.textContent = definition.status === 'active' ? 'Active' : (setupIssue ? 'Needs setup' : 'Inactive');
-      status.className = definition.status === 'active' ? 'active' : (setupIssue ? 'draft' : '');
+      status.textContent = automationGroupDisplayLabel(definition, counts);
+      status.className = displayState === 'active' ? 'active' : (displayState === 'draft' ? 'draft' : '');
       const toggle = row.querySelector('[data-aut-group-toggle]');
       if (toggle) {
         toggle.setAttribute('aria-checked', String(definition.status === 'active'));
         const toggleLabel = definition.status === 'active'
           ? 'Turn off ' + definition.name
-          : (setupIssue ? 'Finish ' + setupIssue.title + ' before turning on ' + definition.name : 'Turn on ' + definition.name);
+          : (activationIssue ? 'This Draft has no complete Automation to run' : 'Turn on ' + definition.name + '; Drafts stay saved and off');
         toggle.setAttribute('aria-label', toggleLabel);
         toggle.setAttribute('title', toggleLabel);
-        toggle.classList.toggle('has-setup-issue', definition.status !== 'active' && !!setupIssue);
+        toggle.classList.remove('has-setup-issue');
       }
       const metricValues = row.querySelectorAll('.aut-group-counts strong');
       if (metricValues[0]) metricValues[0].textContent = String(definition.automations || 0);
       if (metricValues[1]) metricValues[1].textContent = String(counts.on || 0);
       if (metricValues[2]) metricValues[2].textContent = String(counts.off || 0);
       if (metricValues[3]) metricValues[3].textContent = String(counts.draft || 0);
-      const matchesStatus = activeGroupFilter === 'all' || definition.status === activeGroupFilter;
+      const matchesStatus = activeGroupFilter === 'all' || displayState === activeGroupFilter;
       const matchesQuery = !query || definition.name.toLowerCase().includes(query) || row.textContent.toLowerCase().includes(query);
       row.hidden = !(matchesStatus && matchesQuery);
       if (!row.hidden) visible += 1;
@@ -5777,19 +5860,26 @@
     document.getElementById('autGroupEmptyCreate').hidden = !genuinelyEmpty;
     document.querySelectorAll('[data-aut-group-filter]').forEach(function (button) { button.classList.toggle('active', button.dataset.autGroupFilter === activeGroupFilter); });
     const totalGroups = groupKeys.length;
-    const activeGroups = groupKeys.filter(function (key) { return automationGroupDefinitions[key].status === 'active'; }).length;
-    const inactiveGroups = totalGroups - activeGroups;
+    const displayStates = groupKeys.map(function (key) {
+      const definition = automationGroupDefinitions[key];
+      return automationGroupDisplayState(definition, automationGroupStateCounts(definition));
+    });
+    const activeGroups = displayStates.filter(function (state) { return state === 'active'; }).length;
+    const inactiveGroups = displayStates.filter(function (state) { return state === 'inactive'; }).length;
+    const draftGroups = displayStates.filter(function (state) { return state === 'draft'; }).length;
     document.querySelectorAll('[data-aut-group-filter]').forEach(function (button) {
       const count = button.querySelector('b');
       if (!count) return;
-      count.textContent = String(button.dataset.autGroupFilter === 'all' ? totalGroups : (button.dataset.autGroupFilter === 'active' ? activeGroups : inactiveGroups));
+      count.textContent = String(button.dataset.autGroupFilter === 'all'
+        ? totalGroups
+        : (button.dataset.autGroupFilter === 'active' ? activeGroups : (button.dataset.autGroupFilter === 'draft' ? draftGroups : inactiveGroups)));
     });
     const pipelineRow = document.querySelector('[data-aut-pipeline-open="sales-pipeline"]');
     if (pipelineRow && pipeline && pipeline.id === 'sales-pipeline') {
       const pipelineCount = pipelineRow.querySelector('.aut-pipeline-count');
       pipelineCount.querySelector('strong').textContent = String(totalGroups);
       pipelineCount.querySelector('small').textContent = totalGroups
-        ? (activeGroups + ' active · ' + inactiveGroups + ' inactive')
+        ? (activeGroups + ' active · ' + inactiveGroups + ' inactive · ' + draftGroups + ' draft')
         : 'No Automations';
       pipelineCount.classList.toggle('zero', totalGroups === 0);
     }
@@ -5802,11 +5892,11 @@
     const row = document.createElement('article');
     row.className = 'aut-group-row';
     row.dataset.autGroupRow = key;
-    row.dataset.status = 'inactive';
-    row.innerHTML = '<div class="aut-group-main"><div class="aut-group-icon draft"><i class="fai">&#xf15c;</i></div><div><div class="aut-group-title"><strong>' + escapeAutomationHtml(definition.name) + '</strong><span class="draft">Needs setup</span></div><p>Empty Automation setup for the Quote Pipeline.</p><div class="aut-group-fit"><span>0 Automations</span><span>Quote Stages</span></div><button class="aut-group-setup-issue" type="button" data-aut-group-resolve="' + escapeAutomationHtml(key) + '"><i class="fai">&#xf071;</i><span><b>Finish before turning on:</b> Add at least one Automation.</span></button></div></div>' +
-      '<div class="aut-group-counts"><div class="aut-group-metric total"><strong>0</strong><span>Automations</span></div><div class="aut-group-metric on"><strong>0</strong><span>Active</span></div><div class="aut-group-metric off"><strong>0</strong><span>Inactive</span></div><div class="aut-group-metric draft"><strong>0</strong><span>Needs setup</span></div></div>' +
+    row.dataset.status = 'draft';
+    row.innerHTML = '<div class="aut-group-main"><div class="aut-group-icon draft"><i class="fai">&#xf15c;</i></div><div><div class="aut-group-title"><strong>' + escapeAutomationHtml(definition.name) + '</strong><span class="draft">Draft</span></div><p>Saved Draft for the Quote Pipeline.</p><div class="aut-group-fit"><span>0 Automations</span><span>Quote Stages</span></div></div></div>' +
+      '<div class="aut-group-counts"><div class="aut-group-metric total"><strong>0</strong><span>Automations</span></div><div class="aut-group-metric on"><strong>0</strong><span>Active</span></div><div class="aut-group-metric off"><strong>0</strong><span>Inactive</span></div><div class="aut-group-metric draft"><strong>0</strong><span>Draft</span></div></div>' +
       '<div class="aut-group-audit"><strong>Candy</strong><span>Today</span><small>Creator</small></div><div class="aut-group-audit"><strong>Candy</strong><span>Just now</span><small>Last edited by</small></div>' +
-      '<div class="aut-group-actions"><button class="aut-group-preview" type="button" data-aut-group-preview="' + escapeAutomationHtml(key) + '"><i class="fai">&#xf06e;</i> Preview</button><button class="aut-group-open aut-group-finish" type="button" data-aut-group-resolve="' + escapeAutomationHtml(key) + '"><i class="fai">&#xf071;</i> Finish setup</button><button class="aut-group-toggle has-setup-issue" type="button" role="switch" aria-checked="false" aria-label="Add an Automation before turning on ' + escapeAutomationHtml(definition.name) + '" title="Add an Automation before turning on ' + escapeAutomationHtml(definition.name) + '" data-aut-group-toggle="' + escapeAutomationHtml(key) + '"><span></span></button></div>';
+      '<div class="aut-group-actions"><button class="aut-group-preview" type="button" data-aut-group-preview="' + escapeAutomationHtml(key) + '"><i class="fai">&#xf06e;</i> Preview</button><button class="aut-group-open" type="button" data-aut-group-open="' + escapeAutomationHtml(key) + '"><i class="fai">&#xf303;</i> Edit</button><button class="aut-group-toggle" type="button" role="switch" aria-checked="false" aria-label="This Draft has no complete Automation to run" title="This Draft has no complete Automation to run" data-aut-group-toggle="' + escapeAutomationHtml(key) + '"><span></span></button></div>';
     host.appendChild(row);
   }
 
@@ -5908,7 +5998,7 @@
     return '<div class="aut-map-automation aut-map-dynamic-workflow" data-aut-dynamic-workflow="' + escapeAutomationHtml(workflowKey) + '" data-aut-run-order-card="' + escapeAutomationHtml(workflowKey) + '">' +
       '<div class="aut-map-run-order-row"><button class="aut-map-run-order-handle" type="button" draggable="true" data-aut-run-order-handle="' + escapeAutomationHtml(workflowKey) + '" title="Drag to change Run order within this Stage"><span aria-hidden="true">⠿</span></button><b class="aut-map-run-order-number" aria-hidden="true">1</b>' +
       '<button type="button" data-aut-map-workflow="' + escapeAutomationHtml(workflowKey) + '">' + escapeAutomationHtml(title) + '</button>' +
-      '<button type="button" data-aut-workflow-state="' + escapeAutomationHtml(workflowKey) + '" data-state="' + state + '">' + (config.enabled ? 'Active' : (needsSetup ? 'Needs setup' : 'Inactive')) + '</button></div>' +
+      '<button type="button" data-aut-workflow-state="' + escapeAutomationHtml(workflowKey) + '" data-state="' + state + '">' + (config.enabled ? 'Active' : (needsSetup ? 'Draft' : 'Inactive')) + '</button></div>' +
       '<span>' + escapeAutomationHtml(hasRequiredAction ? 'Required completion checkpoint' : 'Independent Automation') + '</span>' +
       dynamicWorkflowRuleMarkup(config) + '</div>';
   }
@@ -6112,7 +6202,7 @@
         const parts = [];
         if (stateCounts.on) parts.push(stateCounts.on + ' Active');
         if (stateCounts.off) parts.push(stateCounts.off + ' Inactive');
-        if (stateCounts.draft) parts.push(stateCounts.draft + ' Needs setup');
+        if (stateCounts.draft) parts.push(stateCounts.draft + ' Draft');
         stageStatus.textContent = parts.join(' · ') || (definition && definition.empty ? 'Add an Automation' : 'None added');
       }
       stageCard.classList.toggle('has-no-custom-automations', Boolean(definition && definition.custom && !cards.length));
@@ -6305,10 +6395,10 @@
       const nextState = definition.states[conceptKey] || 'off';
       const toggle = titleButton.closest('.aut-map-automation').querySelector('[data-aut-map-toggle]');
       toggle.dataset.state = nextState;
-      toggle.textContent = nextState === 'on' ? 'Active' : (nextState === 'draft' ? 'Needs setup' : 'Inactive');
-      if (conceptAutomationDefinitions[conceptKey]) conceptAutomationDefinitions[conceptKey].status = nextState === 'on' ? 'Active' : (nextState === 'draft' ? 'Needs setup' : 'Inactive');
+      toggle.textContent = nextState === 'on' ? 'Active' : (nextState === 'draft' ? 'Draft' : 'Inactive');
+      if (conceptAutomationDefinitions[conceptKey]) conceptAutomationDefinitions[conceptKey].status = nextState === 'on' ? 'Active' : (nextState === 'draft' ? 'Draft' : 'Inactive');
       document.querySelectorAll('[data-aut-concept="' + conceptKey + '"] em').forEach(function (em) {
-        em.textContent = nextState === 'on' ? 'Active' : (nextState === 'draft' ? 'Needs setup' : 'Inactive');
+        em.textContent = nextState === 'on' ? 'Active' : (nextState === 'draft' ? 'Draft' : 'Inactive');
         em.classList.toggle('on', nextState === 'on');
       });
     });
@@ -6367,10 +6457,17 @@
         return workflows[key] && workflows[key].triggerPipelineId === pipeline.id;
       });
       const total = isSalesPipeline ? totalGroups : workflowKeys.length;
+      const groupStates = isSalesPipeline ? salesAutomationGroupKeys().map(function (key) {
+        const definition = automationGroupDefinitions[key];
+        return automationGroupDisplayState(definition, automationGroupStateCounts(definition));
+      }) : [];
       const active = isSalesPipeline
-        ? (activeAutomationGroupKey ? 1 : 0)
+        ? groupStates.filter(function (state) { return state === 'active'; }).length
         : workflowKeys.filter(function (key) { return workflows[key].enabled; }).length;
-      const inactive = Math.max(0, total - active);
+      const draft = isSalesPipeline
+        ? groupStates.filter(function (state) { return state === 'draft'; }).length
+        : workflowKeys.filter(function (key) { return workflowNeedsSetup(workflows[key]); }).length;
+      const inactive = Math.max(0, total - active - draft);
       const quoteConnected = automationPipelineUsesQuoteLifecycle(pipeline);
       const row = document.createElement('button');
       row.type = 'button';
@@ -6379,7 +6476,7 @@
       row.dataset.autPipelineOpen = pipeline.id;
       row.innerHTML = '<span class="aut-pipeline-name" role="cell"><i class="fai">' + (quoteConnected ? '&#xf0ae;' : '&#xf542;') + '</i><span><strong>' + escapeAutomationHtml(pipeline.name) + '</strong><small>' + (quoteConnected ? 'Quote Stages update automatically · Custom Stages supported' : 'Standalone Pipeline · your own Stages') + '</small></span></span>' +
         automationPipelineHubLifecycleMarkup(pipeline) +
-        '<span class="aut-pipeline-count' + (total ? '' : ' zero') + '" role="cell"><strong>' + total + '</strong><small>' + (total ? (active + ' active · ' + inactive + ' inactive') : 'No Automations') + '</small></span>' +
+        '<span class="aut-pipeline-count' + (total ? '' : ' zero') + '" role="cell"><strong>' + total + '</strong><small>' + (total ? (active + ' active · ' + inactive + ' inactive · ' + draft + ' draft') : 'No Automations') + '</small></span>' +
         '<span class="aut-pipeline-open" aria-hidden="true">Open <i class="fai">&#xf054;</i></span>';
       table.appendChild(row);
     });
@@ -6452,12 +6549,21 @@
     const after = targetKey ? automationGroupDefinitions[targetKey] : null;
     if (targetKey && !after) return;
     const action = mode || (targetKey === activeAutomationGroupKey ? 'preview' : 'activate');
+    if (action === 'activate' && activationBlockingAutomationGroupSetupIssue(after)) {
+      resolveAutomationGroupSetup(targetKey, true);
+      return;
+    }
     pendingAutomationGroupChange = { targetKey: targetKey || null, action: action };
     const title = document.getElementById('autGroupPreviewTitle');
     const copy = document.getElementById('autGroupPreviewCopy');
     const confirm = document.getElementById('autGroupPreviewConfirm');
     title.textContent = action === 'deactivate' ? 'Turn off the Active Automation?' : (action === 'activate' ? 'Switch the Active Automation?' : 'Preview Automation');
-    copy.textContent = action === 'deactivate' ? 'New Pipeline events will stop entering user Automations.' : (action === 'activate' ? 'Review exactly what changes before the new Automation receives events.' : 'Review the full Pipeline setup without changing what is Active.');
+    const afterCounts = after ? automationGroupStateCounts(after) : { draft: 0 };
+    copy.textContent = action === 'deactivate'
+      ? 'New Pipeline events will stop entering user Automations.'
+      : (action === 'activate'
+        ? 'Review the change before completed Automations receive events.' + (afterCounts.draft ? ' ' + afterCounts.draft + ' Draft' + (afterCounts.draft === 1 ? '' : 's') + ' will stay saved and off.' : '')
+        : 'Review the full Pipeline setup without changing what is Active.');
     document.getElementById('autGroupBeforeName').textContent = before ? before.name : 'No Active Automation';
     document.getElementById('autGroupAfterName').textContent = after ? after.name : 'No Active Automation';
     document.getElementById('autGroupBeforeStages').innerHTML = automationGroupStageMarkup();
@@ -6495,6 +6601,11 @@
       return;
     }
     if (change.action === 'activate') {
+      if (activationBlockingAutomationGroupSetupIssue(automationGroupDefinitions[change.targetKey])) {
+        closeAutomationGroupPreview();
+        resolveAutomationGroupSetup(change.targetKey, true);
+        return;
+      }
       if (activeAutomationGroupKey) automationGroupDefinitions[activeAutomationGroupKey].status = 'inactive';
       activeAutomationGroupKey = change.targetKey;
       automationGroupDefinitions[change.targetKey].status = 'active';
@@ -6644,6 +6755,7 @@
     map.dataset.ready = 'true';
     const canvas = document.getElementById('autMapCanvas');
     const board = document.getElementById('autMapBoard');
+    const stageNavigatorTrack = document.getElementById('autMapStageNavigatorTrack');
     const zoomOutput = document.getElementById('autMapZoom');
     const pauseResumeButton = document.getElementById('autPipelinePauseResume');
     const overlay = document.getElementById('autMapImpactOverlay');
@@ -6670,6 +6782,7 @@
     let suppressMapClick = false;
     let runOrderDragState = null;
     let templateLibraryDragKey = null;
+    let stageNavigatorScrollFrame = 0;
 
     function clearRunOrderDropMarkers() {
       map.querySelectorAll('.is-run-order-drop-before,.is-run-order-drop-after,.is-run-order-drop-invalid').forEach(function (node) {
@@ -6690,6 +6803,74 @@
         const heading = stageCard.querySelector('header strong');
         return heading && heading.textContent.trim() === stageName;
       }) || null;
+    }
+
+    function mapStageName(stageCard) {
+      const heading = stageCard && stageCard.querySelector('header strong');
+      return heading ? heading.textContent.trim() : '';
+    }
+
+    function stageNavigatorTone(stageCard) {
+      if (!stageCard) return '';
+      if (stageCard.classList.contains('lost')) return 'lost';
+      if (stageCard.classList.contains('won')) return 'won';
+      if (stageCard.classList.contains('custom')) return 'custom';
+      if (stageCard.classList.contains('conditional')) return 'conditional';
+      return '';
+    }
+
+    function setStageNavigatorSelection(stageName) {
+      if (!stageNavigatorTrack) return;
+      let selectedButton = null;
+      stageNavigatorTrack.querySelectorAll('[data-aut-map-stage-jump]').forEach(function (button) {
+        const selected = button.dataset.autMapStageJump === stageName;
+        button.classList.toggle('is-selected', selected);
+        if (selected) {
+          button.setAttribute('aria-current', 'step');
+          selectedButton = button;
+        } else button.removeAttribute('aria-current');
+      });
+      if (selectedButton) {
+        const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        selectedButton.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+
+    function renderStageNavigator() {
+      if (!stageNavigatorTrack) return;
+      const stageCards = Array.from(board.querySelectorAll('.aut-map-stage'));
+      stageNavigatorTrack.innerHTML = stageCards.map(function (stageCard) {
+        const stageName = mapStageName(stageCard);
+        const tone = stageNavigatorTone(stageCard);
+        return '<button type="button"' + (tone ? ' class="' + tone + '"' : '') +
+          ' data-aut-map-stage-jump="' + escapeAutomationHtml(stageName) + '" aria-label="Jump to ' + escapeAutomationHtml(stageName) + '">' +
+          escapeAutomationHtml(stageName) + '</button>';
+      }).join('');
+      const selectedStage = mapStageCardByName(selectedAutomationStage) ? selectedAutomationStage : '';
+      setStageNavigatorSelection(selectedStage);
+      syncStageNavigatorFromViewport();
+    }
+
+    function syncStageNavigatorFromViewport() {
+      if (!stageNavigatorTrack || stageNavigatorScrollFrame) return;
+      stageNavigatorScrollFrame = requestAnimationFrame(function () {
+        stageNavigatorScrollFrame = 0;
+        const canvasRect = canvas.getBoundingClientRect();
+        const viewportCenter = canvasRect.left + canvasRect.width / 2;
+        let nearestStageName = '';
+        let nearestDistance = Infinity;
+        board.querySelectorAll('.aut-map-stage').forEach(function (stageCard) {
+          const rect = stageCard.getBoundingClientRect();
+          const distance = Math.abs((rect.left + rect.width / 2) - viewportCenter);
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestStageName = mapStageName(stageCard);
+          }
+        });
+        stageNavigatorTrack.querySelectorAll('[data-aut-map-stage-jump]').forEach(function (button) {
+          button.classList.toggle('is-in-view', button.dataset.autMapStageJump === nearestStageName);
+        });
+      });
     }
 
     function centerMapStage(stageCard, behavior) {
@@ -6721,6 +6902,7 @@
     function focusMapStage(stageName) {
       const stageCard = mapStageCardByName(stageName);
       if (!stageCard) return;
+      setStageNavigatorSelection(stageName);
       syncMapEdgePadding();
       centerMapStage(stageCard, 'smooth');
     }
@@ -6807,7 +6989,7 @@
         }
         const parts = [];
         if (on) parts.push(on + ' Active');
-        if (draft) parts.push(draft + ' Needs setup');
+        if (draft) parts.push(draft + ' Draft');
         if (off) parts.push(off + ' Inactive');
         const status = stage.querySelector('.aut-map-status');
         if (status) status.textContent = parts.length ? parts.join(' · ') : 'None added';
@@ -6858,7 +7040,7 @@
 
     function setAutomationDetailStatus(state) {
       if (!detailStatus) return;
-      detailStatus.textContent = state === 'on' ? 'Active' : (state === 'draft' ? 'Needs setup' : 'Inactive');
+      detailStatus.textContent = state === 'on' ? 'Active' : (state === 'draft' ? 'Draft' : 'Inactive');
       detailStatus.className = 'aut-map-detail-status' + (state === 'off' ? ' inactive' : (state === 'draft' ? ' setup' : ''));
     }
 
@@ -6877,7 +7059,7 @@
       selectedConceptAutomation = key in conceptAutomationDefinitions ? key : 'first-action';
       const mapTitleControl = map.querySelector('[data-aut-map-concept="' + selectedConceptAutomation + '"]');
       const stateControl = mapTitleControl && mapTitleControl.closest('.aut-map-automation').querySelector('[data-aut-map-toggle]');
-      const state = stateControl ? stateControl.dataset.state : (definition.status === 'Active' ? 'on' : (definition.status === 'Needs setup' ? 'draft' : 'off'));
+      const state = stateControl ? stateControl.dataset.state : (definition.status === 'Active' ? 'on' : (definition.status === 'Draft' ? 'draft' : 'off'));
       renderConceptAutomation(selectedConceptAutomation);
       const flow = definition.steps.map(function (step, index) {
         return (index ? '<i class="fai">&#xf061;</i>' : '') + conceptStepMarkup(step);
@@ -6890,7 +7072,7 @@
         automationCompanyScopeDetailMarkup(definition, 'This Automation applies to matching records from every Owning Company.') +
         '<div class="aut-concept-flow">' + flow + '</div>' +
         '<div class="aut-concept-note"><i class="fai">&#xf0eb;</i><span><strong>How to read this:</strong> ' + escapeAutomationHtml(definition.note) + '</span></div>' +
-        '<div class="aut-concept-actions"><button class="aut-btn aut-detail-history" type="button" id="autMapDetailHistory"><i class="fai">&#xf1da;</i> Change history</button><button class="aut-btn" type="button" id="autMapDetailState"' + (state === 'draft' ? ' disabled' : '') + '><i class="fai">' + (state === 'on' ? '&#xf04c;' : '&#xf04b;') + '</i> ' + (state === 'on' ? 'Turn off' : (state === 'draft' ? 'Complete setup first' : 'Turn on')) + '</button><button class="aut-btn primary" type="button" id="autMapDetailDraft"><i class="fai">&#xf303;</i> Edit automation</button></div>';
+        '<div class="aut-concept-actions"><button class="aut-btn aut-detail-history" type="button" id="autMapDetailHistory"><i class="fai">&#xf1da;</i> Change history</button><button class="aut-btn" type="button" id="autMapDetailState"' + (state === 'draft' ? ' disabled' : '') + '><i class="fai">' + (state === 'on' ? '&#xf04c;' : '&#xf04b;') + '</i> ' + (state === 'on' ? 'Turn off' : (state === 'draft' ? 'Draft cannot turn on yet' : 'Turn on')) + '</button><button class="aut-btn primary" type="button" id="autMapDetailDraft"><i class="fai">&#xf303;</i> Edit automation</button></div>';
       detailBody.querySelector('#autMapDetailHistory').addEventListener('click', function () {
         showAutomationToast('Change history records saved edits and every Active / Inactive status change.');
       });
@@ -6921,7 +7103,7 @@
         '<div class="aut-dynamic-detail-rules">' + dynamicWorkflowRuleMarkup(config) + '</div>' +
         (state === 'draft' ? '<div class="aut-concept-note setup"><i class="fai">&#xf071;</i><span><strong>Cannot turn on yet:</strong> ' + escapeAutomationHtml(setupReason) + '</span></div>' : '') +
         '<div class="aut-concept-note"><i class="fai">&#xf05a;</i><span><strong>How to read this:</strong> Stage controls where the Automation belongs. Company scope controls which records can enter it.</span></div>' +
-        '<div class="aut-concept-actions"><button class="aut-btn aut-detail-history" type="button" id="autMapDynamicHistory"><i class="fai">&#xf1da;</i> Change history</button><button class="aut-btn" type="button" id="autMapDynamicState"><i class="fai">' + (state === 'on' ? '&#xf04c;' : (state === 'draft' ? '&#xf071;' : '&#xf04b;')) + '</i> ' + (state === 'on' ? 'Turn off' : (state === 'draft' ? 'Finish setup' : 'Turn on')) + '</button><button class="aut-btn primary" type="button" id="autMapDynamicEdit"><i class="fai">&#xf303;</i> Edit automation</button></div>';
+        '<div class="aut-concept-actions"><button class="aut-btn aut-detail-history" type="button" id="autMapDynamicHistory"><i class="fai">&#xf1da;</i> Change history</button><button class="aut-btn" type="button" id="autMapDynamicState"><i class="fai">' + (state === 'on' ? '&#xf04c;' : (state === 'draft' ? '&#xf303;' : '&#xf04b;')) + '</i> ' + (state === 'on' ? 'Turn off' : (state === 'draft' ? 'Edit Draft' : 'Turn on')) + '</button><button class="aut-btn primary" type="button" id="autMapDynamicEdit"><i class="fai">&#xf303;</i> Edit automation</button></div>';
       detailBody.querySelector('#autMapDynamicHistory').addEventListener('click', function () {
         showAutomationToast('Change history records saved edits and every Active / Inactive status change.');
       });
@@ -6947,12 +7129,12 @@
         if (titleButton.dataset.autMapTitle !== title) return;
         const toggle = titleButton.closest('.aut-map-automation').querySelector('[data-aut-map-toggle]');
         toggle.dataset.state = state;
-        toggle.textContent = state === 'on' ? 'Active' : (state === 'draft' ? 'Needs setup' : 'Inactive');
+        toggle.textContent = state === 'on' ? 'Active' : (state === 'draft' ? 'Draft' : 'Inactive');
         const conceptKey = titleButton.dataset.autMapConcept;
-        if (conceptAutomationDefinitions[conceptKey]) conceptAutomationDefinitions[conceptKey].status = state === 'on' ? 'Active' : (state === 'draft' ? 'Needs setup' : 'Inactive');
+        if (conceptAutomationDefinitions[conceptKey]) conceptAutomationDefinitions[conceptKey].status = state === 'on' ? 'Active' : (state === 'draft' ? 'Draft' : 'Inactive');
         if (automationGroupDefinitions[selectedAutomationGroupKey]) automationGroupDefinitions[selectedAutomationGroupKey].states[conceptKey] = state;
         document.querySelectorAll('[data-aut-concept="' + conceptKey + '"] em').forEach(function (em) {
-          em.textContent = state === 'on' ? 'Active' : (state === 'draft' ? 'Needs setup' : 'Inactive');
+          em.textContent = state === 'on' ? 'Active' : (state === 'draft' ? 'Draft' : 'Inactive');
           em.classList.toggle('on', state === 'on');
         });
       });
@@ -6967,7 +7149,7 @@
       pendingImpact = { type: 'automation', title: title, nextState: turningOn ? 'on' : 'off' };
       impactTitle.textContent = (turningOn ? 'Turn on ' : 'Turn off ') + title + '?';
       impactSubtitle.textContent = 'Review the behaviour change before confirming.';
-      currentTitle.textContent = state === 'on' ? 'Automation is Active' : (state === 'draft' ? 'Automation needs setup' : 'Automation is Inactive');
+      currentTitle.textContent = state === 'on' ? 'Automation is Active' : (state === 'draft' ? 'Automation is a Draft' : 'Automation is Inactive');
       currentCopy.textContent = state === 'on' ? 'Matching records start this Automation automatically.' : 'No Automation will run for new matching activity.';
       afterTitle.textContent = turningOn ? 'Automation is Active' : 'Automation is Inactive';
       afterCopy.textContent = turningOn ? 'New matching activity will follow the saved Rules, Waits and Actions.' : 'No Automation will run for new matching activity.';
@@ -7072,6 +7254,7 @@
     }
 
     map.addEventListener('aut-group-applied', function (event) {
+      renderStageNavigator();
       displayMapCounts();
       syncPipelinePauseControl();
       if (!(event.detail && event.detail.preservePosition)) centerMapOnPipeline();
@@ -7203,6 +7386,17 @@
         suppressMapClick = false;
         return;
       }
+      const stageJump = event.target.closest('[data-aut-map-stage-jump]');
+      if (stageJump) {
+        const stageName = stageJump.dataset.autMapStageJump;
+        const panelIsOpen = contextTemplateSidebar && !contextTemplateSidebar.hidden && !pipelineDetail.classList.contains('context-template-sidebar-collapsed');
+        if (panelIsOpen) renderContextualTemplateSidebar(stageName, false, true);
+        else {
+          selectedAutomationStage = stageName;
+          focusMapStage(stageName);
+        }
+        return;
+      }
       if (event.target.closest('[data-aut-run-order-handle]')) return;
       const workflowState = event.target.closest('[data-aut-workflow-state]');
       if (workflowState) {
@@ -7221,11 +7415,10 @@
       if (stageAdd) {
         const stageName = stageAdd.dataset.autStageAdd || stageAdd.dataset.autEmptyAdd;
         if (pipelineDetail.classList.contains('has-context-template-sidebar')) {
-          contextualCreatorMode = 'templates';
           renderContextualTemplateSidebar(stageName, true, true);
           return;
         }
-        openStageAutomationCreator(stageName, true, 'templates', stageAdd.dataset.autPipelineId || null);
+        openStageAutomationCreator(stageName, true, null, stageAdd.dataset.autPipelineId || null);
         return;
       }
       const toggle = event.target.closest('[data-aut-map-toggle]');
@@ -7251,6 +7444,7 @@
       const zoomBase = currentZoom === 0 ? 15 : currentZoom;
       setMapZoom(zoomBase * Math.exp(-event.deltaY * .0032), event.clientX - rect.left, event.clientY - rect.top);
     }, { passive: false });
+    canvas.addEventListener('scroll', syncStageNavigatorFromViewport, { passive: true });
     canvas.addEventListener('pointerdown', function (event) {
       if (event.target.closest('button')) return;
       dragging = true;
@@ -7302,6 +7496,7 @@
       if (!detailOverlay.hidden) closeAutomationDetail();
     });
     setMapZoom(100, canvas.clientWidth / 2, canvas.clientHeight / 2, false);
+    renderStageNavigator();
     syncPipelinePauseControl();
     centerMapOnPipeline();
   }
@@ -9162,7 +9357,7 @@
     automationFlow.dataset.mode = 'proposal';
     automationFlow.classList.add('aut-proposal-flow');
     workflowTitle.textContent = config.title;
-    workflowMeta.textContent = (config.editingVersion ? 'Active · Unpublished changes' : (config.enabled ? 'Active' : 'Inactive')) + ' · ' + automationPipelineName(config);
+    workflowMeta.textContent = automationBuilderStatusLabel(config) + ' · ' + automationPipelineName(config);
     plainSummary.textContent = 'This workflow uses Site Visit, Scope of Work and Technical Review between ' + config.stageMap.qualify + ' and ' + config.stageMap.quoting + ' in ' + automationPipelineName(config) + '. Each stage shows the real owner, task and approval status.';
     publishButton.textContent = config.editingVersion ? 'Publish changes' : (config.enabled ? 'Published' : 'Activate automation');
     publishButton.disabled = !config.setupComplete || (config.enabled && !config.editingVersion);
@@ -9505,7 +9700,7 @@
     scheduleScratchConnectorDraw(config);
     workflowTitle.textContent = config.title;
     const phaseOneRecipe = isPhaseOneTemplateRecipe(config);
-    workflowMeta.textContent = (config.editingVersion ? 'Active · Unpublished changes' : (config.enabled ? 'Active' : 'Inactive')) + ' · ' + (phaseOneRecipe ? 'Template' : (config.templateKey ? 'Template copy' : 'Custom')) + ' · Applies to: ' + automationCompanyScopeLabel(config);
+    workflowMeta.textContent = automationBuilderStatusLabel(config) + ' · ' + (phaseOneRecipe ? 'Template' : (config.templateKey ? 'Template copy' : 'Custom')) + ' · Applies to: ' + automationCompanyScopeLabel(config);
     plainSummary.textContent = phaseOneRecipe
       ? 'This Template keeps its starting point and step structure. You can change the settings shown here. The current version stays active until you publish your changes.'
       : 'Starts when ' + trigger.title.toLowerCase() + ' for ' + automationCompanyScopeLabel(config) + (steps.length ? ', then runs ' + steps.length + ' editable step' + (steps.length === 1 ? '' : 's') + '. Select any step to change its settings, duplicate it, move it or delete it.' : '. Add the next step using the + button.');
@@ -10201,9 +10396,9 @@
   function guidedSetupActionMarkup(index, total) {
     const isIntro = index < 0;
     const isLast = !total || index === total - 1;
-    return '<div class="aut-guided-actions"><button class="aut-guided-skip" type="button" data-aut-guided-skip>Skip guided setup</button><div>' +
+    return '<div class="aut-guided-actions"><button class="aut-guided-skip" type="button" data-aut-guided-skip>Skip review</button><div>' +
       (!isIntro ? '<button class="aut-btn" type="button" data-aut-guided-previous>Previous</button>' : '') +
-      '<button class="aut-btn primary" type="button" data-aut-guided-next>' + (isIntro && total ? 'Start setup' : (isLast ? 'Finish setup' : 'Next')) + '</button></div></div>';
+      '<button class="aut-btn primary" type="button" data-aut-guided-next>' + (isIntro && total ? 'Review settings' : (isLast ? 'Finish review' : 'Next')) + '</button></div></div>';
   }
 
   function renderGuidedSetup() {
@@ -10217,13 +10412,13 @@
       showAutomationStepSettingsPane();
       if (automationInspector) automationInspector.hidden = false;
       inspectorStep.textContent = 'Guided setup · Introduction';
-      inspectorTitle.textContent = 'Set up ' + config.title;
+      inspectorTitle.textContent = 'Review ' + config.title;
       inspectorFoot.hidden = true;
       document.querySelectorAll('#viewAutomation .aut-flow [data-aut-node]').forEach(function (node) { node.classList.remove('selected'); });
       const sectionList = sections.length
         ? '<ul class="aut-guided-section-list">' + sections.map(function (section) { return '<li><i class="fai">&#xf058;</i><span>' + escapeAutomationHtml(section.title) + '</span></li>'; }).join('') + '</ul>'
-        : '<div class="aut-info-note"><i class="fai">&#xf023;</i><span>This Template has no user-adjustable settings. Review the fixed recipe, then finish setup.</span></div>';
-      inspectorBody.innerHTML = '<div class="aut-guided-progress"><span>Optional Template setup</span><strong>What this Automation will do</strong><p>' + escapeAutomationHtml(phaseOneContextTemplateMeta[config.templateKey] ? phaseOneContextTemplateMeta[config.templateKey].description : (config.description || 'Run the approved WeQuote recipe for matching records.')) + '</p><div class="aut-guided-progress-bar"><i style="width:8%"></i></div></div>' +
+        : '<div class="aut-info-note"><i class="fai">&#xf023;</i><span>This Template has no user-adjustable settings. You can review the fixed recipe or skip this optional step.</span></div>';
+      inspectorBody.innerHTML = '<div class="aut-guided-progress"><span>Optional Template review</span><strong>What this Automation will do</strong><p>' + escapeAutomationHtml(phaseOneContextTemplateMeta[config.templateKey] ? phaseOneContextTemplateMeta[config.templateKey].description : (config.description || 'Run the approved WeQuote recipe for matching records.')) + '</p><div class="aut-guided-progress-bar"><i style="width:8%"></i></div></div>' +
         '<div class="aut-info-note"><i class="fai">&#xf05a;</i><span>The Template defaults are ready to use. This guide is optional; you can skip it and turn on the Inactive Automation directly.</span></div>' +
         '<ul class="aut-guided-fixed-list"><li><i class="fai">&#xf023;</i><span>Template name, Pipeline Stage, Starts when choice, If Yes / If No paths and Action types are fixed.</span></li><li><i class="fai">&#xf303;</i><span>Only the settings listed below can change.</span></li></ul>' + sectionList + guidedSetupActionMarkup(index, sections.length);
       inspectorBody.scrollTop = 0;
@@ -10233,7 +10428,7 @@
     renderScratchInspector(section.node);
     inspectorFoot.hidden = true;
     inspectorStep.textContent = 'Guided setup · ' + (index + 1) + ' of ' + sections.length;
-    inspectorTitle.textContent = 'Setup ' + (index + 1) + ' of ' + sections.length + ' · ' + section.title;
+    inspectorTitle.textContent = 'Review ' + (index + 1) + ' of ' + sections.length + ' · ' + section.title;
     inspectorBody.insertAdjacentHTML('afterbegin', '<div class="aut-guided-progress"><span>Approved Template settings</span><strong>' + escapeAutomationHtml(section.title) + '</strong><p>' + escapeAutomationHtml(section.copy) + '</p><div class="aut-guided-progress-bar"><i style="width:' + Math.round(((index + 1) / sections.length) * 100) + '%"></i></div></div>');
     inspectorBody.insertAdjacentHTML('beforeend', guidedSetupActionMarkup(index, sections.length));
     inspectorBody.scrollTop = 0;
@@ -10261,7 +10456,7 @@
     renderInspector('scratch-trigger');
     if (activationCoachmark) activationCoachmark.hidden = false;
     if (publishButton) publishButton.focus();
-    showAutomationToast('Setup complete. Draft saved Inactive. Test is optional; Activate automation when ready.');
+    showAutomationToast('Review complete. This Automation remains Inactive until you turn it on.');
   }
 
   function skipTemplateGuidedSetup() {
@@ -10847,7 +11042,7 @@
         '<button class="aut-btn primary" type="button" id="autUntitledChooseTemplate">Choose Stage &amp; Template</button>' +
       '</section>';
     workflowTitle.textContent = config.title || 'New Quote Pipeline Automation';
-    workflowMeta.textContent = 'Inactive Draft · Quote Pipeline · Setup not complete';
+    workflowMeta.textContent = 'Draft · Quote Pipeline · Setup not complete';
     summaryLabel.textContent = 'Setup status:';
     plainSummary.textContent = 'Choose a Stage and one matching Phase 1 Template before testing or publishing.';
     if (draftBanner) draftBanner.hidden = true;
@@ -10934,7 +11129,7 @@
     const wonHandoff = isWonHandoff(config);
     const quoteInvoice = isQuoteInvoice(config);
     workflowTitle.textContent = config.title;
-    workflowMeta.textContent = (config.editingVersion ? 'Active · Unpublished changes' : (config.enabled ? 'Active' : 'Inactive')) + ' · Uses ' + config.objectType + ' data';
+    workflowMeta.textContent = automationBuilderStatusLabel(config) + ' · Uses ' + config.objectType + ' data';
     publishButton.textContent = config.protected ? 'System rule is on' : (config.editingVersion ? 'Publish changes' : (config.enabled ? 'Published' : 'Activate automation'));
     publishButton.disabled = !!config.protected || (config.enabled && !config.editingVersion);
     if (conversionFlow) {
@@ -11016,7 +11211,7 @@
       if (config.editingVersion) activity = 'Live version keeps running';
       return '<button class="aut-workflow' + (key === activeWorkflowKey ? ' active' : '') + '" type="button" data-aut-workflow="' + escapeAutomationHtml(key) + '">' +
         '<span class="aut-workflow-line"><span class="aut-workflow-name">' + escapeAutomationHtml(config.title) + '</span><span class="aut-object-badge ' + objectBadgeClass(config.objectType) + '">' + escapeAutomationHtml(config.objectType.toUpperCase()) + '</span></span><span class="aut-workflow-scope"><i class="fai">&#xf1ad;</i>' + escapeAutomationHtml(automationCompanyScopeLabel(config, true)) + '</span>' +
-        '<span class="aut-workflow-meta"><span class="aut-status' + (config.enabled ? ' on' : '') + '">' + (config.editingVersion ? 'Active · Unpublished changes' : (config.enabled ? 'Active' : (needsSetup ? 'Needs setup' : 'Inactive'))) + '</span><span>' + escapeAutomationHtml(activity) + '</span></span></button>';
+        '<span class="aut-workflow-meta"><span class="aut-status' + (config.enabled ? ' on' : '') + '">' + (config.editingVersion ? (config.enabled ? 'Active' : 'Inactive') + ' · Unpublished changes' : (config.enabled ? 'Active' : (needsSetup ? 'Draft' : 'Inactive'))) + '</span><span>' + escapeAutomationHtml(activity) + '</span></span></button>';
     }).join('');
     yourEmpty.hidden = keys.length > 0;
     document.querySelector('.aut-count').textContent = keys.length;
@@ -12390,7 +12585,7 @@
     if (!host) return;
     const pipeline = automationPipelineById(selectedTemplatePipelineId) || automationPipelines()[0];
     const quoteConnected = automationPipelineUsesQuoteLifecycle(pipeline);
-    const scratchOnly = creatorStartMode === 'scratch' || !quoteConnected;
+    const scratchOnly = creatorStartMode === 'scratch';
     host.classList.toggle('is-locked', automationStageLocked);
     host.innerHTML = '<div class="aut-template-stage-nav-copy"><span><small>' + escapeAutomationHtml(quoteConnected ? 'QUOTE PIPELINE · CHOOSE STAGE' : 'PIPELINE WITHOUT QUOTE STAGES · CHOOSE STAGE') + '</small><strong>' + escapeAutomationHtml(pipeline && pipeline.name ? pipeline.name : 'Pipeline') + (selectedAutomationStage ? ' · ' + escapeAutomationHtml(selectedAutomationStage) : ' · Choose a Stage') + '</strong></span>' +
       (automationStageLocked
@@ -12429,23 +12624,26 @@
     if (!creatorTemplates) return;
     const pipeline = automationPipelineById(selectedTemplatePipelineId) || automationPipelines()[0];
     const quoteConnected = automationPipelineUsesQuoteLifecycle(pipeline);
-    const scratchOnly = creatorStartMode === 'scratch' || !quoteConnected;
+    const selectedDefinition = automationStageDefinition(selectedAutomationStage, selectedTemplatePipelineId);
+    const creationPolicy = automationStageCreationPolicy(selectedDefinition, pipeline);
+    const scratchOnly = creatorStartMode === 'scratch';
     creatorTemplates.classList.toggle('scratch-only', scratchOnly);
     const stagePrompt = document.getElementById('autStageTemplatePrompt');
     const scratchNotice = document.getElementById('autScratchOnlyNotice');
     const templateGrid = document.getElementById('autPhase1TemplateGrid');
-    const selectedDefinition = automationStageDefinition(selectedAutomationStage, selectedTemplatePipelineId);
-    const canBuildFromScratch = Boolean(selectedDefinition);
+    const canBuildFromScratch = creationPolicy.scratchAllowed;
     if (stagePrompt) stagePrompt.hidden = !!selectedAutomationStage || scratchOnly;
     if (scratchNotice) scratchNotice.hidden = !scratchOnly || !!selectedAutomationStage;
-    if (templateGrid) templateGrid.hidden = !selectedAutomationStage;
+    if (templateGrid) templateGrid.hidden = !selectedAutomationStage || !creationPolicy.templatesAllowed;
     const scratchButton = creatorTemplates.querySelector('[data-aut-creator="scratch"]');
     if (scratchButton) scratchButton.hidden = !canBuildFromScratch;
+    const templatesButton = creatorTriggers && creatorTriggers.querySelector('#autCreatorUseTemplates');
+    if (templatesButton) templatesButton.hidden = !creationPolicy.templatesAllowed;
     const creatorHelp = creatorTemplates.querySelector('.aut-creator-toolbar .aut-help');
     if (creatorHelp) creatorHelp.textContent = scratchOnly
-      ? 'Choose a Stage to build a Custom Automation'
+      ? 'Choose a Stage to build from scratch'
       : (selectedAutomationStage
-        ? (canBuildFromScratch ? 'Use a Template, or build a Custom Automation' : 'Showing only matching Templates')
+        ? (canBuildFromScratch ? 'Use a Template, or build from scratch' : 'Showing only matching Templates')
         : 'Choose a Stage before Templates are shown');
     renderTemplateStageNav();
     creatorTemplates.querySelectorAll('[data-aut-template]').forEach(function (card) {
@@ -12539,7 +12737,13 @@
     scratchTriggerChoice = null;
     selectedCompanyScopeMode = 'all';
     selectedCompanyScopeIds = [];
-    creatorStartMode = screen === 'scratch' || !quoteConnected ? 'scratch' : 'templates';
+    const creationPolicy = automationStageCreationPolicy(stage, pipeline);
+    const requestedMode = screen === 'scratch' ? 'scratch' : (screen === 'templates' ? 'templates' : null);
+    creatorStartMode = requestedMode === 'scratch' && creationPolicy.scratchAllowed
+      ? 'scratch'
+      : (requestedMode === 'templates' && creationPolicy.templatesAllowed
+        ? 'templates'
+        : (creationPolicy.defaultMode === 'custom' ? 'scratch' : 'templates'));
     resetCreatorDetails();
     templateOverlay.hidden = false;
     syncCreatorStageContext();
@@ -12566,10 +12770,12 @@
   function setCreatorScreen(screen) {
     const pipeline = automationPipelineById(selectedTemplatePipelineId) || automationPipelines()[0];
     const quoteConnected = automationPipelineUsesQuoteLifecycle(pipeline);
+    const selectedStageDefinition = automationStageDefinition(selectedAutomationStage, selectedTemplatePipelineId);
+    const creationPolicy = automationStageCreationPolicy(selectedStageDefinition, pipeline);
     if (screen === 'pipeline') renderCreatorPipelineChoices();
     if (screen === 'home') {
-      if (!quoteConnected) creatorStartMode = 'scratch';
-      screen = selectedAutomationStage && !quoteConnected ? 'triggers' : 'templates';
+      if (selectedStageDefinition) creatorStartMode = creationPolicy.defaultMode === 'custom' ? 'scratch' : 'templates';
+      screen = selectedAutomationStage && creatorStartMode === 'scratch' ? 'triggers' : 'templates';
     }
     syncCreatorStageContext();
     creatorPipeline.hidden = screen !== 'pipeline';
@@ -12590,12 +12796,12 @@
       renderCreatorCompanyPicker();
     } else if (screen === 'templates') {
       filterCreatorTemplatesForStage();
-      const scratchOnly = creatorStartMode === 'scratch' || !quoteConnected;
+      const scratchOnly = creatorStartMode === 'scratch';
       creatorTitle.textContent = scratchOnly ? 'Choose a Stage' : (selectedAutomationStage ? 'Choose a ' + selectedAutomationStage + ' template' : 'Choose a Stage');
       creatorCopy.textContent = scratchOnly
         ? 'Select where this Automation belongs. The next screen shows the Starts when choices for that Stage.'
         : (selectedAutomationStage
-          ? 'Templates for ' + selectedAutomationStage + ' are shown first. You can also build a Custom Automation with choices that work in this Stage.'
+          ? 'Choose a ready-made Template for ' + selectedAutomationStage + ', or build from scratch using choices that work in this Stage.'
           : 'Select the Pipeline Stage first. Its matching Templates will then appear.');
     } else if (screen === 'template-preview') {
       creatorTitle.textContent = 'Preview template';
@@ -12788,7 +12994,7 @@
     const role = config.responsibilities;
     const stageCountAdded = PROPOSAL_TEMPLATE_STAGE_DEFS.filter(function (stage) { return proposalStageIsTemplateCreated(pipeline, stage.name); }).length;
     proposalSetupBody.innerHTML =
-      '<div class="aut-proposal-setup-head"><div><span class="aut-status">Needs setup</span><strong>Pipeline template applied</strong><small>The stages are ready. Assign the people who will complete and approve the work.</small></div><button class="aut-btn" type="button" id="autCloseProposalSetup">Finish later</button></div>' +
+      '<div class="aut-proposal-setup-head"><div><span class="aut-status">Draft</span><strong>Pipeline template applied</strong><small>The stages are ready. Assign the people who will complete and approve the work.</small></div><button class="aut-btn" type="button" id="autCloseProposalSetup">Finish later</button></div>' +
       '<div class="aut-proposal-setup-grid"><section><header><span>1</span><div><strong>Confirm Pipeline stages</strong><small>' + (stageCountAdded ? stageCountAdded + ' missing stage' + (stageCountAdded === 1 ? ' was' : 's were') + ' added; existing matching stages are reused.' : 'All three workflow stages already existed and are reused.') + '</small></div></header>' +
         '<div class="aut-field"><label for="autProposalPipeline">Pipeline</label><select id="autProposalPipeline" disabled>' + automationPipelineOptions(config.triggerPipelineId) + '</select></div>' +
         automationPipelineStripMarkup(pipeline, [config.stageMap.siteVisit, config.stageMap.sow, config.stageMap.technicalReview]) +
@@ -12836,7 +13042,9 @@
     const pipeline = automationPipelineById(selectedTemplatePipelineId) || automationPipelines()[0];
     const quoteConnected = automationPipelineUsesQuoteLifecycle(pipeline);
     let targetScreen = screen === 'triggers' && selectedAutomationStage ? 'triggers' : (screen === 'home' ? 'home' : 'templates');
-    if (!quoteConnected) {
+    const selectedStageDefinition = automationStageDefinition(selectedAutomationStage, selectedTemplatePipelineId);
+    const creationPolicy = automationStageCreationPolicy(selectedStageDefinition, pipeline);
+    if (selectedStageDefinition && creationPolicy.defaultMode === 'custom' && screen !== 'templates') {
       creatorStartMode = 'scratch';
       targetScreen = selectedAutomationStage ? 'triggers' : 'templates';
     }
@@ -12892,7 +13100,7 @@
     button.className = 'aut-workflow';
     button.type = 'button';
     button.dataset.autWorkflow = key;
-    button.innerHTML = '<span class="aut-workflow-line"><span class="aut-workflow-name"></span><span class="aut-object-badge ' + objectBadgeClass(config.objectType) + '">' + escapeAutomationHtml(config.objectType.toUpperCase()) + '</span></span><span class="aut-workflow-meta"><span class="aut-status">Inactive</span><span>Building</span></span>';
+    button.innerHTML = '<span class="aut-workflow-line"><span class="aut-workflow-name"></span><span class="aut-object-badge ' + objectBadgeClass(config.objectType) + '">' + escapeAutomationHtml(config.objectType.toUpperCase()) + '</span></span><span class="aut-workflow-meta"><span class="aut-status">Draft</span><span>Building</span></span>';
     const sections = document.querySelectorAll('.aut-list .aut-list-section');
     const protectedSection = sections[sections.length - 1];
     document.querySelector('.aut-list').insertBefore(button, protectedSection);
@@ -12916,7 +13124,7 @@
     if (!automationPipelineUsesQuoteLifecycle(pipeline) && !isGenericStageStarter) {
       creatorStartMode = 'scratch';
       setCreatorScreen(selectedAutomationStage ? 'triggers' : 'templates');
-      showAutomationToast('Quote Templates need a Quote Pipeline. Build a Custom Automation for this Stage instead.');
+      showAutomationToast('Quote Templates need a Quote Pipeline. Build from scratch in this Stage instead.');
       return;
     }
     const templateStage = automationStageForTemplateKey(templateKey, selectedAutomationStage);
@@ -13271,7 +13479,7 @@
     const groupToggle = event.target.closest('[data-aut-group-toggle]');
     if (groupToggle) {
       const key = groupToggle.dataset.autGroupToggle;
-      if (automationGroupDefinitions[key].status !== 'active' && resolveAutomationGroupSetup(key)) return;
+      if (automationGroupDefinitions[key].status !== 'active' && resolveAutomationGroupSetup(key, true)) return;
       openAutomationGroupPreview(automationGroupDefinitions[key].status === 'active' ? null : key, automationGroupDefinitions[key].status === 'active' ? 'deactivate' : 'activate');
       return;
     }
@@ -13791,7 +13999,7 @@
     if (!modeButton || modeButton.disabled) return;
     setContextualCreatorMode(modeButton.dataset.autContextMode, false);
     if (modeButton.dataset.autContextMode === 'custom') {
-      showAutomationToast('Custom selected. Choose one Starts when option in the left panel.');
+      showAutomationToast('Build from scratch selected. Choose what should start this Automation.');
       requestAnimationFrame(function () {
         const firstChoice = contextCustomTriggerList && contextCustomTriggerList.querySelector('[data-aut-context-trigger-choice]');
         if (firstChoice) firstChoice.focus();
@@ -14128,10 +14336,13 @@
       selectedAutomationStage = stageChoice.dataset.autTemplateStage || null;
       automationStageLocked = false;
       scratchTriggerChoice = null;
+      const pipeline = automationPipelineById(selectedTemplatePipelineId) || automationPipelines()[0];
+      const selectedStageDefinition = automationStageDefinition(selectedAutomationStage, selectedTemplatePipelineId);
+      const creationPolicy = automationStageCreationPolicy(selectedStageDefinition, pipeline);
+      creatorStartMode = creationPolicy.defaultMode === 'custom' ? 'scratch' : 'templates';
       filterCreatorTemplatesForStage();
       if (selectedAutomationStage) renderCreatorTriggerChoices();
-      const pipeline = automationPipelineById(selectedTemplatePipelineId) || automationPipelines()[0];
-      const scratchOnly = creatorStartMode === 'scratch' || !automationPipelineUsesQuoteLifecycle(pipeline);
+      const scratchOnly = creatorStartMode === 'scratch';
       if (scratchOnly) setCreatorScreen('triggers');
       else {
         setCreatorScreen('templates');
@@ -14149,7 +14360,7 @@
     if (event.target.closest('#autCloseProposalSetup')) {
       templateOverlay.hidden = true;
       showAutomationZeroState();
-      showAutomationToast('Inactive Automation saved. Finish setup from Your automations when you are ready.');
+      showAutomationToast('Draft saved. You can continue editing it from Your automations when you are ready.');
       return;
     }
     if (event.target.closest('#autSaveProposalSetup')) {
@@ -14163,10 +14374,12 @@
     const creatorChoice = event.target.closest('[data-aut-creator]');
     if (creatorChoice) {
       const pipeline = automationPipelineById(selectedTemplatePipelineId) || automationPipelines()[0];
-      const quoteConnected = automationPipelineUsesQuoteLifecycle(pipeline);
       const choice = creatorChoice.dataset.autCreator;
       const stageDefinition = automationStageDefinition(selectedAutomationStage, selectedTemplatePipelineId);
-      creatorStartMode = choice === 'templates' && quoteConnected ? 'templates' : 'scratch';
+      const creationPolicy = automationStageCreationPolicy(stageDefinition, pipeline);
+      creatorStartMode = choice === 'scratch' && creationPolicy.scratchAllowed
+        ? 'scratch'
+        : (choice === 'templates' && creationPolicy.templatesAllowed ? 'templates' : (creationPolicy.defaultMode === 'custom' ? 'scratch' : 'templates'));
       if (selectedAutomationStage) setCreatorScreen(creatorStartMode === 'templates' ? 'templates' : 'triggers');
       else setCreatorScreen('templates');
       return;
@@ -14198,7 +14411,7 @@
       if (!automationPipelineUsesQuoteLifecycle(pipeline)) {
         creatorStartMode = 'scratch';
         setCreatorScreen(selectedAutomationStage ? 'triggers' : 'templates');
-        showAutomationToast('This Pipeline has no Quote Templates. Build a Custom Automation instead.');
+        showAutomationToast('This Pipeline has no Quote Templates. Build from scratch instead.');
         return;
       }
       if (template.dataset.autTemplate === 'client-proposal-approval') {

@@ -65,6 +65,9 @@
   const briefingSteps = briefingLayer ? Array.from(briefingLayer.querySelectorAll('[data-briefing-step]')) : [];
   const appShell = document.querySelector('.app');
   const navToggle = document.querySelector('.sidebar .collapse-btn');
+  const automationView = document.getElementById('viewAutomation');
+  const automationPipelineDetail = document.getElementById('autPipelineDetail');
+  const automationMap = document.getElementById('autSemanticMap');
   const LOCAL_STORAGE_KEY = 'wequote-attention-local-tasks-v2';
   const PLATFORM_NOTES_STORAGE_KEY = 'wequote-platform-record-notes-v1';
   const PLATFORM_MEETINGS_STORAGE_KEY = 'wequote-platform-record-meetings-v1';
@@ -705,13 +708,36 @@
     }, 5000);
   }
 
+  function elementIsDisplayed(element) {
+    if (!element || element.hidden) return false;
+    const style = window.getComputedStyle(element);
+    return style.display !== 'none' && style.visibility !== 'hidden';
+  }
+
   function mapIsVisible() {
-    const map = document.getElementById('autSemanticMap');
-    const controls = map && map.querySelector('.aut-map-controls');
-    return Boolean(map && controls && map.offsetParent !== null && controls.offsetParent !== null);
+    const controls = automationMap && automationMap.querySelector('.aut-map-controls');
+    return elementIsDisplayed(automationPipelineDetail) && elementIsDisplayed(automationMap) && elementIsDisplayed(controls);
+  }
+
+  function automationWorkspaceBlocksWidget() {
+    if (!elementIsDisplayed(automationView)) return false;
+    return automationView.classList.contains('aut-builder-mode') || mapIsVisible();
   }
 
   function updateFloatingPosition() {
+    const hiddenForAutomation = automationWorkspaceBlocksWidget();
+    root.classList.toggle('is-automation-workspace-hidden', hiddenForAutomation);
+    root.setAttribute('aria-hidden', String(hiddenForAutomation));
+    if (hiddenForAutomation) {
+      root.classList.remove('is-over-map-controls');
+      document.body.classList.remove('attention-widget-docked', 'attention-widget-dock-ready', 'attention-widget-dragging', 'attention-widget-resizing');
+      if (appShell) appShell.classList.remove('attention-widget-docked', 'attention-nav-compact');
+      return;
+    }
+    if (widgetEnabled && root.classList.contains('is-docked')) {
+      document.body.classList.add('attention-widget-docked');
+      if (appShell) appShell.classList.add('attention-widget-docked', 'attention-nav-compact');
+    }
     const manuallyPositioned = root.style.left && root.style.left !== 'auto';
     root.classList.toggle('is-over-map-controls', !root.classList.contains('is-docked') && !manuallyPositioned && mapIsVisible());
   }
@@ -2558,6 +2584,14 @@
     updateFloatingPosition();
   });
   window.addEventListener('hashchange', updateFloatingPosition);
+  if (typeof MutationObserver === 'function') {
+    const automationWorkspaceObserver = new MutationObserver(function () {
+      requestAnimationFrame(updateFloatingPosition);
+    });
+    if (automationView) automationWorkspaceObserver.observe(automationView, { attributes: true, attributeFilter: ['class', 'style'] });
+    if (automationPipelineDetail) automationWorkspaceObserver.observe(automationPipelineDetail, { attributes: true, attributeFilter: ['class', 'hidden'] });
+    if (automationMap) automationWorkspaceObserver.observe(automationMap, { attributes: true, attributeFilter: ['class', 'hidden', 'style'] });
+  }
   window.setInterval(function () { if (widgetEnabled && !openMenuId && modalLayer.hidden && recordPickerLayer.hidden && completingTaskIds.size === 0) reloadTasks(); }, 15000);
 
   loadLocalTasks();

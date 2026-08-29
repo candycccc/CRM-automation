@@ -23,11 +23,11 @@
   <link rel="stylesheet" href="./assets/compat/variation-grouping-parity-v4.css?v=11">
   <link rel="stylesheet" href="./assets/compat/quote-first-co-trainline.css?v=4">
   <link rel="stylesheet" href="./assets/css/compatibility.css?v=1">
-  <link rel="stylesheet" href="./assets/css/automation.css?v=146">
+  <link rel="stylesheet" href="./assets/css/automation.css?v=152">
   <link rel="stylesheet" href="./assets/css/quote-demo.css?v=8">
   <link rel="stylesheet" href="./assets/css/phase1-handoff.css?v=3">
   <link rel="stylesheet" href="./assets/css/full-roadmap.css?v=2">
-  <link rel="stylesheet" href="./assets/css/focus-widget.css?v=61">
+  <link rel="stylesheet" href="./assets/css/focus-widget.css?v=62">
   <link rel="stylesheet" href="./assets/css/my-notes.css?v=11">
   <link rel="stylesheet" href="./assets/css/custom-dashboard.css?v=2">
 </head>
@@ -1874,11 +1874,12 @@
           <button type="button" class="active" data-aut-group-filter="all">All <b>0</b></button>
           <button type="button" data-aut-group-filter="active">Active <b>0</b></button>
           <button type="button" data-aut-group-filter="inactive">Inactive <b>0</b></button>
+          <button type="button" data-aut-group-filter="draft">Draft <b>0</b></button>
         </div>
         <div class="aut-group-toolbar"><label><i class="fai">&#xf002;</i><input type="search" id="autGroupSearch" placeholder="Search Quote Pipeline Automations" autocomplete="off"></label><span><b id="autGroupVisibleCount">0</b> Automation setups in Quote Pipeline</span></div>
         <div class="aut-group-columns" aria-hidden="true"><span>Automation and status</span><span>Setup summary</span><span>Created</span><span>Last updated</span><span>Preview · Edit · Active</span></div>
         <div class="aut-group-list" id="autGroupList"></div>
-        <div class="aut-group-empty" id="autGroupEmpty"><i class="fai">&#xf0e7;</i><strong id="autGroupEmptyTitle">No Automations yet</strong><span id="autGroupEmptyCopy">Use a Template or build a Custom Automation.</span><button class="aut-btn primary" type="button" id="autGroupEmptyCreate"><i class="fai">&#xf067;</i> Create first Automation</button></div>
+        <div class="aut-group-empty" id="autGroupEmpty"><i class="fai">&#xf0e7;</i><strong id="autGroupEmptyTitle">No Automations yet</strong><span id="autGroupEmptyCopy">Use a Template or build from scratch.</span><button class="aut-btn primary" type="button" id="autGroupEmptyCreate"><i class="fai">&#xf067;</i> Create first Automation</button></div>
       </section>
 
       <div class="aut-group-preview-overlay" id="autGroupPreviewOverlay" hidden>
@@ -1960,7 +1961,7 @@
           <div class="aut-pipeline-zero-content">
             <small>READY TO CUSTOMISE</small>
             <h3 id="autPipelineZeroTitle">Create the first Automation</h3>
-            <p id="autPipelineZeroCopy">Choose a Pipeline Stage, then use a Template or build a Custom Automation.</p>
+            <p id="autPipelineZeroCopy">Choose a Pipeline Stage, then use a Template or build from scratch.</p>
             <div class="aut-pipeline-zero-library" aria-label="Available workflow blocks">
               <span class="starts"><i class="fai">&#xf11e;</i><b>Starts when</b><em>Stage entry, activity, files, owner or close date</em></span>
               <span class="rules"><i class="fai">&#xf126;</i><b>Rules</b><em>Required work, labels, interests, value or activity</em></span>
@@ -1980,8 +1981,8 @@
               <button type="button" id="autContextTemplateClose" aria-label="Close Add automation panel" title="Close panel"><i class="fai">&#xf00d;</i></button>
             </div>
             <div class="aut-context-mode-tabs" role="tablist" aria-label="Automation start mode">
-              <button class="active" type="button" role="tab" aria-selected="true" data-aut-context-mode="templates">Templates</button>
-              <button type="button" role="tab" aria-selected="false" data-aut-context-mode="custom">Custom</button>
+              <button id="autContextTemplatesTab" class="active" type="button" role="tab" aria-selected="true" aria-controls="autContextTemplateList" data-aut-context-mode="templates">Templates</button>
+              <button id="autContextScratchTab" type="button" role="tab" aria-selected="false" aria-controls="autContextCustomPanel" data-aut-context-mode="custom">Build from scratch</button>
             </div>
           </header>
           <label class="aut-context-template-stage" for="autContextTemplateStage">
@@ -1990,14 +1991,14 @@
               <option>Qualified</option><option>In Progress</option><option>In Review</option><option>Passed Review</option><option>Sent</option><option>Won</option><option>Lost</option>
             </select>
           </label>
-          <div class="aut-context-template-list" id="autContextTemplateList" aria-live="polite"></div>
+          <div class="aut-context-template-list" id="autContextTemplateList" role="tabpanel" aria-labelledby="autContextTemplatesTab" aria-live="polite"></div>
           <p class="aut-context-template-help"><i class="fai">&#xf05a;</i><span>Select a Pipeline Stage to see matching Templates.</span></p>
 
-          <section class="aut-context-custom-panel" id="autContextCustomPanel" aria-labelledby="autContextCustomTitle" hidden>
+          <section class="aut-context-custom-panel" id="autContextCustomPanel" role="tabpanel" aria-labelledby="autContextScratchTab autContextCustomTitle" hidden>
             <header>
               <div>
-                <span class="aut-context-custom-eyebrow">Custom Automation</span>
-                <h2 id="autContextCustomTitle">Choose Starts when</h2>
+                <span class="aut-context-custom-eyebrow">Build from scratch</span>
+                <h2 id="autContextCustomTitle">Choose what starts this Automation</h2>
                 <p>Choose the change or date that starts this Automation.</p>
               </div>
               <div class="aut-context-custom-progress" aria-label="Builder steps">
@@ -2056,7 +2057,7 @@
                   <span class="aut-map-transition-result">Quote Status and Deal Stage become Passed Review</span>
                 </div>
               </div>
-              <article class="aut-map-stage conditional"><span class="aut-map-role">CONTINUES HERE</span><header><small>CONDITIONAL</small><strong>Passed Review</strong></header><span class="aut-map-count">2 Automations</span><span class="aut-map-status">1 Active · 1 Needs setup</span><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="ready-send" data-aut-map-title="Ready-to-send check">Ready-to-send check</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Customer-ready content check</span><div class="aut-map-rules"><b class="when"><span>STARTS WHEN</span> Quote becomes Passed Review</b><b class="condition"><span>RULE</span> Has review passed, and is the Quote complete and still usable?</b><b class="yes"><span>IF YES</span> Create a Note · mention Quote owner · ready to send</b><b class="no"><span>IF NO</span> Create a Note · mention Quote owner · needs attention</b></div></div><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="high-value" data-aut-map-title="High-value approval">High-value approval</button><button type="button" data-aut-map-toggle data-state="draft">Needs setup</button></div><span>Final commercial approval</span><div class="aut-map-rules"><b class="when"><span>STARTS WHEN</span> Quote reaches Passed Review</b><b class="condition"><span>RULE</span> Is value over £25,000, or discount over 15%?</b><b class="yes"><span>IF YES</span> Create a Note · mention one approver · follow up today</b><b class="no"><span>IF NO</span> Continue normally</b></div></div></div></article>
+              <article class="aut-map-stage conditional"><span class="aut-map-role">CONTINUES HERE</span><header><small>CONDITIONAL</small><strong>Passed Review</strong></header><span class="aut-map-count">2 Automations</span><span class="aut-map-status">1 Active · 1 Draft</span><div class="aut-map-automations"><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="ready-send" data-aut-map-title="Ready-to-send check">Ready-to-send check</button><button type="button" data-aut-map-toggle data-state="on">Active</button></div><span>Customer-ready content check</span><div class="aut-map-rules"><b class="when"><span>STARTS WHEN</span> Quote becomes Passed Review</b><b class="condition"><span>RULE</span> Has review passed, and is the Quote complete and still usable?</b><b class="yes"><span>IF YES</span> Create a Note · mention Quote owner · ready to send</b><b class="no"><span>IF NO</span> Create a Note · mention Quote owner · needs attention</b></div></div><div class="aut-map-automation"><div><button type="button" data-aut-map-concept="high-value" data-aut-map-title="High-value approval">High-value approval</button><button type="button" data-aut-map-toggle data-state="draft">Draft</button></div><span>Final commercial approval</span><div class="aut-map-rules"><b class="when"><span>STARTS WHEN</span> Quote reaches Passed Review</b><b class="condition"><span>RULE</span> Is value over £25,000, or discount over 15%?</b><b class="yes"><span>IF YES</span> Create a Note · mention one approver · follow up today</b><b class="no"><span>IF NO</span> Continue normally</b></div></div></div></article>
               <div class="aut-map-transition" aria-label="Moves when the Quote is sent">
                 <div class="aut-map-transition-card">
                   <small>MOVES AUTOMATICALLY WHEN</small>
@@ -2099,7 +2100,11 @@
             </div>
             <div class="aut-map-hint">Drag to move around · use − and + to zoom</div>
           </div>
-          <div class="aut-map-controls" aria-label="Map zoom controls"><button type="button" data-aut-map-zoom="out" aria-label="Zoom out">−</button><output id="autMapZoom" aria-live="polite">100%</output><button type="button" data-aut-map-zoom="in" aria-label="Zoom in">＋</button></div>
+          <nav class="aut-map-stage-navigator" aria-label="Jump to a Pipeline Stage">
+            <span class="aut-map-stage-navigator-label"><i class="fai">&#xf3c5;</i><b>Jump to Stage</b></span>
+            <div class="aut-map-stage-navigator-track" id="autMapStageNavigatorTrack" aria-label="Pipeline Stages"></div>
+            <div class="aut-map-controls" aria-label="Map zoom controls"><button type="button" data-aut-map-zoom="out" aria-label="Zoom out">−</button><output id="autMapZoom" aria-live="polite">100%</output><button type="button" data-aut-map-zoom="in" aria-label="Zoom in">＋</button></div>
+          </nav>
           <div class="aut-lifecycle-exceptions"><span><i class="fai">&#xf05a;</i><b>Deal Stage follows related Quotes automatically</b></span><span><strong>Won</strong> = a Quote is Accepted</span><span><strong>Lost</strong> = no Quote can still be accepted</span><span><strong>Archived</strong> = all related Quotes are Cancelled</span><span><strong>Expired</strong> = a Sent Quote passes its expiry date</span></div>
         </div>
 
@@ -2113,7 +2118,7 @@
             <div class="aut-pipeline-list-head"><span><strong>Automations</strong><small>Independent outcomes in this Pipeline</small></span><b>10</b></div>
             <button class="active" type="button" data-aut-concept="first-action"><span><i class="fai">&#xf007;</i><strong>Qualified owner &amp; first action</strong><small>Qualified · independent Automation</small></span><em class="on">Active</em></button>
             <button type="button" data-aut-concept="inactivity"><span><i class="fai">&#xf017;</i><strong>Qualified inactivity reminder</strong><small>Qualified · independent Automation</small></span><em class="on">Active</em></button>
-            <button type="button" data-aut-concept="high-value"><span><i class="fai">&#xf06e;</i><strong>High-value approval</strong><small>Qualified / Passed Review</small></span><em>Needs setup</em></button>
+            <button type="button" data-aut-concept="high-value"><span><i class="fai">&#xf06e;</i><strong>High-value approval</strong><small>Qualified / Passed Review</small></span><em>Draft</em></button>
             <button type="button" data-aut-concept="sent-follow-up"><span><i class="fai">&#xf1d8;</i><strong>Sent Quote follow-up</strong><small>Sent · independent Automation</small></span><em class="on">Active</em></button>
             <button type="button" data-aut-concept="quote-build"><span><i class="fai">&#xf044;</i><strong>Quote build &amp; SOW checks</strong><small>In Progress · independent Automation</small></span><em class="on">Active</em></button>
             <button type="button" data-aut-concept="internal-review"><span><i class="fai">&#xf46c;</i><strong>Technical &amp; Internal Review</strong><small>In Review · conditional</small></span><em class="on">Active</em></button>
@@ -2207,7 +2212,7 @@
           <div class="aut-list-title"><strong>Automations</strong><span class="aut-count">0</span></div>
           <div class="aut-list-section">Your automations</div>
           <div id="autYourAutomations"></div>
-          <div class="aut-list-empty" id="autYourEmpty"><strong>No automations yet</strong><span>Use a Template for this Stage, or build a Custom Automation.</span><button class="aut-btn small" type="button" id="autEmptyNewWorkflow">Create automation</button></div>
+          <div class="aut-list-empty" id="autYourEmpty"><strong>No automations yet</strong><span>Use a Template for this Stage, or build from scratch.</span><button class="aut-btn small" type="button" id="autEmptyNewWorkflow">Create automation</button></div>
           <div class="aut-list-section">Recommended templates</div>
           <button class="aut-workflow template" type="button" data-aut-list-template="qualified-owner-first-action"><span class="aut-workflow-line"><span class="aut-workflow-name">Qualified owner &amp; first action</span><span class="aut-object-badge deal">DEAL</span></span><span class="aut-workflow-meta"><span>Qualified</span><span>Use template →</span></span></button>
           <button class="aut-workflow template" type="button" data-aut-list-template="qualified-inactivity"><span class="aut-workflow-line"><span class="aut-workflow-name">Qualified inactivity reminder</span><span class="aut-object-badge deal">DEAL</span></span><span class="aut-workflow-meta"><span>Qualified · Wait 7 days</span><span>Use template →</span></span></button>
@@ -2425,13 +2430,13 @@
             <div class="aut-creator-screen" id="autCreatorHome" hidden>
               <div class="aut-creator-entry">
                 <button class="aut-creator-choice" type="button" data-aut-creator="templates"><span class="aut-template-card-icon"><i class="fai">&#xf00a;</i></span><strong>Use a Template</strong><span>Start with a ready-made flow for this Stage.</span><em>Choose a Template →</em></button>
-                <button class="aut-creator-choice" type="button" data-aut-creator="scratch"><span class="aut-template-card-icon"><i class="fai">&#xf303;</i></span><strong>Build a Custom Automation</strong><span>Choose Starts when, add a Rule only if needed, then choose an Action.</span><em>Build your Automation →</em></button>
+                <button class="aut-creator-choice" type="button" data-aut-creator="scratch"><span class="aut-template-card-icon"><i class="fai">&#xf303;</i></span><strong>Build from scratch</strong><span>Choose Starts when, add a Rule only if needed, then choose an Action.</span><em>Build your Automation →</em></button>
               </div>
-              <div class="aut-template-note"><i class="fai">&#xf023;</i><span>Templates are shown first. A Custom Automation only shows choices that work in the Stage you chose.</span></div>
+              <div class="aut-template-note"><i class="fai">&#xf023;</i><span>Global Create starts with Templates. Build from scratch only shows choices that work in the Stage you choose.</span></div>
             </div>
 
             <div class="aut-creator-screen" id="autCreatorTemplates" hidden>
-              <div class="aut-creator-toolbar"><div><button class="aut-creator-back" type="button" data-aut-template-cancel><i class="fai">&#xf00d;</i> Cancel</button><button class="aut-btn small" type="button" data-aut-creator="scratch"><i class="fai">&#xf303;</i> Build Custom</button></div><span class="aut-help">Step 1 · Choose the Pipeline Stage</span></div>
+              <div class="aut-creator-toolbar"><div><button class="aut-creator-back" type="button" data-aut-template-cancel><i class="fai">&#xf00d;</i> Cancel</button><button class="aut-btn small" type="button" data-aut-creator="scratch"><i class="fai">&#xf303;</i> Build from scratch</button></div><span class="aut-help">Step 1 · Choose the Pipeline Stage</span></div>
               <div class="aut-template-stage-nav" id="autTemplateStageNav" aria-label="Choose a Quote Pipeline Stage"></div>
               <div class="aut-scratch-only-notice" id="autStageTemplatePrompt"><span><i class="fai">&#xf279;</i></span><div><small>QUOTE PIPELINE</small><h3>Choose a Stage first</h3><p>Matching fixed Templates will appear after you select the Stage where this Automation belongs.</p></div></div>
               <div class="aut-scratch-only-notice" id="autScratchOnlyNotice" hidden><span><i class="fai">&#xf303;</i></span><div><small>CUSTOM AUTOMATION</small><h3>Choose the Stage first</h3><p>After you choose the Stage, WeQuote shows how the Automation can start, what it can check, and what it can do.</p></div></div>
@@ -2476,7 +2481,7 @@
             </div>
 
             <div class="aut-creator-screen" id="autCreatorTriggers" hidden>
-              <div class="aut-creator-toolbar"><button class="aut-creator-back" type="button" data-aut-creator-back="home"><i class="fai">&#xf060;</i> Back</button><span class="aut-help">Step 1 of 2 · Choose how it starts</span></div>
+              <div class="aut-creator-toolbar"><div><button class="aut-creator-back" type="button" data-aut-creator-back="home"><i class="fai">&#xf060;</i> Back</button><button class="aut-btn small" type="button" data-aut-creator="templates" id="autCreatorUseTemplates"><i class="fai">&#xf00a;</i> Use a Template</button></div><span class="aut-help">Step 1 of 2 · Choose how it starts</span></div>
               <section class="aut-trigger-section"><h3>Suggested</h3><div class="aut-trigger-list">
                 <button class="aut-trigger-card" type="button" data-aut-trigger-choice="new-lead"><i class="fai">&#xf234;</i><span><strong>New Lead is created</strong><span>Assign an owner or create a first-contact Lead activity.</span></span></button>
                 <button class="aut-trigger-card" type="button" data-aut-trigger-choice="deal-stage"><i class="fai">&#xf0ae;</i><span><strong>Deal moves to a stage</strong><span>Follow up when a Deal reaches a selected stage.</span></span></button>
@@ -3980,7 +3985,7 @@
 </aside>
 
 <script src="./assets/js/crm.js?v=166"></script>
-  <script src="./assets/js/automation.js?v=193"></script>
+  <script src="./assets/js/automation.js?v=201"></script>
 
 <!-- Pipeline stage drag insertion indicator -->
 
@@ -3994,7 +3999,7 @@
   <script src="./assets/compat/quote-first-co-trainline.js?v=5"></script>
 <script src="./assets/js/compatibility-post.js?v=1"></script>
 <script src="./assets/js/quote-demo.js?v=17"></script>
-<script src="./assets/js/focus-widget.js?v=72"></script>
+<script src="./assets/js/focus-widget.js?v=74"></script>
 <script src="./assets/js/my-notes.js?v=12"></script>
 <script src="./assets/js/custom-dashboard.js?v=2"></script>
 <!-- First Change Order trainline: Revision 1 stays flat until CO 1.1 exists. -->

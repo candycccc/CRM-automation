@@ -65,7 +65,8 @@ body.attention-widget-dock-ready::after {
 }
 
 html.attention-widget-pref-disabled #wequote-attention-widget,
-#wequote-attention-widget.is-user-disabled { display: none !important; }
+#wequote-attention-widget.is-user-disabled,
+#wequote-attention-widget.is-automation-workspace-hidden { display: none !important; }
 
 #wequote-attention-widget.is-dragging,
 #wequote-attention-widget.is-resizing { transition: none; }
