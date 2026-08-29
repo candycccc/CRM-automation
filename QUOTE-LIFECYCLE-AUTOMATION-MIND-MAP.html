@@ -30,7 +30,7 @@
     button, input { font: inherit; }
     button { color: inherit; }
     button:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid rgba(37, 88, 232, .28); outline-offset: 2px; }
-    .app { width: 100%; height: 100%; display: grid; grid-template-rows: auto 1fr; background: #fff; }
+    .app { width: 100%; height: 100%; display: grid; grid-template-rows: auto auto 1fr; background: #fff; }
     .topbar {
       min-height: 64px; padding: 10px 14px; display: flex; align-items: center; gap: 14px;
       border-bottom: 1px solid #dce4ee; background: #fff; z-index: 20;
@@ -40,6 +40,11 @@
     .brand-copy strong { display: block; font-size: 16px; line-height: 1.2; }
     .brand-copy span { display: block; margin-top: 2px; color: var(--muted); }
     .toolbar { margin-left: auto; display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
+    .prototype-note {
+      padding: 8px 14px; border-bottom: 1px solid #ead5a7; background: #fff;
+      color: #6d4b16; line-height: 1.4;
+    }
+    .prototype-note strong { color: #8a5708; }
     .segmented { display: inline-flex; padding: 3px; border: 1px solid #d8e0eb; border-radius: 10px; background: #f5f7fa; }
     .tool, .segmented button {
       min-height: 34px; border: 1px solid #d6dfeb; border-radius: 8px; padding: 0 10px;
@@ -149,6 +154,7 @@
       html, body { overflow: auto; }
       .app { min-height: 100%; height: auto; }
       .topbar { align-items: flex-start; flex-direction: column; }
+      .prototype-note { padding: 8px 12px; }
       .brand { min-width: 0; }
       .toolbar { width: 100%; margin: 0; justify-content: flex-start; }
       .search-wrap { width: 100%; order: 3; }
@@ -185,6 +191,8 @@
         <button class="tool primary" id="fitView" type="button">Fit view</button>
       </div>
     </header>
+
+    <div class="prototype-note" role="note"><strong>Prototype exception — not included in the formal counts:</strong> the prototype source retains <strong>Add Quote Label</strong> for In Progress, In Review, Passed Review and Sent, but the current UI keeps it disabled as Pending decision. It is not part of the approved 14 shared Actions, so it is excluded from the 16 Action types, 100 Action placements, 1,300 compatibility decisions and 15,238 simple shapes until the product contract decides whether it stays.</div>
 
     <main class="workspace">
       <section class="map-pane" id="mapPane" aria-label="Interactive mind map">
@@ -244,9 +252,15 @@
       'Has there been recent activity on the Deal?',
       'Does the Deal have this Label?',
       'Does the Deal have this Interest?',
-      'Is the Deal Value above or below an amount?',
-      'Does this Company own the Deal?',
+      'Is the Deal Value above, below or equal to an amount?',
+      'Does the Deal belong to a selected Company?',
       'When is the Expected Close Date?'
+    ];
+    const parameterisedRuleContract = [
+      'Deal & owner → Deal belongs to this Company → choose one Company on this Rule → Yes only when the current Deal’s owning Company ID exactly matches the selected Company ID; this is per-Rule record data, not Automation-wide scope.',
+      'Dates & value → Deal value is above, below or equal to an amount → choose the operator and enter a finite positive amount → compare in the Deal Company currency; there is no currency picker.',
+      'Dates & value → Expected Close Date is before, on or after a selected date → choose the comparison and date → a valid date is required.',
+      'Dates & value → Expected Close Date is within the next number of days → enter the number of days → a whole number from 1 to 365 is required.'
     ];
     const sharedActions = [
       'Assign the Deal to a person',
@@ -273,7 +287,7 @@
       { id:'quote-build', stage:'In Progress', title:'Quote build & SOW checks', count:6, start:'First related Quote is created or edited', prototypeStart:'Prototype currently starts only when the first related Quote is created', wait:'None', rule:'Required pricing data or SOW information is missing', yes:'Create Note — Quote information needs attention', no:'Stop', editable:noteFields, warning:'Guide and prototype do not yet use exactly the same start event.' },
       { id:'internal-review', stage:'In Review', title:'Internal Quote review', count:6, start:'Quote is submitted for internal review', wait:'None', rule:'No open technical review Note exists', yes:'Create Note — Technical review required', no:'Stop', editable:noteFields },
       { id:'ready-to-send', stage:'Passed Review', title:'Ready-to-send check', count:6, start:'Quote becomes Passed Review', wait:'None', rule:'Quote is still viable AND required customer-facing content is complete', yes:'Create Note — Quote ready-to-send check complete', no:'Stop', editable:noteFields, warning:'A separate concept preview shows a No-path Note; the fixed Template currently stops. Confirm before build.' },
-      { id:'high-value', stage:'Passed Review', title:'High-value approval', count:2, start:'Quote becomes Passed Review', wait:'None', rule:'Quote value > £25,000 OR discount > 15%', yes:'Create Note — High-value approval required', no:'Stop', editable:['Quote-value threshold in company currency','Discount percentage from 0–100'], fixed:['The OR operator','Both branches','Create Note Action and its Note content'] },
+      { id:'high-value', stage:'Passed Review', title:'High-value approval', count:2, start:'Quote becomes Passed Review', wait:'None', rule:'Quote value > 25,000 in the Deal Company currency OR discount > 15%', yes:'Create Note — High-value approval required', no:'Stop', editable:['Quote-value threshold in company currency','Discount percentage from 0–100'], fixed:['The OR operator','Both branches','Create Note Action and its Note content'] },
       { id:'sent-follow-up', stage:'Sent', title:'Sent Quote follow-up', count:7, start:'Quote is sent', wait:'3 calendar days by default', rule:'Intended: Quote is still Sent AND not expired', prototypeRule:'Prototype currently checks: No open Deal Next Action exists', yes:'Create Note — Sent Quote customer follow-up', no:'Stop', editable:['Wait duration', ...noteFields], warning:'The intended Rule and current prototype Rule conflict. This must be resolved before build.' },
       { id:'expiry-reminder', stage:'Sent', title:'Quote expiry reminder', count:6, start:'Quote expiry date approaches — prototype uses 3 days away', wait:'None — this is a date-based start, not a Wait', rule:'Quote is still Sent AND remains viable', yes:'Create Note — Quote expiry follow-up', no:'Stop', editable:noteFields, fixed:['Prototype trigger offset: 3 days'] },
       { id:'won-handoff', stage:'Won result', title:'Won Deal handoff', count:6, start:'Any relevant Quote is Accepted; WeQuote derives Won', wait:'None', rule:'Prototype: No open Deal Next Action exists', yes:'Create Note — Won Deal handoff', no:'Stop', editable:noteFields, warning:'The exact handoff Rule still needs one agreed product contract.' },
@@ -292,7 +306,9 @@
     const quoteContexts = [
       {
         id:'quote-custom-qualified', title:'Qualified', type:'Protected Quote Stage',
-        meaning:'The Deal is ready, but it does not yet have a current Quote.', counts:'10 Starts when · 13 Rules · 14 shared Actions',
+        meaning:'The Deal is ready, but it does not yet have a current Quote.', counts:'6 Starts when · 32 Rule choices · 15 Actions',
+        formalStarts:['Deal enters Qualified','Deal Owner changes','Meeting or Site Visit changes','File is added to the Deal','Deal Next Action becomes due','Expected Close Date is coming up'],
+        ruleCount:32, allowedPairs:179, actionCount:15,
         extraStarts:['Deal enters Qualified'],
         extraRules:['Does the Deal still have no current Quote?','Is the Deal still Qualified?'],
         quoteAction:'Create the first Quote for this Deal', actionStatus:'Guarded design proposal',
@@ -300,7 +316,9 @@
       },
       {
         id:'quote-custom-progress', title:'In Progress', type:'Protected Quote Stage',
-        meaning:'At least one current Quote already exists and can still be edited.', counts:'12 Starts when · 13 Rules · 14 shared Actions',
+        meaning:'At least one current Quote already exists and can still be edited.', counts:'7 Starts when · 32 Rule choices · 15 Actions',
+        formalStarts:['The first Quote for this Deal is created','Another Quote option is added','A related Quote is edited','File is added to the Deal','Note follow-up time is reached','Deal Next Action becomes due','Meeting or Site Visit changes'],
+        ruleCount:32, allowedPairs:220, actionCount:15,
         extraStarts:['First Quote is added to the Deal','A Quote for this Deal is saved','Saved Quote price changes'],
         extraRules:['Can the Quote still be edited?','Is Quote Review turned on?'],
         quoteAction:'Create another Quote option', actionStatus:'Guarded multi-Quote design proposal',
@@ -308,43 +326,53 @@
       },
       {
         id:'quote-custom-review', title:'In Review', type:'Protected Quote Stage',
-        meaning:'A Quote is waiting for an internal review result.', counts:'11 Starts when · 14 Rules · 14 shared Actions',
+        meaning:'A Quote is waiting for an internal review result.', counts:'4 Starts when · 32 Rule choices · 14 Actions',
+        formalStarts:['Quote is submitted for internal review','Quote Review Note changes','File is added to the Deal','Note follow-up time is reached'],
+        ruleCount:32, allowedPairs:127, actionCount:14,
         extraStarts:['Quote is submitted for internal review','Quote Review Note changes'],
         extraRules:['Is the Quote still In Review?','Is there nobody who can review the Quote?','What is the technical review Note status?'],
         quoteAction:'No Create Quote Action here', actionStatus:'Protected boundary',
-        boundary:'A new Quote here could mean another option, a revision or a variation. WeQuote must not guess. Custom Automation also cannot pass or reject the review.'
+        boundary:'A new Quote here could mean another option, a revision or a variation. WeQuote must not guess. A Start-from-scratch Automation also cannot pass or reject the review.'
       },
       {
         id:'quote-custom-passed', title:'Passed Review', type:'Protected Quote Stage',
-        meaning:'A Quote passed review but has not been sent yet.', counts:'10 Starts when · 15 Rules · 14 shared Actions',
+        meaning:'A Quote passed review but has not been sent yet.', counts:'3 Starts when · 32 Rule choices · 14 Actions',
+        formalStarts:['Quote becomes Passed Review','File is added to the Deal','Deal Next Action becomes due'],
+        ruleCount:32, allowedPairs:92, actionCount:14,
         extraStarts:['Quote passes internal review'],
         extraRules:['Does the Quote still count for this Deal?','Is the Quote total above an amount?','Is the Quote discount above a percentage?','Does this Quote need another approval?'],
         quoteAction:'No Create Quote Action here', actionStatus:'Protected boundary',
-        boundary:'Custom Automation can prepare internal work, but it cannot send the Quote or move the Deal directly into Sent.'
+        boundary:'A Start-from-scratch Automation can prepare internal work, but it cannot send the Quote or move the Deal directly into Sent.'
       },
       {
         id:'quote-custom-sent', title:'Sent', type:'Protected Quote Stage',
-        meaning:'At least one current Quote has been sent to the customer.', counts:'12 Starts when · 16 Rules · 14 shared Actions',
+        meaning:'At least one current Quote has been sent to the customer.', counts:'6 Starts when · 33 Rule choices · 14 Actions',
+        formalStarts:['Quote is sent','Customer views a Sent Quote','Quote expiry date is coming up','Deal Next Action becomes due','Note follow-up time is reached','File is added to the Deal'],
+        ruleCount:33, allowedPairs:188, actionCount:14,
         extraStarts:['Quote is sent','Customer views a Sent Quote','Quote expiry date is coming up'],
         extraRules:['Is the Quote still Sent?','Has the customer viewed the Sent Quote?','Has the customer viewed none of the matching Sent Quotes?','Does the Quote still count for this Deal?','Has the Quote not expired yet?'],
         quoteAction:'No Create Quote Action here', actionStatus:'Protected boundary',
-        boundary:'Custom Automation can create follow-up work, but it cannot accept for the customer, mark Won/Lost or create a new Quote after the result.'
+        boundary:'A Start-from-scratch Automation can create follow-up work, but it cannot accept for the customer, mark Won/Lost or create a new Quote after the result.'
       },
       {
         id:'quote-custom-won', title:'Won context', type:'Protected result context',
-        meaning:'A relevant Quote was accepted, so WeQuote derives the Deal as Won.', counts:'11 Starts when · 12 Rules · 14 shared Actions',
+        meaning:'A relevant Quote was accepted, so WeQuote derives the Deal as Won.', counts:'4 Starts when · 32 Rule choices · 14 Actions',
+        formalStarts:['Quote is accepted','File is added to the Deal','Note follow-up time is reached','Deal Next Action becomes due'],
+        ruleCount:32, allowedPairs:125, actionCount:14,
         extraStarts:['Quote is accepted','Deal becomes Won'],
         extraRules:['Does the Deal have an accepted Quote?'],
         quoteAction:'No Create Quote Action here', actionStatus:'Protected result',
-        boundary:'Custom Automation can run handoff work after the result, but it cannot create another Quote, accept a Quote or write the Won result.'
+        boundary:'A Start-from-scratch Automation can run handoff work after the result, but it cannot create another Quote, accept a Quote or write the Won result.'
       },
       {
         id:'quote-custom-lost', title:'Lost context', type:'Protected result context',
-        meaning:'No current Quote can keep the Deal open, so WeQuote derives the Deal as Lost.', counts:'10 Starts when · 13 Rules · 14 shared Actions',
+        meaning:'No current Quote can keep the Deal open, so WeQuote derives the Deal as Lost.', counts:'3 Starts when · 32 Rule choices · 14 Actions',
+        formalStarts:['Deal becomes Lost','Note follow-up time is reached','File is added to the Deal'],
+        ruleCount:32, allowedPairs:95, actionCount:14,
         extraStarts:['Deal becomes Lost'],
         extraRules:['Is the Loss Reason missing?','Can none of the Deal’s Quotes keep it open?'],
         quoteAction:'No Create Quote Action here', actionStatus:'Protected result',
-        boundary:'Custom Automation can create internal follow-up work after the result, but it cannot create another Quote or write the Lost result.'
+        boundary:'A Start-from-scratch Automation can create internal follow-up work after the result, but it cannot create another Quote or write the Lost result.'
       }
     ];
 
@@ -379,9 +407,12 @@
     const commonCustomSections = [
       listSection('Starts when available in every Custom working Stage', ['Deal enters this Custom Stage', ...sharedStarts]),
       listSection('Rules available in every Custom working Stage', sharedRules),
+      listSection('How a Rule with a setting works', parameterisedRuleContract),
+      textSection('Rule validation', 'The user first chooses a Rule category, then a Rule, then completes any setting that Rule requires. Company, amount, date or day-count settings must be valid before the Rule can be saved or the Automation can be activated. The saved value must appear in the Map and preview; a generic “Saved conditions are met” label is not sufficient.'),
+      textSection('Template boundary', 'This Rule chooser belongs to Start from scratch. In the 12 Templates, the Rule and operator stay fixed; only the two approved High-value thresholds and other explicitly approved Template settings can be changed.'),
       listSection('Actions in the design-guide library', sharedActions),
       textSection('Wait and branches', 'Wait is optional. The first scratch contract supports 1–90 whole calendar days. Rules may combine confirmed checks using AND / OR. Adding a Rule automatically creates If Yes and If No paths. No Rule means the flow can go directly to Actions.'),
-      textSection('Activation check', 'The draft stays Inactive until the main path, or the If Yes path after a Rule, contains at least one Action.')
+      textSection('Activation check', 'An incomplete Automation remains Draft. Once the flow is complete and saved but still switched off, it becomes Inactive. Only a valid Inactive Automation can be switched to Active.')
     ];
 
     function gapNode(g) {
@@ -400,36 +431,43 @@
         node(`${g.id}-starts`, 'Extra Quote Starts when', 'This gap only', extraStarts.join(' · '), g.starts.length ? 'editable' : 'fixed', [listSection('Extra Starts when', extraStarts)], [], [g.starts.length ? 'You can choose' : 'No extra choices']),
         node(`${g.id}-rules`, 'Extra Quote Rules', 'This gap only', `${g.rules.length} extra checks`, 'category', [listSection('Extra Rules', g.rules)], [], ['You can choose']),
         node(`${g.id}-action`, g.action, 'Quote Action', g.actionStatus || g.unavailable, extraActionKind, [textSection('Availability', g.actionStatus || g.unavailable), textSection('Boundary', g.unavailable)], [], [extraActionKind === 'proposal' ? 'Design proposal' : 'Not offered']),
-        node(`${g.id}-movement`, 'Protected movement', 'Fixed by WeQuote', g.next, 'fixed', [textSection('Next lifecycle event', g.next), textSection('Why it is fixed', 'Custom Automation cannot write a protected Quote Stage or result directly.')], [], ['Fixed by WeQuote'])
+        node(`${g.id}-movement`, 'Protected movement', 'Fixed by WeQuote', g.next, 'fixed', [textSection('Next lifecycle event', g.next), textSection('Why it is fixed', 'A Start-from-scratch Automation cannot write a protected Quote Stage or result directly.')], [], ['Fixed by WeQuote'])
       ], ['Custom Stage', g.counts]);
     }
 
     function quoteContextNode(context) {
       const hasQuoteAction = !context.quoteAction.startsWith('No ');
       const contextKind = context.type.includes('result') ? 'result' : 'stage';
-      return node(context.id, context.title, context.type, `${context.counts} · Custom route`, contextKind, [
+      return node(context.id, context.title, context.type, `${context.counts} · Start-from-scratch route`, contextKind, [
         textSection('What this context means', context.meaning),
-        textSection('Latest product direction', 'The user may choose a ready-made Template or build a compatible Custom Automation in this Quote context.'),
-        listSection('Shared Starts when', sharedStarts),
-        listSection('Extra Starts when for this context', context.extraStarts),
-        listSection('Shared Rules', sharedRules),
-        listSection('Extra Rules for this context', context.extraRules),
+        textSection('Route order', '1. Start from scratch is shown first and creates a Draft Custom Automation. 2. Templates is shown second and offers the ready-made recipes for this Quote context.'),
+        listSection('Starts when available in this context', context.formalStarts),
+        listSection('Shared Rule families', sharedRules),
+        listSection('Recommended Rules for this context', context.extraRules),
+        listSection('Parameterised Rule contract', parameterisedRuleContract),
         listSection('Shared Actions', sharedActions),
         textSection('Quote-specific Action boundary', `${context.quoteAction} — ${context.actionStatus}. ${context.boundary}`),
         textSection('What remains fixed', 'The Automation stays assigned to this Quote context. WeQuote still controls the protected Stage meaning, Quote-driven movement and Won/Lost result.')
       ], [
-        node(`${context.id}-starts`, 'Starts when', 'Choose one compatible event', `${sharedStarts.length} shared + ${context.extraStarts.length} context choice${context.extraStarts.length === 1 ? '' : 's'}`, 'category', [listSection('Shared Deal events', sharedStarts), listSection('Extra Quote events', context.extraStarts)], [], ['Custom choice']),
-        node(`${context.id}-rules`, 'Rules', 'Optional checks', `${sharedRules.length} shared + ${context.extraRules.length} context check${context.extraRules.length === 1 ? '' : 's'}`, 'category', [listSection('Shared Deal checks', sharedRules), listSection('Extra Quote checks', context.extraRules), textSection('Branch behaviour', 'A Rule is optional. Adding one creates If Yes and If No paths automatically.')], [], ['Optional']),
-        node(`${context.id}-actions`, 'Actions', 'Choose compatible results', `14 shared Actions${hasQuoteAction ? ' + 1 guarded Quote proposal' : ''}`, hasQuoteAction ? 'proposal' : 'category', [listSection('Shared CRM Actions', sharedActions), textSection('Withheld Action', 'Remove Interest stays a manual CRM operation and is not offered as a general Automation Action.'), textSection('Quote-specific boundary', `${context.quoteAction} — ${context.actionStatus}. ${context.boundary}`)], [], [hasQuoteAction ? 'Guarded proposal' : 'Protected boundary']),
-        node(`${context.id}-fixed`, 'Context stays protected', 'Fixed by WeQuote', 'Customise the flow, not the lifecycle meaning', 'fixed', [textSection('Fixed boundary', 'The selected Quote context, its lifecycle meaning and the system-driven transitions stay fixed. Custom Automation cannot directly send, approve, accept, mark Won/Lost or write a protected Quote Stage.')], [], ['Fixed by WeQuote'])
-      ], ['Custom available', context.counts]);
+        node(`${context.id}-starts`, 'Starts when', 'Choose one compatible event', `${context.formalStarts.length} allowed start placement${context.formalStarts.length === 1 ? '' : 's'}`, 'category', [listSection('Available here', context.formalStarts)], [], ['Start from scratch choice']),
+        node(`${context.id}-rules`, 'Rules', 'Optional checks', `${context.ruleCount} choices · ${context.allowedPairs} allowed Start/Rule pairs`, 'category', [listSection('Shared Rule families', sharedRules), listSection('Recommended checks here', context.extraRules), listSection('Category → Rule → setting → validation', parameterisedRuleContract), textSection('Branch behaviour', 'A Rule is optional. Adding one creates If Yes and If No paths automatically. The saved Map text must include the selected Company, amount, date or number of days when the Rule uses one.')], [], ['Optional']),
+        node(`${context.id}-actions`, 'Actions', 'Choose compatible results', `${context.actionCount} formal Action placement${context.actionCount === 1 ? '' : 's'} here`, hasQuoteAction ? 'proposal' : 'category', [listSection('14 shared CRM Actions', sharedActions), textSection('Withheld Action', 'Remove Interest stays a manual CRM operation and is not offered as a general Automation Action.'), textSection('Prototype-only exception', 'Add Quote Label is visible in four contexts but is not counted pending a product decision.'), textSection('Quote-specific boundary', `${context.quoteAction} — ${context.actionStatus}. ${context.boundary}`)], [], [hasQuoteAction ? '14 shared + 1 guarded' : '14 shared']),
+        node(`${context.id}-fixed`, 'Context stays protected', 'Fixed by WeQuote', 'Change the flow, not the lifecycle meaning', 'fixed', [textSection('Fixed boundary', 'The selected Quote context, its lifecycle meaning and the system-driven transitions stay fixed. A Start-from-scratch Automation cannot directly send, approve, accept, mark Won/Lost or write a protected Quote Stage.')], [], ['Fixed by WeQuote'])
+      ], ['Start from scratch available', context.counts]);
     }
 
     const tree = node('root', 'CRM Automation Scope', 'Scope map', 'Two main branches: with or without the Quote lifecycle', 'root', [
-      textSection('How to read this map', 'The first main branch uses the Quote lifecycle. It contains the 12 ready-made Templates, Custom Automation in every existing Quote context, Custom Stages inserted between protected Quote Stages, and the wider option of another Quote-connected Pipeline. The second main branch is a Standalone Pipeline without Quote lifecycle behaviour.'),
-      textSection('Two main branches', '1. With Quote Lifecycle: Templates or compatible Custom Automation in existing Quote contexts, optional inserted Custom Stages, and later another Pipeline using the same protected lifecycle. 2. Without Quote Lifecycle: a Standalone Pipeline with user-defined working Stages and Deal-only Automation choices.'),
+      textSection('How to read this map', 'The first main branch uses the Quote lifecycle. In every existing Quote context, Start from scratch is Route 1 and Templates is Route 2. It also covers Custom Stages inserted between protected Quote Stages and the wider option of another Quote-connected Pipeline. The second main branch is a Standalone Pipeline without Quote lifecycle behaviour.'),
+      textSection('Two main branches', '1. With Quote Lifecycle: Start from scratch first, Templates second, optional inserted Custom Stages, and later another Pipeline using the same protected lifecycle. 2. Without Quote Lifecycle: a Standalone Pipeline with user-defined working Stages and Deal-only Automation choices.'),
       textSection('Source alignment', 'The 29 August product-direction record now overrides the older Templates-only gate, and the active prototype exposes both routes in all seven Quote contexts. Dated handoff snapshots remain historical evidence only.'),
       textSection('Important count note', 'The 79 catalogue examples are candidate recipes. They are not the 12 fixed Templates, and zero are live end-to-end today.'),
+      listSection('Formal Start-from-scratch scope counts', [
+        '18 Starts when types produce 33 allowed start placements across the seven Quote contexts.',
+        '14 shared Actions plus Create the first Quote and Create another Quote option make 16 formal Action types and 100 allowed Action placements.',
+        'Stage/start, stage/Action and Start/Rule pairing requires 1,300 compatibility decisions before runtime and branch testing.',
+        'The simplest one-start, zero-or-one-Rule and one-Action model produces 15,238 possible flow shapes.'
+      ]),
+      textSection('Prototype-only Action pending contract', 'Add Quote Label currently appears in In Progress, In Review, Passed Review and Sent. It is not counted in the formal 14 shared Actions, 16 Action types, 100 placements, 1,300 decisions or 15,238 shapes until the product contract confirms it.'),
       listSection('Shared flow model — applies to both branches', [
         'Starts when is required and chooses the event that begins the Automation.',
         'Wait is optional and pauses the run before the next step.',
@@ -447,13 +485,29 @@
       ]),
       textSection('Shared items still needing team review', 'Create Quote and automatic Stage movement remain guarded design proposals. The Quote build start, Sent follow-up Rule, Won handoff Rule and Ready-to-send No path still need one agreed contract before implementation.')
     ], [
-      node('with-quote-lifecycle', 'With Quote Lifecycle', 'Main branch 1', 'Templates and Custom Automation connected to protected Quote contexts', 'branch', [
-        textSection('What belongs here', 'The protected Quote lifecycle stays intact. Users may choose a ready-made Template or build a compatible Custom Automation in every existing Quote context. They may also add Custom Stages inside the five allowed lifecycle gaps, and later create another Pipeline that uses the same protected Quote lifecycle.'),
+      node('with-quote-lifecycle', 'With Quote Lifecycle', 'Main branch 1', 'Start from scratch first; Templates second in every protected Quote context', 'branch', [
+        textSection('What belongs here', 'The protected Quote lifecycle stays intact. In every existing Quote context, users see Start from scratch first and Templates second. They may also add Custom Stages inside the five allowed lifecycle gaps, and later create another Pipeline that uses the same protected Quote lifecycle.'),
         textSection('Protected lifecycle', 'Qualified → In Progress → In Review → Passed Review → Sent → Won / Lost. WeQuote controls the meaning and Quote-driven movement; Automation works around it without rewriting it.')
       ], [
 
-      node('templates', '12 fixed Templates', 'Ready-made route', 'Reviewed starting points across Quote Stages and result contexts', 'branch', [
-        textSection('Why Templates exist', 'They lower the learning curve with a reviewed starting point. Users change only approved values; they do not redesign the flow. Templates sit beside, not instead of, the Custom route.'),
+      node('quote-context-custom', 'Start from scratch in every Quote context', 'Route 1', 'Qualified, In Progress, In Review, Passed Review, Sent, Won and Lost', 'branch', [
+        textSection('Terminology', 'Start from scratch is the route shown to the user. Choosing it creates a Draft Custom Automation; “Custom” describes the saved Automation, not a separate third route.'),
+        textSection('What this changes', 'Start from scratch is not limited to a Stage that the user adds. Every existing Quote Stage and Won/Lost result context can create a Draft Custom Automation using only choices compatible with that context.'),
+        textSection('Creation flow', 'Choose the Quote context, select Start from scratch, then choose a compatible Starts when event. The Builder opens with that Trigger placed. Wait and Rule are optional; at least one Action is required before activation.'),
+        textSection('What stays protected', 'The selected context stays fixed. The user can change the flow blocks and their allowed settings, but cannot change the meaning of a protected Quote Stage, directly move into it, send or approve a Quote, accept for the customer, or mark Won/Lost.'),
+        textSection('Formal combination scope', '18 Starts when types create 33 start placements. Fourteen shared Actions plus two guarded Quote-creation Actions make 16 formal Action types and 100 Action placements. Pairing requires 1,300 compatibility decisions before runtime testing; the simplest model produces 15,238 flow shapes.'),
+        textSection('Implementation note', 'The Version 9 PRD and active prototype expose Start from scratch first and Templates second in all seven protected Quote contexts. Runtime event matching, due-state semantics and complete Rule evaluation still require engineering validation before production.')
+      ], [
+        node('scratch-rule-contract', 'How a configurable Rule works', 'Start from scratch only', 'Choose category → choose Rule → complete its setting → pass validation', 'category', [
+          listSection('Four parameterised examples', parameterisedRuleContract),
+          textSection('Saved display', 'The Map, preview and Builder must show the configured Company, amount, date or number of days. They must not replace it with “Saved conditions are met”.'),
+          textSection('Template boundary', 'Templates do not expose this Rule chooser. Their Rule and operator stay fixed, except for the two approved threshold values in High-value approval.')
+        ], [], ['Rule contract', 'Validation required']),
+        ...quoteContexts.map(quoteContextNode)
+      ], ['Route 1', '7 Quote contexts', 'Start from scratch']),
+
+      node('templates', '12 fixed Templates', 'Route 2', 'Reviewed starting points across Quote Stages and result contexts', 'branch', [
+        textSection('Why Templates exist', 'They lower the learning curve with a reviewed starting point. Users change only approved values; they do not redesign the flow. Templates are shown after Start from scratch in each Quote context.'),
         listSection('Always fixed', ['Template name and identity','Quote context','Starts when','Rule and operator','Yes / No structure','Wait position','Step order','Action type','Duplicate prevention','Protected-lifecycle checkpoint']),
         listSection('Editable only when declared', ['5 Next Action settings for the first Qualified Template','6 approved Note and follow-up fields for Note Templates','Wait duration for the two reminder Templates','2 thresholds for High-value approval','No settings for Accepted Quote → Draft Invoice']),
         textSection('Scale', '12 reviewed flow shapes contain 63 control instances made from 14 field types and 5 reusable setting editors. Reusable UI does not make free combination logic equivalent.')
@@ -465,33 +519,26 @@
         stageNode('Sent'),
         stageNode('Won result', 'result'),
         stageNode('Lost result', 'result')
-      ], ['Ready-made route', '12 fixed flows', '63 approved controls']),
-
-      node('quote-context-custom', 'Custom Automation in every Quote context', 'Latest product direction', 'Qualified, In Progress, In Review, Passed Review, Sent, Won and Lost', 'branch', [
-        textSection('What this changes', 'Custom is not limited to a Stage that the user adds. Every existing Quote Stage and Won/Lost result context can also start an Inactive Custom draft using only choices compatible with that context.'),
-        textSection('Creation flow', 'Choose the Quote context, select Custom, then choose a compatible Starts when event. The Builder opens with that Trigger placed. Wait and Rule are optional; at least one Action is required before activation.'),
-        textSection('What stays protected', 'The selected context stays fixed. The user can change the flow blocks and their allowed settings, but cannot change the meaning of a protected Quote Stage, directly move into it, send or approve a Quote, accept for the customer, or mark Won/Lost.'),
-        textSection('Implementation note', 'The Phase 1 PRD addendum and active prototype now expose both routes in all seven protected Quote contexts. Runtime event matching, due-state semantics and complete Rule evaluation still require engineering validation before production.')
-      ], quoteContexts.map(quoteContextNode), ['Latest direction', '7 Quote contexts', 'Prototype aligned']),
+      ], ['Route 2', '12 fixed flows', '63 approved controls']),
 
       node('custom-stages', 'Add a Stage to the Quote Pipeline', 'Latest design target', 'Five allowed gaps; protected Quote Stages stay fixed', 'branch', [
-        textSection('What the user controls', 'Choose the gap, Stage name, icon, colour and probability; add more than one Stage in a gap; reorder only inside that same gap; build independent Custom Automations using allowed blocks.'),
+        textSection('What the user controls', 'Choose the gap, Stage name, icon, colour and probability; add more than one Stage in a gap; reorder only inside that same gap; create independent Automations through Start from scratch using allowed blocks.'),
         textSection('What WeQuote controls', 'Qualified, In Progress, In Review, Passed Review, Sent, Won and Lost keep their meaning and Quote-driven movement. A Custom Stage cannot cross to another lifecycle gap.'),
-        textSection('Creation route', 'On a Custom Stage, Build from scratch is shown first. Choose a compatible Starts when event; WeQuote creates an Inactive draft with that Trigger already placed.'),
+        textSection('Creation route', 'On a Custom Stage, Start from scratch is shown first. Choose a compatible Starts when event; WeQuote creates a Draft Custom Automation with that Trigger already placed.'),
         textSection('Release status', 'Custom Stages and blank-canvas authoring are outside the current Phase 1 PRD. They are included here so the team can review the full implementation scope.')
       ], gaps.map(gapNode), ['Design target', '5 lifecycle gaps']),
 
       node('new-quote-pipeline', 'Create another Pipeline with Quote Lifecycle', 'Wider design target', 'A new Pipeline that reuses the same protected Quote lifecycle', 'proposal', [
-        textSection('What stays the same', 'Qualified, In Progress, In Review, Passed Review, Sent, Won and Lost keep the same protected meanings and Quote-driven transitions. Each context still offers Templates and compatible Custom Automation.'),
+        textSection('What stays the same', 'Qualified, In Progress, In Review, Passed Review, Sent, Won and Lost keep the same protected meanings and Quote-driven transitions. Each context still shows Start from scratch first and Templates second.'),
         textSection('What the user can define', 'Choose the Pipeline name and add named Custom Stages inside any of the five allowed lifecycle gaps. Reorder Custom Stages only inside their own gap.'),
         textSection('Why this is a separate scope', 'A second Quote-connected Pipeline needs routing rules, permissions, reporting separation, Deal migration rules, lifecycle ownership and clear behaviour for existing multi-Quote Deals.'),
-        textSection('Release status', 'Creating another Quote lifecycle Pipeline is not part of the current Phase 1 baseline. It is shown here so it is not confused with simply adding Custom Automation to the existing Quote Pipeline.')
+        textSection('Release status', 'Creating another Quote lifecycle Pipeline is not part of the current Phase 1 baseline. It is shown here so it is not confused with adding a Start-from-scratch Automation to the existing Quote Pipeline.')
       ], [
         node('new-quote-pipeline-fixed', 'Protected Quote contexts', 'Fixed by WeQuote', 'Same seven contexts and lifecycle meaning', 'fixed', [listSection('Reused lifecycle', ['Qualified','In Progress','In Review','Passed Review','Sent','Won','Lost'])], [], ['Fixed']),
-        node('new-quote-pipeline-custom', 'Customise around the lifecycle', 'User-defined', 'Pipeline name, gap Stages and compatible Automation', 'editable', [listSection('Can be configured', ['Pipeline name','Custom Stages inside five gaps','Templates or Custom Automation in every Quote context','Custom Automation on inserted Stages'])], [], ['Can change']),
+        node('new-quote-pipeline-custom', 'Configure around the lifecycle', 'User-defined', 'Pipeline name, gap Stages and compatible Automation', 'editable', [listSection('Can be configured', ['Pipeline name','Custom Stages inside five gaps','Start from scratch first and Templates second in every Quote context','Start from scratch on inserted Stages'])], [], ['Can change']),
         node('new-quote-pipeline-platform', 'Platform work needed', 'Engineering scope', 'Routing, migration, permissions, reporting and multi-Quote ownership', 'warning', [listSection('Must be agreed before build', ['Which Deals enter this Pipeline','Whether a Deal can move between Quote Pipelines','Which Pipeline owns a multi-Quote Deal','Permissions to create, edit and archive','Reporting and audit continuity','Effect on active Automation runs'])], [], ['Decision needed'])
       ], ['With Quote lifecycle', 'New Pipeline'])
-      ], ['Quote-connected', 'Templates + Custom']),
+      ], ['Quote-connected', 'Start from scratch + Templates']),
 
       node('without-quote-lifecycle', 'Without Quote Lifecycle', 'Main branch 2', 'Standalone Pipeline with Deal-only Automation choices', 'branch', [
         textSection('What belongs here', 'This branch does not use protected Quote Stages or Quote-driven movement. The user defines the Pipeline name and working Stages, then builds Automation from shared Deal events, Rules and Actions.'),
@@ -502,7 +549,7 @@
         textSection('Release status', 'Standalone Pipelines and blank-canvas authoring are outside the current Phase 1 PRD. The prototype demonstrates the concept only.')
       ], [
         node('standalone-define', 'You define the Pipeline', 'Can change', 'Pipeline name, working Stage names and order', 'editable', [listSection('Pipeline setup', ['Choose the Pipeline name','Add, rename, reorder or archive working Stages','Choose icon, colour and probability','Pipeline type is fixed after creation']), textSection('Results', 'Won stays at 100% probability and Lost at 0%. They remain protected results.')], [], ['You can change']),
-        node('standalone-flow', 'Every working Stage', 'Build from scratch', 'Stage entry + 9 starts · 11 Rules · 14 available Actions', 'category', commonCustomSections, [], ['Shared Deal library']),
+        node('standalone-flow', 'Every working Stage', 'Start from scratch', 'Stage entry + 9 starts · 11 Rules · 14 available Actions', 'category', commonCustomSections, [], ['Shared Deal library']),
         node('standalone-move', 'Stage movement', 'Current guide position', 'Users move Deals between named working Stages', 'fixed', [textSection('Current position', 'Automatic Stage movement is not available in the Guide target yet. The team must agree allowed targets, permissions, repeat suppression and required-work protection.'), textSection('Prototype-ahead warning', 'The prototype demonstrates restricted Move Stage choices. Treat this as a proposal, not a committed production contract.')], [], ['Decision needed']),
         node('standalone-noquote', 'Quote choices are not included', 'Not offered here', 'No Quote starts, Quote Rules, Create Quote or Quote-driven movement', 'blocked', [listSection('Not included', ['Quote-specific Starts when','Quote-specific Rules','Create first Quote','Create another Quote option','Automatic Quote lifecycle movement','Send, approve, accept, Won or Lost Actions'])], [], ['Not offered']),
         node('standalone-build', 'New platform work needed', 'Engineering scope', 'Permissions, migration, routing, audit and runtime safety', 'proposal', [listSection('Before this is a real product', ['Durable Pipeline and Stage IDs','Ordering, versioning and permissions','Deal migration and deletion rules','Reporting continuity','Active-Automation impact handling','Runtime persistence, audit, retry and idempotency','Timezone-aware scheduling','Loop protection and post-Wait rechecks'])], [], ['New work needed'])
@@ -663,7 +710,7 @@
       document.getElementById('toggleBranch').hidden = !item.children.length;
       document.getElementById('toggleBranch').textContent = expanded.has(item.id) ? 'Collapse branch' : 'Expand branch';
       const chips = item.tags.length ? `<div class="chips">${item.tags.map(tag => `<span class="chip ${item.kind}">${escapeHtml(tag)}</span>`).join('')}</div>` : '';
-      const status = item.id === 'root' ? `<div class="status-card"><strong>Latest product direction</strong>CRM Automation has two main branches: with the Quote lifecycle and without it. Inside the Quote branch, every current Quote context offers both ready-made Templates and compatible Custom Automation.</div>` : '';
+      const status = item.id === 'root' ? `<div class="status-card"><strong>Version 9 route order</strong>CRM Automation has two main branches: with the Quote lifecycle and without it. Inside the Quote branch, every current Quote context shows Start from scratch first and Templates second.</div>` : '';
       const sections = item.sections.map((section, index) => `<details class="detail-section" ${index < 2 ? 'open' : ''}><summary>${escapeHtml(section.title)}</summary><div class="detail-content">${section.copy ? `<p>${escapeHtml(section.copy)}</p>` : ''}${section.items ? `<ul>${section.items.map(value => `<li>${escapeHtml(value)}</li>`).join('')}</ul>` : ''}</div></details>`).join('');
       const legend = item.id === 'root' ? `<details class="detail-section" open><summary>Legend</summary><div class="detail-content legend"><span><i></i><b>Fixed by WeQuote</b></span><span class="editable"><i></i><b>You can change</b></span><span class="proposal"><i></i><b>New work or design proposal</b></span><span class="blocked"><i></i><b>Not offered here</b></span></div></details>` : '';
       document.getElementById('detailBody').innerHTML = `${chips}${status}${sections}${legend}<div class="source-note"><strong>Source status:</strong> checked against the current Phase 1 PRD, Quote Automation catalogue, Guide and prototype code on 29 August 2026. Warning cards show places where those sources do not yet agree.</div>`;

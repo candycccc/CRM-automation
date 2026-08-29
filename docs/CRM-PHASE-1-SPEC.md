@@ -1,18 +1,15 @@
-# WeQuote CRM — Phase 1 specification
+# WeQuote CRM — Phase 1 specification (historical extraction)
 
 **Extracted from `WeQuote-CRM-Phase-1-PRD.html` · 25 August 2026.**
 
-> **Current product-direction addendum · 29 August 2026**
-> Every existing Quote lifecycle placement context — Qualified, In Progress, In Review, Passed Review, Sent, Won and
-> Lost — now supports two separate Automation creation routes: **Templates** and **Custom**. Templates remain managed,
-> structurally locked flows with only declared settings editable. Custom uses a context-compatible Trigger-first journey
-> and creates an **Inactive Custom Automation draft** in the selected fixed context. This addendum supersedes the
-> Template-only/no-blank-canvas statements retained below from the 25 August extraction, including the introductory
-> Automation-scope paragraph, the one-route creation journey and AC-BLD-03 wherever they deny the Custom route.
-> Template-specific lock rules and protected Quote lifecycle boundaries remain valid. See
+> **SUPERSEDED REFERENCE — DO NOT USE AS THE CURRENT AUTOMATION CONTRACT.**
+> This file is a 25 August text extraction kept only for traceability. The single current PRD is
+> [`WeQuote-CRM-Phase-1-PRD.html`](WeQuote-CRM-Phase-1-PRD.html), Version 9 · Managed + Custom. Current direction is
 > [`quote-automation/QUOTE-LIFECYCLE-AUTOMATION-PRODUCT-DIRECTION-2026-08-29.md`](quote-automation/QUOTE-LIFECYCLE-AUTOMATION-PRODUCT-DIRECTION-2026-08-29.md).
-> The historical extraction remains below for traceability; product direction, current prototype implementation and
-> production runtime readiness must be reported separately.
+> Every fixed Quote context now offers **Start from scratch | Templates**, in that order. Start from scratch creates a
+> Custom Automation **Draft**; a complete saved flow that is off is **Inactive**; only a valid flow can become **Active**.
+> An Owning Company is Deal record data and can be chosen as a Rule parameter — there is no Automation-wide Company
+> scope. The old Template-only and Company-scope statements retained below are superseded and must not be implemented.
 
 This is the **committed Phase 1 scope only**. Phase 2 (customer-defined stages), Phase 3
 (fully custom pipelines) and all 26 figures have been removed. Where the full PRD showed a
@@ -25,10 +22,7 @@ acceptance-criterion IDs (`AC-XXX-nn`) are stable and match the full PRD and the
 workbook. **Do not renumber them.** Where something is out of Phase 1 scope it is marked
 *Deferred* in place, keeping its number.
 
-**Phase 1 Automation scope, per the 25 August handoff:** every Automation begins as one of
-the twelve templates. Phase 1B configures a template through its form; Phase 1C opens it as
-an editable copy in the builder, with draft / test / publish, the simulator and the
-required-work gate. **Start from scratch — a blank canvas as a creation route — is deferred.**
+**Historical 25 August wording begins below.** It does not override Version 9.
 
 ---
 
@@ -824,7 +818,7 @@ Twelve named recipes ship configured and ready. In Phase 1B a customer enables o
 | Lost | Lost Deal reason follow-up | Connected |
 
 
-> **Figure 20 — What comes ready to use.** Every template with its actual steps, grouped by the stage it starts in. Two things are worth reading closely. **High-value approval** — the one unconnected template — already has its rule expressed as `Value > £25,000 OR discount > 15%`. The *fields* behind that rule are real, configurable production settings; the *numbers* are example values from this artifact and should not be quoted as a real customer’s setting. Separately, exactly **two** templates use an explicit **Wait** step — seven working days on Qualified inactivity, three on Sent follow-up. The rest work from due dates or date-based triggers, which is a different scheduling problem (§C2).
+> **Figure 20 — What comes ready to use.** Every template with its actual steps, grouped by the stage it starts in. Two things are worth reading closely. **High-value approval** — the one unconnected template — already has its rule expressed as `Value > 25,000 in the Deal Company currency OR discount > 15%`. The *fields* behind that rule are real, configurable production settings; the *numbers* are example values from this artifact and should not be quoted as a real customer’s setting. Separately, exactly **two** templates use an explicit **Wait** step — seven calendar days on Qualified inactivity, three calendar days on Sent follow-up. The rest work from due dates or date-based triggers, which is a different scheduling problem (§C2).
 
 > **The one gap is the cheapest item in the pack**
 >
@@ -1089,7 +1083,7 @@ Owners here are roles, not people — the named individual, the current status, 
 | **Build** | One shared description of a flow, with versions stored server-side. Browser storage does not satisfy this. | Engineering | Blocking |
 | **Build** | Recipe settings can be changed without opening the canvas. | Engineering | Blocking |
 | **Build** | Every recipe carries a company scope, visible everywhere it is listed. | Engineering | Blocking |
-| **Build** | Timed recipes have a real work queue: persistence, worker, working days, timezone, cancellation when a record leaves the stage. | Engineering | Blocking |
+| **Build** | Timed recipes have a real work queue: persistence, worker, 1–90 calendar-day waits, timezone, cancellation when a record leaves the stage. | Engineering | Blocking |
 | **Tests** | Replaying the same event creates nothing twice, for every action type. | QA | Blocking |
 | **Tests** | Work already in flight finishes on the version it started with. | QA | Blocking |
 | **Tests** | Only one change order can be open per quote. | QA | Blocking |
@@ -1230,7 +1224,7 @@ Owners here are roles, not people — the named individual, the current status, 
 | FR-35 | The account boundary is resolved and asserted at event ingest, before company and stage matching, because queued runs have no user session. |
 | FR-36 | Company-level visibility is delivered as a new scoping tier for Leads, Deals and Automations. |
 | FR-37 | The activity timeline is extended to carry an organisation column, Deal and Lead links, and the new entry types the shared actions create. Automation results must be readable from the record they belong to. |
-| FR-38 | Time-driven and date-driven recipes require a production due-queue: persistence, worker, working-day and timezone handling, version pinning, cancellation when a record leaves the stage, idempotency, retry and audit. Event-driven and state-driven recipes must not be blocked behind it. |
+| FR-38 | Time-driven and date-driven recipes require a production due-queue: persistence, worker, 1–90 calendar-day Wait and timezone handling, version pinning, cancellation when a record leaves the stage, idempotency, retry and audit. Event-driven and state-driven recipes must not be blocked behind it. |
 | FR-39 | Where a Zoho CRM link is active, Deal behaviour follows the coexistence contract in §C3. |
 | FR-40 | The workflow definition schema and its versioned persistence are delivered in Phase 1B, because both authoring surfaces depend on them. Prototype behaviour backed by browser storage does not satisfy this. |
 | FR-41 | Phase 1A may derive and display lifecycle state, value and attention items. Phase 1A must not create notes, tasks, file requests or outbound notifications without an explicit user action. |
@@ -1470,7 +1464,7 @@ Two further events exist but cannot be built against: the CRM emits a Deal-creat
 > **Scheduling: reduced risk, not solved**
 >
 > The live platform already runs **thirteen scheduled jobs** — every minute, five minutes, hour and midnight, plus one dedicated to the notification queue. Quote expiry and request overdue are handled by the **hourly** job, which scans with SQL, sends a notification and writes a "notified" flag back. That is the fire-once-with-persistent-state pattern these recipes need, already proven.
- So this is not a green field. But a production Automation due-queue is more than one table and a worker. It must also handle working days, timezones and daylight saving; version pinning so a paused or republished Automation resumes against the right snapshot; cancelling or revalidating a pending run when the record leaves the stage; idempotency and concurrency locking; retry and failure monitoring; and company scope, permissions and audit history.
+ So this is not a green field. But a production Automation due-queue is more than one table and a worker. It must also handle 1–90 calendar-day waits, timezones and daylight saving; version pinning so a paused or republished Automation resumes against the right snapshot; cancelling or revalidating a pending run when the record leaves the stage; idempotency and concurrency locking; retry and failure monitoring; and permissions and audit history.
  **Existing cron infrastructure materially reduces scheduler risk, but a production Automation due-queue still requires a technical spike and runtime design.**
 
 > **🛑 What this matrix means for the roadmap**

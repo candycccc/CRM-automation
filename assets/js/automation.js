@@ -136,7 +136,7 @@
       waitDays: 0,
       quoteValueThreshold: 25000,
       discountThreshold: 15,
-      condition: 'Quote value is over £25,000 OR discount is over 15%',
+      condition: 'Quote value is over 25,000 in the Deal Company currency OR discount is over 15%',
       actionType: 'Create Note',
       actionName: 'High-value approval required',
       noteBody: 'Review the Quote value and discount before it is sent to the customer.',
@@ -363,7 +363,7 @@
       name: 'Qualified', label: 'STAGE 1', tone: 'qualified',
       description: 'Deal exists; no related Quote has started.',
       templateKeys: ['qualified-owner-first-action', 'qualified-inactivity', 'pre-quote-readiness'],
-      triggerBlockIds: ['trigger-deal-qualified', 'trigger-deal-owner', 'trigger-meeting-change', 'trigger-file-added'],
+      triggerBlockIds: ['trigger-deal-qualified', 'trigger-deal-owner', 'trigger-meeting-change', 'trigger-file-added', 'trigger-next-action-due', 'trigger-expected-close'],
       triggerChoices: [
         ['trigger-deal-qualified', 'Deal enters Qualified', 'Deal is created or enters Qualified.', '&#xf0ae;', 'Deal'],
         ['trigger-deal-owner', 'Deal Owner changes', 'The Qualified Deal is reassigned.', '&#xf007;', 'Deal'],
@@ -392,7 +392,7 @@
       name: 'In Review', label: 'CONDITIONAL', tone: 'in-review',
       description: 'Only used when the organisation uses Quote Review.',
       templateKeys: ['internal-quote-review'],
-      triggerBlockIds: ['trigger-review-submitted', 'trigger-file-added', 'trigger-note-follow-up'],
+      triggerBlockIds: ['trigger-review-submitted', 'trigger-review-note-changed', 'trigger-file-added', 'trigger-note-follow-up'],
       triggerChoices: [
         ['trigger-review-submitted', 'Quote is submitted for internal review', 'The Quote moves to In Review.', '&#xf24e;', 'Quote'],
         ['trigger-review-note-changed', 'Quote Review Note changes', 'A technical review Note is added, updated, completed or becomes due.', '&#xf249;', 'Quote'],
@@ -520,25 +520,25 @@
   }
 
   function automationCompanyScopeDetailMarkup(config, copy) {
-    return '<div class="aut-detail-company-scope"><div><small>OWNING COMPANIES</small><strong><i class="fai">&#xf1ad;</i> ' + escapeAutomationHtml(automationCompanyScopeLabel(config)) + '</strong><span>' + escapeAutomationHtml(copy || 'Choose which Companies this Automation applies to.') + '</span></div>' + automationCompanyScopePillsMarkup(config) + '</div>';
+    // Legacy drafts can still contain company-scope fields. Phase 1 no longer
+    // exposes an Automation-wide scope: Company is selected only inside an
+    // Owning Company Rule, where it is evaluated as record data.
+    return '';
   }
 
   function automationCompanyScopeBeforeAfterMarkup(config) {
-    return '<span class="aut-before-after-company"><i class="fai">&#xf1ad;</i> Applies to ' + escapeAutomationHtml(automationCompanyScopeLabel(config)) + '</span>' + automationCompanyScopePillsMarkup(config, 'compact');
+    return '';
   }
 
   function automationRecordMatchesCompanyScope(config, record) {
-    normalizeAutomationCompanyScope(config);
-    const recordCompanyId = record && record.owningCompanyId ? record.owningCompanyId : 'main-company';
-    if (config.companyScopeMode === 'all') return true;
-    if (config.companyScopeMode === 'all-except') return config.companyScopeIds.indexOf(recordCompanyId) < 0;
-    return config.companyScopeIds.indexOf(recordCompanyId) >= 0;
+    // Automation-wide Company scope was removed from the selected Phase 1
+    // product direction. Keep the legacy fields readable, but do not use them
+    // to enrol or exclude records. Company filtering is a parameterised Rule.
+    return true;
   }
 
   function automationCompanyScopesOverlap(first, second) {
-    return AUTOMATION_OWNING_COMPANIES.some(function (company) {
-      return automationRecordMatchesCompanyScope(first, { owningCompanyId: company.id }) && automationRecordMatchesCompanyScope(second, { owningCompanyId: company.id });
-    });
+    return true;
   }
 
   function automationOutcomeKey(config) {
@@ -930,7 +930,7 @@
       return;
     }
     if (isInactiveLeadWorkflow(config)) {
-      config.waitDays = Math.max(0, Number(config.waitDays) || 2);
+      config.waitDays = Math.max(1, Math.min(90, Number(config.waitDays) || 2));
       config.condition = 'No existing inactive Lead reminder';
       config.actionName = 'Create Lead reminder activity';
       config.actionOwner = 'Lead owner';
@@ -938,7 +938,7 @@
       return;
     }
     if (isQuoteWorkflow(config)) {
-      config.waitDays = Math.max(0, Number(config.waitDays) || 3);
+      config.waitDays = Math.max(1, Math.min(90, Number(config.waitDays) || 3));
       config.condition = 'No open Deal next action exists';
       config.actionType = 'Create Note';
       config.actionName = 'Sent Quote customer follow-up';
@@ -1169,7 +1169,19 @@
   let automationStageLocked = false;
   let creatorStartMode = 'scratch';
   let contextualCreatorMode = 'custom';
-  const quotePlaygroundState = { stage: 'Qualified', triggerId: '', rule: '', yesActionIds: [], noActionIds: [] };
+  const quotePlaygroundState = {
+    stage: 'Qualified',
+    triggerId: '',
+    ruleCategory: '',
+    rule: '',
+    ruleCompanyId: '',
+    ruleValueOperator: 'above',
+    ruleValueAmount: '',
+    ruleDate: '',
+    ruleDays: '',
+    yesActionIds: [],
+    noActionIds: []
+  };
   let pendingAutomationName = '';
   let pendingAutomationDescription = '';
   let selectedCompanyScopeMode = 'all';
@@ -1534,7 +1546,7 @@
     const publishIntro = publishTitle && publishTitle.parentElement ? publishTitle.parentElement.querySelector('p') : null;
     if (publishTitle) publishTitle.textContent = firstActivation ? 'Activate automation?' : 'Publish changes?';
     if (publishIntro) publishIntro.textContent = firstActivation
-      ? 'This saved Draft is currently Inactive. Testing is optional; activation starts future matching records.'
+      ? 'This complete Automation is saved and Inactive. Testing is optional; activation starts future matching records.'
       : 'Confirm the saved Draft before updating the live Automation. Testing is optional unless WeQuote detects a conflict.';
     if (publishConfirmButton) publishConfirmButton.textContent = firstActivation ? 'Activate automation' : 'Publish changes';
     const test = automationTestState(config);
@@ -1672,6 +1684,7 @@
 
     builderCanvas.addEventListener('pointerdown', function (event) {
       if (event.button !== 0 || builderPanTargetIsInteractive(event.target)) return;
+      collapseAutomationLeftPaneFromCanvas();
       event.preventDefault();
       builderPanState = {
         pointerId: event.pointerId,
@@ -1840,11 +1853,62 @@
     return !!(config && !config.protected && hasEditableStepModel(config) && !isPhaseOneTemplateRecipe(config));
   }
 
-  function showAutomationBlockLibraryPane() {
+  function syncAutomationLeftPaneAccessibility() {
+    const collapsed = !!(automationShell && automationShell.classList.contains('is-left-pane-collapsed'));
+    [blockLibrary, automationInspector].forEach(function (pane) {
+      if (!pane) return;
+      const unavailable = collapsed || pane.hidden;
+      pane.inert = unavailable;
+      pane.setAttribute('aria-hidden', unavailable ? 'true' : 'false');
+    });
+  }
+
+  function redrawAutomationAfterLeftPaneChange() {
+    const redraw = function () {
+      const config = activeConfig();
+      if (config && hasEditableStepModel(config)) scheduleScratchConnectorDraw(config);
+    };
+    requestAnimationFrame(redraw);
+    window.setTimeout(redraw, 240);
+  }
+
+  function setAutomationLeftPaneCollapsed(collapsed) {
+    if (!automationShell) return;
+    const nextCollapsed = Boolean(collapsed);
+    automationShell.classList.toggle('is-left-pane-collapsed', nextCollapsed);
+    automationShell.classList.toggle('is-settings-open', !nextCollapsed && !!(automationInspector && !automationInspector.hidden));
+    syncAutomationLeftPaneAccessibility();
+    redrawAutomationAfterLeftPaneChange();
+  }
+
+  function collapseAutomationLeftPaneFromCanvas() {
+    if (!automationShell || !automationShell.classList.contains('is-builder')) return;
+    if (guidedSetupState || automationView.classList.contains('aut-guided-setup-active')) return;
+    if (['palette', 'test', 'simulation', 'selected-run'].includes(activeNode)) return;
+    if ((automationInspector && automationInspector.contains(document.activeElement)) ||
+        (blockLibrary && blockLibrary.contains(document.activeElement))) {
+      document.activeElement.blur();
+    }
+    document.querySelectorAll('#viewAutomation .aut-flow [data-aut-node]').forEach(function (node) {
+      node.classList.remove('selected');
+    });
+    document.querySelectorAll('#viewAutomation .aut-flow [data-aut-step-wrap]').forEach(function (wrap) {
+      wrap.classList.remove('active');
+    });
+    closeStepMenu();
+    setAutomationLeftPaneCollapsed(true);
+  }
+
+  function showAutomationBlockLibraryPane(forceOpen) {
     const showLibrary = automationCanShowBlockLibrary();
     if (blockLibrary) blockLibrary.hidden = !showLibrary;
     if (automationInspector) automationInspector.hidden = showLibrary;
-    automationShell.classList.toggle('is-settings-open', !showLibrary);
+    if (forceOpen === true || !automationShell.classList.contains('is-left-pane-collapsed')) {
+      setAutomationLeftPaneCollapsed(false);
+    } else {
+      syncAutomationLeftPaneAccessibility();
+    }
+    automationShell.classList.toggle('is-settings-open', !automationShell.classList.contains('is-left-pane-collapsed') && !showLibrary);
     if (closeInspectorButton) closeInspectorButton.hidden = !showLibrary;
     closeStepMenu();
   }
@@ -1852,7 +1916,7 @@
   function showAutomationStepSettingsPane() {
     if (blockLibrary) blockLibrary.hidden = true;
     if (automationInspector) automationInspector.hidden = false;
-    automationShell.classList.add('is-settings-open');
+    setAutomationLeftPaneCollapsed(false);
     if (closeInspectorButton) closeInspectorButton.hidden = !automationCanShowBlockLibrary();
   }
 
@@ -2227,6 +2291,23 @@
     });
   }
 
+  function genericAutomationCalendarDay(value) {
+    const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return NaN;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const timestamp = Date.UTC(year, month - 1, day);
+    const parsed = new Date(timestamp);
+    if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) return NaN;
+    return timestamp / 86400000;
+  }
+
+  function genericAutomationTodayCalendarDay() {
+    const today = new Date();
+    return Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) / 86400000;
+  }
+
   function genericAutomationConditionResult(step, context) {
     const condition = String(step && step.condition || '').trim();
     const text = condition.toLowerCase();
@@ -2271,7 +2352,27 @@
       return !meetings.some(function (meeting) { return meeting.status === 'completed'; });
     }
     if (text.includes('customer or site information is incomplete') || text.includes('site or customer information is incomplete')) return !(deal && deal.contact && (deal.org || deal.c));
-    if (text.includes('expected close date is overdue')) return !!(deal && deal.closeDate) && Date.parse(deal.closeDate) < Date.now();
+    if (text.includes('owning company matches the selected company')) {
+      return !!(step && step.conditionCompanyId) && !!deal && deal.owningCompanyId === step.conditionCompanyId;
+    }
+    if (text.includes('expected close date is missing')) return !(deal && deal.closeDate);
+    if (text.includes('expected close date is overdue')) return genericAutomationCalendarDay(deal && deal.closeDate) < genericAutomationTodayCalendarDay();
+    if (text.includes('expected close date is before the selected date')) {
+      return genericAutomationCalendarDay(deal && deal.closeDate) < genericAutomationCalendarDay(step.conditionDate);
+    }
+    if (text.includes('expected close date is on the selected date')) {
+      return genericAutomationCalendarDay(deal && deal.closeDate) === genericAutomationCalendarDay(step.conditionDate);
+    }
+    if (text.includes('expected close date is after the selected date')) {
+      return genericAutomationCalendarDay(deal && deal.closeDate) > genericAutomationCalendarDay(step.conditionDate);
+    }
+    if (text.includes('expected close date is within the selected window')) {
+      const closeDay = genericAutomationCalendarDay(deal && deal.closeDate);
+      const todayDay = genericAutomationTodayCalendarDay();
+      const windowDays = Number(step && step.conditionDays);
+      const differenceDays = closeDay - todayDay;
+      return Number.isFinite(closeDay) && Number.isInteger(windowDays) && windowDays > 0 && differenceDays >= 0 && differenceDays <= windowDays;
+    }
     if (text.includes('loss reason is empty') || text.includes('loss reason is missing')) return !(deal && deal.lostReason);
     if (text.includes('no viable related quote') || text.includes('no related quote can still be accepted')) return !quotes.some(function (item) { return item && !item.alternativeLost && !['cancelled', 'rejected', 'declined'].includes(item.status); });
     if (text.includes('deposit amount is available')) return Number(deal && deal.v) > 0;
@@ -2279,6 +2380,14 @@
     if (text.includes('deal does not have selected label')) return !(deal && deal.labels && deal.labels.length);
     if (text.includes('deal has selected interest')) return !!(deal && deal.interests && deal.interests.length);
     if (text.includes('deal does not have selected interest')) return !(deal && deal.interests && deal.interests.length);
+    if (text.includes('deal value matches the selected operator')) {
+      const dealValue = Number(deal && deal.v);
+      const amount = Number(step && step.conditionValueAmount);
+      if (!Number.isFinite(dealValue) || !Number.isFinite(amount)) return false;
+      if (step.conditionValueOperator === 'below') return dealValue < amount;
+      if (step.conditionValueOperator === 'equal') return dealValue === amount;
+      return dealValue > amount;
+    }
     if (text.includes('value') || text.includes('discount')) {
       const amount = Number((condition.match(/[£$]?([\d,]+)/) || [])[1]?.replace(/,/g, ''));
       return amount ? Number(deal && deal.v) >= amount : Number(deal && deal.v) > 0;
@@ -2576,14 +2685,10 @@
       result = { recipient: automationOwnerName(step.owner || 'Deal owner', deal) };
       genericAutomationHistory(deal, { kind: 'notification', actionType: 'notification', title: 'Internal notification sent to ' + result.recipient });
     } else if (action === 'Add Quote Label') {
-      const quote = genericAutomationLatestQuote(context);
-      if (quote) {
-        quote.labels = Array.isArray(quote.labels) ? quote.labels : [];
-        const label = step.quoteLabel || 'Priority';
-        if (!quote.labels.includes(label)) quote.labels.push(label);
-        result = label;
-        genericAutomationHistory(deal, { kind: 'quote-data', actionType: 'quote-label', title: 'Add Quote Label · ' + label });
-      }
+      // Kept only so older saved Drafts remain readable. Product has not approved
+      // this Action, so it must never mutate CRM data even if legacy state reaches
+      // the runtime before activation validation runs.
+      result = null;
     } else if (action === 'Attach file to Deal' && deal) {
       deal.files = Array.isArray(deal.files) ? deal.files : [];
       const fileName = step.fileUploadedName || step.fileSelection || 'Automation document';
@@ -3630,7 +3735,7 @@
             renderContextualTemplateSidebar(stageName, true, true, true);
           });
         });
-        showAutomationToast(stageName + ' is fixed by the Quote lifecycle. Build a compatible Custom Automation or use a matching Template.');
+        showAutomationToast(stageName + ' is fixed by the Quote lifecycle. Start from scratch, or choose a matching Template.');
       } else {
         const customWorkflowKey = userWorkflowKeys().find(function (key) {
           return (workflows[key].triggerStageId === context.stageId || workflowStageName(workflows[key]) === stageName) &&
@@ -3981,7 +4086,7 @@
       ? 'New matching events continue using this version until you publish the Draft.'
       : 'Matching work at ' + activeStage + ' remains manual until this Draft is published.';
     impactAfterTitle.textContent = 'Saved Draft being tested';
-    impactAfterCopy.textContent = model.length + ' saved workflow step' + (model.length === 1 ? '' : 's') + ' · ' + automationCompanyScopeLabel(config) + ' · no live CRM data is changed.';
+    impactAfterCopy.textContent = model.length + ' saved workflow step' + (model.length === 1 ? '' : 's') + ' · no live CRM data is changed.';
     impactAfter.classList.remove('off');
     const changes = Array.isArray(config.lastSavedChanges) && config.lastSavedChanges.length
       ? config.lastSavedChanges
@@ -4420,8 +4525,8 @@
       title: 'Qualified inactivity reminder', status: 'Active', start: 'Qualified', end: 'Follow-up Note created or branch ends',
       outcome: 'Prevent Qualified opportunities from going quiet.',
       steps: [
-        ['trigger', 'TRIGGER', 'Deal remains in Qualified', 'No activity for 7 working days'],
-        ['wait', 'WAIT', '7 working days', 'Calendar-aware delay'],
+        ['trigger', 'TRIGGER', 'Deal remains in Qualified', 'No activity for 7 calendar days'],
+        ['wait', 'WAIT', '7 calendar days', 'Calendar-day delay'],
         ['condition', 'RULE', 'Still inactive?', 'Stage = Qualified AND no recent activity'],
         ['branches', 'BRANCH', 'YES · Create follow-up Note', 'NO · End safely'],
         ['action final', 'ACTION', 'Create Note + mention Deal owner', 'Follow up next working day']
@@ -4433,7 +4538,7 @@
       outcome: 'Add final commercial governance when a reviewed Quote carries higher risk.',
       steps: [
         ['trigger', 'TRIGGER', 'Quote reaches Passed Review', 'Quote Pipeline'],
-        ['condition', 'RULE', 'Value > £25,000 OR discount > 15%?', 'Two criteria joined by OR'],
+        ['condition', 'RULE', 'Value > 25,000 in the Deal Company currency OR discount > 15%?', 'Two criteria joined by OR'],
         ['branches', 'BRANCH', 'YES · Request approval', 'NO · Continue normally'],
         ['action final', 'ACTION', 'Create Note + mention one approver', 'Follow up today']
       ],
@@ -4444,7 +4549,7 @@
       outcome: 'Follow up viable Sent Quotes without creating duplicate work.',
       steps: [
         ['trigger', 'TRIGGER', 'Quote enters Sent', 'First send of each revision'],
-        ['wait', 'WAIT', '3 working days', 'Pause before checking'],
+        ['wait', 'WAIT', '3 calendar days', 'Pause before checking'],
         ['condition', 'RULE', 'Still Sent and not Expired?', 'Sent AND expiry date has not passed'],
         ['branches', 'BRANCH', 'YES · Create follow-up', 'NO · End safely'],
         ['action final', 'ACTION', 'Create Note + mention Deal owner', 'Follow up today']
@@ -4939,7 +5044,7 @@
       button.tabIndex = active ? 0 : -1;
       button.hidden = !available;
       button.disabled = !available;
-      if (isCustomButton) button.title = available ? 'Build a compatible Custom Automation in this Stage' : 'Choose a Pipeline Stage first';
+      if (isCustomButton) button.title = available ? 'Start a compatible Custom Automation from scratch in this Stage' : 'Choose a Pipeline Stage first';
     });
     if (contextTemplateList) contextTemplateList.hidden = contextualCreatorMode !== 'templates';
     const templateHelp = contextTemplateSidebar.querySelector('.aut-context-template-help');
@@ -4981,7 +5086,7 @@
     if (contextStageLabel) contextStageLabel.textContent = automationStageLocked ? 'Pipeline Stage · fixed' : 'Select Pipeline Stage';
     const contextTemplateHelp = contextTemplateSidebar.querySelector('.aut-context-template-help span');
     if (contextTemplateHelp) contextTemplateHelp.textContent = automationStageLocked
-      ? 'This Quote Stage stays fixed. Switch between Custom and its matching Templates above.'
+      ? 'This Quote Stage stays fixed. Switch between Start from scratch and its matching Templates above.'
       : 'Select a Pipeline Stage to see matching Templates.';
     const quoteConnected = automationPipelineUsesQuoteLifecycle(pipeline);
     const fixedTemplateContext = quoteConnected && !selectedDefinition.custom;
@@ -4996,8 +5101,8 @@
         })
       : (selectedDefinition.templateKeys || []).filter(function (templateKey) { return templateDefinitions[templateKey]; });
     const phaseNote = fixedTemplateContext
-      ? '<div class="aut-template-fixed-note"><i class="fai">&#xf023;</i><span><strong>This Quote Stage stays fixed, but it supports both Custom Automations and Templates.</strong> Template names, Stages and recipe steps stay fixed; choose Custom above when you want to build your own compatible flow.</span></div>'
-      : '<div class="aut-template-custom-note"><i class="fai">&#xf303;</i><span><strong>' + escapeAutomationHtml(quoteConnected ? 'Custom Stage.' : 'Standalone Pipeline.') + '</strong> Custom Automation is shown first. You can also choose a ready-made starter from Templates.</span></div>';
+      ? '<div class="aut-template-fixed-note"><i class="fai">&#xf023;</i><span><strong>This Quote Stage stays fixed, but it supports both Start from scratch and Templates.</strong> Template names, Stages and recipe steps stay fixed; choose Start from scratch above when you want to build your own compatible Custom Automation.</span></div>'
+      : '<div class="aut-template-custom-note"><i class="fai">&#xf303;</i><span><strong>' + escapeAutomationHtml(quoteConnected ? 'Custom Stage.' : 'Standalone Pipeline.') + '</strong> Start from scratch is shown first. You can also choose a ready-made starter from Templates.</span></div>';
     const templateMarkup = templateKeys.map(function (templateKey) {
       const template = templateDefinitions[templateKey];
       const meta = phaseOneContextTemplateMeta[templateKey] || customTemplateMeta[templateKey];
@@ -5033,7 +5138,7 @@
       requestAnimationFrame(function () {
         contextTemplateSidebar.classList.add('is-opening');
         showAutomationToast(creationPolicy.defaultMode === 'custom'
-          ? 'Custom Automation opened for ' + selectedStage + '. Choose what should start this Automation.'
+          ? 'Start from scratch opened for ' + selectedStage + '. Choose what should start this Custom Automation.'
           : 'Templates opened for ' + selectedStage + '. Choose a ready-made flow and change its settings.');
         contextTemplateStage.focus();
         window.setTimeout(function () { contextTemplateSidebar.classList.remove('is-opening'); }, 460);
@@ -5088,7 +5193,7 @@
         renderContextualTemplateSidebar(firstStage, true, true);
       });
     });
-    showAutomationToast('Untitled Automation created. Choose a Stage, then build a Custom Automation or use a matching Template.');
+    showAutomationToast('Untitled Automation created. Choose a Stage, then start from scratch or choose a matching Template.');
   }
 
   function renderCreatorPipelineChoices() {
@@ -5493,7 +5598,7 @@
     const concept = conceptAutomationDefinitions[conceptKey];
     if (!concept) return '';
     const state = definition.states[conceptKey] || 'off';
-    return '<div class="aut-inspect-automation"><strong>' + escapeAutomationHtml(concept.title) + '</strong><em class="' + escapeAutomationHtml(state) + '">' + automationStateLabel(state, definition.status) + '</em><small>' + escapeAutomationHtml(concept.outcome) + '</small><b class="aut-inspect-company-scope"><i class="fai">&#xf1ad;</i> ' + escapeAutomationHtml(automationCompanyScopeLabel(concept)) + '</b>' + automationCompanyScopePillsMarkup(concept, 'compact') + '</div>';
+    return '<div class="aut-inspect-automation"><strong>' + escapeAutomationHtml(concept.title) + '</strong><em class="' + escapeAutomationHtml(state) + '">' + automationStateLabel(state, definition.status) + '</em><small>' + escapeAutomationHtml(concept.outcome) + '</small></div>';
   }
 
   function automationGroupInspectWorkflowMarkup(workflowKey) {
@@ -5501,7 +5606,7 @@
     if (!config) return '';
     const needsSetup = workflowNeedsSetup(config);
     const state = config.enabled ? 'on' : (needsSetup ? 'draft' : 'off');
-    return '<div class="aut-inspect-automation user"><strong>' + escapeAutomationHtml(config.title) + '</strong><em class="' + state + '">' + (config.enabled ? 'Active' : (needsSetup ? 'Draft' : 'Inactive')) + '</em><small>' + escapeAutomationHtml(config.actionName || 'Saved business outcome') + '</small><b class="aut-inspect-company-scope"><i class="fai">&#xf1ad;</i> ' + escapeAutomationHtml(automationCompanyScopeLabel(config)) + '</b>' + automationCompanyScopePillsMarkup(config, 'compact') + '</div>';
+    return '<div class="aut-inspect-automation user"><strong>' + escapeAutomationHtml(config.title) + '</strong><em class="' + state + '">' + (config.enabled ? 'Active' : (needsSetup ? 'Draft' : 'Inactive')) + '</em><small>' + escapeAutomationHtml(config.actionName || 'Saved business outcome') + '</small></div>';
   }
 
   function automationGroupInspectMapMarkup(definition) {
@@ -5867,7 +5972,7 @@
     document.getElementById('autGroupEmptyTitle').textContent = genuinelyEmpty ? 'No Automations yet' : 'No matching Automations';
     document.getElementById('autGroupEmptyCopy').textContent = genuinelyEmpty
       ? (automationPipelineUsesQuoteLifecycle(pipeline)
-        ? 'Open the Map to build a compatible Custom Automation in any Stage or use a matching fixed Template for ' + pipeline.name + '.'
+        ? 'Open the Map to start from scratch in any Stage or choose a matching fixed Template for ' + pipeline.name + '.'
         : 'Open the Map, choose a Stage and build the first Automation from scratch for ' + pipeline.name + '.')
       : 'Try another search or status filter.';
     document.getElementById('autGroupEmptyCreate').hidden = !genuinelyEmpty;
@@ -5947,7 +6052,7 @@
     renderAutomationGroupRows();
     showAutomationPipelineDetail(key);
     setAutomationGroupEditMode(true);
-    showAutomationToast('Untitled Automation created. Build a compatible Custom Automation or use a fixed Template in any Quote Stage. WeQuote will still update Deal Stages from Quote activity.');
+    showAutomationToast('Untitled Automation created. Start from scratch or choose a fixed Template in any Quote Stage. WeQuote will still update Deal Stages from Quote activity.');
   }
 
   function createAutomationFromGroupList() {
@@ -5974,33 +6079,52 @@
     });
   }
 
+  function automationFirstStepOfType(sequence, type) {
+    const list = Array.isArray(sequence) ? sequence : [];
+    for (let index = 0; index < list.length; index += 1) {
+      const step = list[index];
+      if (!step) continue;
+      if (step.type === type) return step;
+      if (step.type === 'condition') {
+        const nested = automationFirstStepOfType(step.yesSteps, type) || automationFirstStepOfType(step.noSteps, type);
+        if (nested) return nested;
+      }
+    }
+    return null;
+  }
+
   function dynamicWorkflowRuleMarkup(config) {
-    const trigger = config.triggerEvent || (config.objectType === 'Lead' ? 'Lead matches the saved Starts when choice' : 'Deal matches the saved Starts when choice');
-    const wait = Number(config.waitDays) > 0
-      ? '<b class="wait"><span>WAIT</span> ' + escapeAutomationHtml(String(config.waitDays)) + ' day' + (Number(config.waitDays) === 1 ? '' : 's') + '</b>'
+    const steps = Array.isArray(config.steps) ? config.steps : [];
+    const triggerSummary = scratchTriggerText(config);
+    const trigger = (triggerSummary && triggerSummary.title) || config.triggerEvent || (config.objectType === 'Lead' ? 'Lead matches the saved Starts when choice' : 'Deal matches the saved Starts when choice');
+    const waitStep = steps.find(function (step) { return step && step.type === 'wait'; });
+    const conditionStep = automationFirstStepOfType(steps, 'condition');
+    const actionStep = conditionStep
+      ? automationFirstStepOfType(conditionStep.yesSteps, 'action')
+      : automationFirstStepOfType(steps, 'action');
+    const noActionStep = conditionStep ? automationFirstStepOfType(conditionStep.noSteps, 'action') : null;
+    const fallbackWaitDays = Number(config.waitDays) > 0 ? Number(config.waitDays) : 0;
+    const waitDays = waitStep ? Number(waitStep.days) : fallbackWaitDays;
+    const wait = waitDays > 0
+      ? '<b class="wait"><span>WAIT</span> ' + escapeAutomationHtml(String(waitDays)) + ' day' + (waitDays === 1 ? '' : 's') + '</b>'
       : '';
-    const condition = config.condition || 'Saved conditions are met';
-    const owner = config.actionOwner || config.assignmentOwner || 'Record owner';
-    const due = config.actionDue ? ' · ' + config.actionDue : '';
-    const required = automationConfigHasRequiredAction(config)
-      ? ' · Required before ' + (config.blockedEvent === 'first-related-quote' ? 'first related Quote is created' : 'continuing')
+    const condition = conditionStep
+      ? '<b class="condition"><span>IF</span> ' + escapeAutomationHtml(automationConditionConfiguredCopy(conditionStep).replace(/\?+$/, '')) + '</b>'
+      : '';
+    const actionCopy = actionStep
+      ? scratchStepText(actionStep, config).title
+      : (config.actionName || 'Choose an Action');
+    const yesLabel = conditionStep ? 'IF YES' : 'ACTION';
+    const yes = '<b class="yes"><span>' + yesLabel + '</span> ' + escapeAutomationHtml(actionCopy) + '</b>';
+    const no = conditionStep
+      ? '<b class="no"><span>IF NO</span> ' + escapeAutomationHtml(noActionStep ? scratchStepText(noActionStep, config).title : 'Stop this path') + '</b>'
       : '';
     return '<div class="aut-map-rules">' +
-      '<b class="when"><span>WHEN</span> ' + escapeAutomationHtml(trigger) + '</b>' + wait +
-      '<b class="condition"><span>IF</span> ' + escapeAutomationHtml(condition) + '</b>' +
-      '<b class="yes"><span>YES</span> ' + escapeAutomationHtml(config.actionName || 'Run saved action') + ' · Assigned to ' + escapeAutomationHtml(owner) + escapeAutomationHtml(due + required) + '</b>' +
-      '<b class="no"><span>IF NO</span> Stop this path</b></div>';
+      '<b class="when"><span>WHEN</span> ' + escapeAutomationHtml(trigger) + '</b>' + wait + condition + yes + no + '</div>';
   }
 
   function automationMapCompanyScopeMarkup(config) {
-    normalizeAutomationCompanyScope(config);
-    const appliedCompanies = automationCompanyScopeAppliedCompanies(config);
-    const summary = config.companyScopeMode === 'all'
-      ? 'For all Companies'
-      : 'For ' + appliedCompanies.length + (config.companyScopeMode === 'selected' ? ' selected' : '') + ' Compan' + (appliedCompanies.length === 1 ? 'y' : 'ies');
-    return '<div class="aut-map-company-scope" aria-label="Owning Company scope: ' + escapeAutomationHtml(automationCompanyScopeTitle(config)) + '">' +
-      '<strong class="aut-map-company-scope-summary"><i class="fai">&#xf1ad;</i> ' + escapeAutomationHtml(summary) + '</strong>' +
-      '<div class="aut-map-company-scope-pills">' + automationCompanyScopePillItemsMarkup(config) + '</div></div>';
+    return '';
   }
 
   function dynamicWorkflowCardMarkup(workflowKey, config) {
@@ -6695,7 +6819,7 @@
     } else if (selectedConceptAutomation === 'inactivity') {
       steps = [{ type: 'wait', days: 7 }, { type: 'condition', condition: 'Stage is Qualified AND no recent activity exists', yesSteps: [note('Qualified inactivity follow-up', 'Deal owner', 'Follow up this Qualified Deal because no recent sales activity was found.', '1-working-day')], noSteps: [] }];
     } else if (selectedConceptAutomation === 'high-value') {
-      steps = [{ type: 'condition', condition: 'Quote value > £25,000 OR discount > 15%', yesSteps: [note('High-value approval required', 'Alex Osei', 'Review the Quote value and discount before it is sent.', 'today')], noSteps: [] }];
+      steps = [{ type: 'condition', condition: 'Quote value > 25,000 in the Deal Company currency OR discount > 15%', yesSteps: [note('High-value approval required', 'Alex Osei', 'Review the Quote value and discount before it is sent.', 'today')], noSteps: [] }];
     } else if (selectedConceptAutomation === 'sent-follow-up') {
       objectType = 'Quote';
       trigger = { title: 'Quote enters Sent', detail: 'Quote Pipeline · first send of each revision' };
@@ -7115,7 +7239,7 @@
         automationCompanyScopeDetailMarkup(config) +
         '<div class="aut-dynamic-detail-rules">' + dynamicWorkflowRuleMarkup(config) + '</div>' +
         (state === 'draft' ? '<div class="aut-concept-note setup"><i class="fai">&#xf071;</i><span><strong>Cannot turn on yet:</strong> ' + escapeAutomationHtml(setupReason) + '</span></div>' : '') +
-        '<div class="aut-concept-note"><i class="fai">&#xf05a;</i><span><strong>How to read this:</strong> Stage controls where the Automation belongs. Company scope controls which records can enter it.</span></div>' +
+        '<div class="aut-concept-note"><i class="fai">&#xf05a;</i><span><strong>How to read this:</strong> The Stage controls where this Automation belongs. Add an Owning Company Rule only when the flow should check one specific Deal Company.</span></div>' +
         '<div class="aut-concept-actions"><button class="aut-btn aut-detail-history" type="button" id="autMapDynamicHistory"><i class="fai">&#xf1da;</i> Change history</button><button class="aut-btn" type="button" id="autMapDynamicState"><i class="fai">' + (state === 'on' ? '&#xf04c;' : (state === 'draft' ? '&#xf303;' : '&#xf04b;')) + '</i> ' + (state === 'on' ? 'Turn off' : (state === 'draft' ? 'Edit Draft' : 'Turn on')) + '</button><button class="aut-btn primary" type="button" id="autMapDynamicEdit"><i class="fai">&#xf303;</i> Edit automation</button></div>';
       detailBody.querySelector('#autMapDynamicHistory').addEventListener('click', function () {
         showAutomationToast('Change history records saved edits and every Active / Inactive status change.');
@@ -7185,7 +7309,7 @@
       impactTitle.textContent = (turningOn ? 'Turn on ' : 'Turn off ') + (config.title || 'Automation') + '?';
       impactSubtitle.textContent = 'Compare the operational effect before confirming this status change.';
       currentTitle.textContent = state === 'on' ? 'Automation is Active' : 'Automation is Inactive';
-      currentCopy.textContent = state === 'on' ? 'Matching records for ' + automationCompanyScopeLabel(config) + ' start automatically.' : 'No Automation will run for new matching activity.';
+      currentCopy.textContent = state === 'on' ? 'Matching records start this Automation automatically.' : 'No Automation will run for new matching activity.';
       afterTitle.textContent = turningOn ? 'Automation is Active' : 'Automation is Inactive';
       afterCopy.textContent = turningOn ? 'New matching activity will use the last tested and published version.' : 'New matching activity will skip this Automation. WeQuote will still update Quote Stages automatically.';
       runsLabel.hidden = turningOn;
@@ -7217,7 +7341,7 @@
         if (!config) { closeImpact(); return; }
         if (turningOn && automationCompanyScopeConflicts(config).length) {
           closeImpact();
-          showAutomationToast('Turn on blocked: this Company scope overlaps an Active Automation with the same outcome.');
+          showAutomationToast('Turn on blocked: another Active Automation uses the same Stage, start and outcome.');
           return;
         }
         if (!turningOn && !config.lastTestedAt) config.lastTestedAt = 'Previously published';
@@ -7524,6 +7648,7 @@
     automationView.classList.remove('aut-untitled-builder-mode');
     automationShell.classList.remove('is-builder');
     automationShell.classList.remove('has-block-library');
+    automationShell.classList.remove('is-left-pane-collapsed');
     closeStepMenu();
     builderEmpty.hidden = false;
     if (blockLibrary) blockLibrary.hidden = true;
@@ -7551,6 +7676,7 @@
     pipelineGroups.hidden = true;
     pipelineDetail.hidden = true;
     automationShell.classList.add('is-builder');
+    if (enteringBuilder) automationShell.classList.remove('is-left-pane-collapsed');
     const phaseOneRecipe = isPhaseOneTemplateRecipe(activeConfig());
     automationView.classList.toggle('aut-template-recipe-mode', phaseOneRecipe);
     automationView.classList.toggle('aut-untitled-builder-mode', isUntitledPhaseOneAutomation(activeConfig()));
@@ -7668,7 +7794,7 @@
     { id: 'action-create-quote', tab: 'action', group: 'Quote & CRM data', type: 'action', label: 'Create the first Quote for this Deal', detail: 'Qualified only · creates one empty Quote and moves the Deal to In Progress', capability: 'connect', capabilityLabel: 'CONNECT', icon: '&#xf15c;' },
     { id: 'action-create-quote-option', tab: 'action', group: 'Quote & CRM data', type: 'action', label: 'Create another Quote option', detail: 'In Progress only · creates a separate Quote for the same Deal; it is not a revision', capability: 'connect', capabilityLabel: 'CONNECT', icon: '&#xf0c5;' },
     { id: 'action-notify', tab: 'action', group: 'Quote & CRM data', type: 'action', label: 'Send internal notification', detail: 'Notify selected internal recipients', capability: 'connect', capabilityLabel: 'CONNECT', icon: '&#xf0f3;' },
-    { id: 'action-add-quote-label', tab: 'action', group: 'Quote & CRM data', type: 'action', label: 'Add Quote Label', detail: 'Write an existing Quote label', capability: 'connect', capabilityLabel: 'CONNECT', proof: 'Pattern proven on Quote', icon: '&#xf02b;' },
+    { id: 'action-add-quote-label', tab: 'action', group: 'Quote & CRM data', type: 'action', label: 'Add Quote Label', detail: 'Not available yet. This is not part of the selected 14 shared Actions or the 2 guarded Quote Actions.', capability: 'future', capabilityLabel: 'PENDING DECISION', proof: 'Prototype-only mismatch · excluded from formal totals', icon: '&#xf02b;', disabled: true },
     { id: 'action-add-deal-label', tab: 'action', group: 'Deal data', type: 'action', label: 'Add Deal label', detail: 'Add one existing CRM label without creating a duplicate', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Labels · New CRM', icon: '&#xf02b;' },
     { id: 'action-remove-deal-label', tab: 'action', group: 'Deal data', type: 'action', label: 'Remove Deal label', detail: 'Remove only a system or Automation-managed label owned by this flow', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Labels · New CRM', icon: '&#xf02b;' },
     { id: 'action-set-next-action', tab: 'action', group: 'Deal activity', type: 'action', label: 'Set Deal Next Action', detail: 'Set the one visible next task, owner and due date', capability: 'new-crm', capabilityLabel: 'NEW CRM', proof: 'Deal Focus · New CRM', icon: '&#xf0ae;' },
@@ -7684,7 +7810,7 @@
 
     { id: 'logic-condition', tab: 'logic', group: 'Rules', type: 'condition', label: 'Rule', detail: 'Ask one Yes or No question. WeQuote adds both results automatically.', capability: 'engine', capabilityLabel: 'ENGINE', icon: '&#xf126;' },
     { id: 'logic-and-or', tab: 'logic', group: 'Later', type: 'condition', label: 'AND / OR group', detail: 'Multiple checks need their own settings. Use one Rule for now.', capability: 'future', capabilityLabel: 'COMING LATER', icon: '&#xf0e8;', disabled: true },
-    { id: 'logic-wait', tab: 'logic', group: 'Flow control', type: 'wait', label: 'Wait', detail: 'Calendar days, working days or date/time', capability: 'engine', capabilityLabel: 'ENGINE', proof: 'Scheduler required', icon: '&#xf017;' },
+    { id: 'logic-wait', tab: 'logic', group: 'Flow control', type: 'wait', label: 'Wait', detail: 'Pause for 1–90 calendar days', capability: 'engine', capabilityLabel: 'ENGINE', proof: 'Scheduler required', icon: '&#xf017;' },
     { id: 'logic-end', tab: 'logic', group: 'Flow control', type: 'end', label: 'Stop this path', detail: 'Stop here without running another Action', capability: 'engine', capabilityLabel: 'ENGINE', icon: '&#xf28d;' },
     { id: 'logic-branches', tab: 'logic', group: 'Built automatically', type: 'generated', label: 'If Yes / If No', detail: 'Added automatically with a Rule', capability: 'engine', capabilityLabel: 'ENGINE', icon: '&#xf126;', disabled: true },
     { id: 'logic-else-if', tab: 'logic', group: 'Built automatically', type: 'generated', label: 'Else If', detail: 'Add another Rule inside a branch', capability: 'engine', capabilityLabel: 'ENGINE', icon: '&#xf126;', disabled: true },
@@ -7708,7 +7834,7 @@
         'action-create-quote': ['Create the first Quote for this Deal', 'Qualified only. Creates one empty Quote, then moves the Deal to In Progress.'],
         'action-create-quote-option': ['Create another Quote option', 'In Progress only. Creates a separate draft Quote for the same Deal. It is not a revision.'],
         'action-notify': ['Send an internal notification', 'Choose which colleagues should receive it.'],
-        'action-add-quote-label': ['Add Quote Label', 'Add an existing Label to the Quote.'],
+        'action-add-quote-label': ['Add Quote Label', 'Not available yet. The product contract still needs a decision.'],
         'action-add-deal-label': ['Add Deal Label', 'Add an existing Label without making a duplicate.'],
         'action-remove-deal-label': ['Remove Deal Label', 'Remove only a system or Automation-managed Label owned by this flow.'],
         'action-set-next-action': ['Set Deal Next Action', 'Set the next task, owner, due date and time.'],
@@ -7723,7 +7849,7 @@
         'action-move-deal-stage': ['Move Deal to another Stage', 'Choose one allowed working Stage. Fixed Quote Stages cannot be chosen.'],
         'logic-condition': ['Rule (optional check)', 'Ask a Yes or No question. WeQuote creates an If Yes path and an If No path.'],
         'logic-and-or': ['Multiple Rules', 'Not available yet. Use one Rule for now.'],
-        'logic-wait': ['Wait (optional)', 'Pause for calendar days, working days, or until a date and time.'],
+        'logic-wait': ['Wait (optional)', 'Pause for 1–90 calendar days.'],
         'logic-end': ['Stop this path', 'Nothing else happens on this path.'],
         'logic-branches': ['If Yes / If No paths', 'WeQuote adds these automatically when you add a Rule.'],
         'logic-else-if': ['Add another Rule', 'Not available yet.'],
@@ -7805,9 +7931,6 @@
     if (definition.quoteConnected && segment === 'In Progress' && !definition.protectedOutcome) {
       actions.push('action-create-quote-option');
     }
-    if (definition.quoteConnected && ['In Progress', 'In Review', 'Passed Review', 'Sent'].includes(segment)) {
-      actions.push('action-add-quote-label');
-    }
     if (definition.custom) actions.push('action-move-deal-stage');
     return actions;
   }
@@ -7879,7 +8002,7 @@
         '<div class="aut-library-group-items">' + blocks.filter(function (block) { return block.group === group; }).map(function (block) {
           const copy = workflowBlockUserCopy(block, config);
           const unavailableLabel = block.disabled
-            ? '<em class="aut-capability future">' + escapeAutomationHtml(block.capabilityLabel === 'MANUAL ONLY' ? 'MANUAL ONLY' : 'COMING LATER') + '</em>'
+            ? '<em class="aut-capability future">' + escapeAutomationHtml(block.capabilityLabel === 'MANUAL ONLY' || block.capabilityLabel === 'PENDING DECISION' ? block.capabilityLabel : 'COMING LATER') + '</em>'
             : '';
           return '<button class="aut-library-block' + (block.disabled ? ' is-unavailable' : '') + '" type="button" data-aut-block-id="' + block.id + '" data-aut-block-type="' + block.type + '" data-aut-library-tab-type="' + block.tab + '"' + (block.disabled ? ' disabled aria-disabled="true"' : '') + ' title="' + escapeAutomationHtml(block.disabled ? copy.detail : 'Add ' + copy.label) + '">' +
             '<span class="aut-library-block-icon"><i class="fai">' + block.icon + '</i></span><span class="aut-library-block-copy"><span class="aut-library-block-title"><strong>' + escapeAutomationHtml(copy.label) + '</strong>' + unavailableLabel + '</span><small>' + escapeAutomationHtml(copy.detail) + '</small></span>' + (block.disabled ? '<i class="fai aut-library-block-lock">&#xf023;</i>' : '<i class="fai aut-library-block-grip">&#xf58e;</i>') + '</button>';
@@ -8183,6 +8306,15 @@
     if (!config || !config.templateKey) return;
     const source = templateDefinitions[config.templateKey];
     if (!source || source.actionType !== 'Create Note') return;
+    const highValueTemplate = config.templateKey === 'high-value-approval';
+    const highValueCondition = highValueTemplate
+      ? 'Quote value is over ' + Math.max(1, Number(config.quoteValueThreshold) || 25000).toLocaleString('en-GB') + ' in the Deal Company currency OR discount is over ' + Math.max(0, Math.min(100, Number(config.discountThreshold) || 15)) + '%'
+      : '';
+    if (highValueTemplate) {
+      config.quoteValueThreshold = Math.max(1, Number(config.quoteValueThreshold) || 25000);
+      config.discountThreshold = Math.max(0, Math.min(100, Number(config.discountThreshold) || 15));
+      config.condition = highValueCondition;
+    }
     config.actionType = 'Create Note';
     config.actionName = source.actionName;
     config.noteBody = source.noteBody;
@@ -8195,6 +8327,7 @@
       (Array.isArray(sequence) ? sequence : []).forEach(function (step) {
         if (!step) return;
         if (step.type === 'condition') {
+          if (highValueTemplate) step.condition = highValueCondition;
           migrate(step.yesSteps);
           migrate(step.noSteps);
           return;
@@ -8748,6 +8881,23 @@
     const issues = [];
     automationWalkSteps(config.steps, function (step) {
       if (!step || step.type !== 'condition') return;
+      if (step.condition === 'Owning Company matches the selected Company' && !AUTOMATION_OWNING_COMPANIES.some(function (company) { return company.id === step.conditionCompanyId; })) {
+        issues.push({
+          kind: 'missing-rule-company',
+          step: step,
+          condition: step.condition,
+          reason: 'Choose the Company this Rule should match.'
+        });
+      }
+      if (automationConditionIsValueComparison(step.condition) && (!['above', 'below', 'equal'].includes(step.conditionValueOperator) || !Number.isFinite(Number(step.conditionValueAmount)) || !(Number(step.conditionValueAmount) > 0))) {
+        issues.push({ kind: 'missing-rule-value', step: step, condition: step.condition, reason: 'Choose how to compare the Deal value and enter an amount.' });
+      }
+      if (/^Expected Close Date is (before|on|after) the selected date$/.test(step.condition) && !Number.isFinite(genericAutomationCalendarDay(step.conditionDate))) {
+        issues.push({ kind: 'missing-rule-date', step: step, condition: step.condition, reason: 'Choose the date this Rule should use.' });
+      }
+      if (step.condition === 'Expected Close Date is within the selected window' && (!Number.isInteger(Number(step.conditionDays)) || Number(step.conditionDays) < 1 || Number(step.conditionDays) > 365)) {
+        issues.push({ kind: 'missing-rule-days', step: step, condition: step.condition, reason: 'Enter how many days ahead this Rule should check.' });
+      }
       if (step.conditionKind === 'group') {
         issues.push({
           kind: 'unsupported-group',
@@ -8778,7 +8928,9 @@
     const issues = [];
     automationWalkSteps(config.steps, function (step) {
       if (!step || step.type !== 'action') return;
-      if (step.action === 'Remove Interest') {
+      if (step.action === 'Add Quote Label') {
+        issues.push({ kind: 'quote-label-pending', step: step, reason: 'Add Quote Label is pending a Product decision and cannot be published in an Automation.' });
+      } else if (step.action === 'Remove Interest') {
         issues.push({ kind: 'remove-interest-withheld', step: step, reason: 'Remove Interest is manual only and cannot be published in an Automation.' });
       } else if (step.action === 'Add Interest' && step.interestEvidenceSource !== 'structured-source') {
         issues.push({ kind: 'interest-evidence-required', step: step, reason: 'Confirm a mapped structured source for Add Interest. Free-text keyword matching is not allowed.' });
@@ -8795,7 +8947,7 @@
     const actionIssue = automationActionSafetyIssues(config)[0];
     if (actionIssue) return actionIssue.reason;
     const ruleIssue = automationRuleCompatibilityIssues(config)[0];
-    if (ruleIssue) return (ruleIssue.kind === 'missing-yes-action' ? 'Finish this Rule. ' : (ruleIssue.kind === 'unsupported-group' ? 'Remove this unfinished group. ' : 'Choose a different Rule. ')) + ruleIssue.reason;
+    if (ruleIssue) return (ruleIssue.kind === 'missing-yes-action' || /^missing-rule-/.test(ruleIssue.kind) ? 'Finish this Rule. ' : (ruleIssue.kind === 'unsupported-group' ? 'Remove this unfinished group. ' : 'Choose a different Rule. ')) + ruleIssue.reason;
     return workflowMoveStageBlocker(config) || '';
   }
 
@@ -8953,11 +9105,30 @@
     return step;
   }
 
-  function automationConditionChoices(config, grouped, context) {
-    if (grouped) return ['All criteria match (AND)', 'Any criterion matches (OR)'];
+  function automationRecommendedConditionChoices(config) {
     const stageName = workflowStageName(config);
     const definition = automationStageDefinition(stageName, config && config.triggerPipelineId) || {};
     const segment = definition.lifecycleSegment || stageName;
+    const stageSpecific = {
+      Qualified: ['Deal Owner is empty', 'Customer or site information is incomplete', 'No related Quote exists'],
+      'In Progress': ['Required Quote pricing or SOW data is missing', 'Related Quote remains editable', 'No open Quote-build Note exists'],
+      'In Review': ['No open technical review Note exists', 'Technical review file is missing', 'Quote is still awaiting review'],
+      'Passed Review': ['Required customer-facing content is incomplete', 'Quote is viable', 'Quote value or discount needs approval'],
+      Sent: ['Quote is still Sent and not Expired', 'Customer has viewed a Sent Quote', 'Customer has not viewed any Sent Quote', 'No customer activity since Quote was Sent'],
+      Won: ['No open handoff Next Action exists', 'Purchase order or contract file is missing', 'Deposit amount is available'],
+      Lost: ['Loss reason is empty', 'No related Quote can still be accepted', 'Re-engagement date is due']
+    };
+    const recommended = definition.quoteConnected === false
+      ? []
+      : (stageSpecific[stageName] || stageSpecific[segment] || []);
+    if (definition.custom) {
+      recommended.unshift('Deal is still in ' + stageName);
+    }
+    return recommended;
+  }
+
+  function automationConditionChoices(config, grouped, context) {
+    if (grouped) return ['All criteria match (AND)', 'Any criterion matches (OR)'];
     const general = [
       'Deal Owner is missing', 'Deal Owner is set',
       'Deal Next Action is missing', 'Deal Next Action is open', 'Deal Next Action is due',
@@ -8969,31 +9140,61 @@
       'Recent CRM activity exists', 'Recent CRM activity does not exist',
       'Deal has selected label', 'Deal does not have selected label',
       'Deal has selected Interest', 'Deal does not have selected Interest',
-      'Deal value matches the selected operator, amount and currency',
+      'Deal value matches the selected operator and amount',
       'Owning Company matches the selected Company',
       'Expected Close Date is missing', 'Expected Close Date is before the selected date',
       'Expected Close Date is on the selected date', 'Expected Close Date is after the selected date',
       'Expected Close Date is within the selected window', 'Expected Close Date is overdue'
     ];
-    const stageSpecific = {
-      Qualified: ['Deal Owner is empty', 'Customer or site information is incomplete', 'No related Quote exists'],
-      'In Progress': ['Required Quote pricing or SOW data is missing', 'Related Quote remains editable', 'No open Quote-build Note exists'],
-      'In Review': ['No open technical review Note exists', 'Technical review file is missing', 'Quote is still awaiting review'],
-      'Passed Review': ['Required customer-facing content is incomplete', 'Quote is viable', 'Quote value or discount needs approval'],
-      Sent: ['Quote is still Sent and not Expired', 'Customer has viewed a Sent Quote', 'Customer has not viewed any Sent Quote', 'No customer activity since Quote was Sent'],
-      Won: ['No open handoff Next Action exists', 'Purchase order or contract file is missing', 'Deposit amount is available'],
-      Lost: ['Loss reason is empty', 'No related Quote can still be accepted', 'Re-engagement date is due']
-    };
-    const compatibleStageRules = definition.quoteConnected === false
-      ? []
-      : (stageSpecific[stageName] || stageSpecific[segment] || []);
-    let choices = compatibleStageRules.concat(general);
-    if (definition.custom) {
-      choices.unshift('Deal is still in ' + stageName);
-    }
+    const choices = automationRecommendedConditionChoices(config).concat(general);
     return Array.from(new Set(choices)).filter(function (condition) {
       return automationRuleCompatibility(condition, config, context).allowed;
     });
+  }
+
+  function automationConditionChoiceGroups(config, choices) {
+    const stageName = workflowStageName(config);
+    const recommended = automationRecommendedConditionChoices(config).filter(function (condition) {
+      return choices.includes(condition);
+    });
+    if (!recommended.length) {
+      ['Deal Owner is missing', 'Deal Next Action is missing', 'Recent CRM activity does not exist', 'Expected Close Date is within the selected window'].forEach(function (condition) {
+        if (choices.includes(condition)) recommended.push(condition);
+      });
+    }
+    const groups = [
+      { id: 'recommended', label: 'Recommended for ' + stageName, choices: recommended },
+      { id: 'deal', label: 'Deal & owner', choices: [] },
+      { id: 'activity', label: 'Follow-up & activity', choices: [] },
+      { id: 'work', label: 'Tasks, files & Quote checks', choices: [] },
+      { id: 'dates', label: 'Dates & value', choices: [] },
+      { id: 'labels', label: 'Labels & interests', choices: [] },
+      { id: 'other', label: 'More checks', choices: [] }
+    ];
+    choices.forEach(function (condition) {
+      if (recommended.includes(condition)) return;
+      let groupId = 'other';
+      if (/Owner|Owning Company|Customer or site|Deal is still in/i.test(condition)) groupId = 'deal';
+      else if (/Next Action|Meeting|Site Visit|activity/i.test(condition)) groupId = 'activity';
+      else if (/required task|file|File Request|Quote|review|SOW|pricing|customer-facing content|approval/i.test(condition)) groupId = 'work';
+      else if (/Date|value|amount|discount|Deposit|Re-engagement/i.test(condition)) groupId = 'dates';
+      else if (/label|Interest/i.test(condition)) groupId = 'labels';
+      const group = groups.find(function (item) { return item.id === groupId; });
+      if (group) group.choices.push(condition);
+    });
+    return groups.filter(function (group) { return group.choices.length; });
+  }
+
+  function automationConditionCategoryId(groups, condition) {
+    const match = groups.find(function (group) { return group.choices.includes(condition); });
+    return match ? match.id : (groups[0] ? groups[0].id : 'recommended');
+  }
+
+  function automationConditionOptionMarkup(choices, selectedCondition, includePrompt) {
+    const prompt = includePrompt ? '<option value="">Choose a Rule…</option>' : '';
+    return prompt + choices.map(function (condition) {
+      return '<option value="' + escapeAutomationHtml(condition) + '"' + (condition === selectedCondition ? ' selected' : '') + '>' + escapeAutomationHtml(automationConditionUserCopy(condition)) + '</option>';
+    }).join('');
   }
 
   function automationConditionUserCopy(condition) {
@@ -9007,12 +9208,89 @@
       'Recent CRM activity exists': 'The Deal has recent activity',
       'Recent CRM activity does not exist': 'The Deal has no recent activity',
       'Deal value matches the selected operator, amount and currency': 'Deal value is above, below or equal to an amount',
-      'Owning Company matches the selected Company': 'Deal Company is the selected Company',
+      'Deal value matches the selected operator and amount': 'Deal value is above, below or equal to an amount',
+      'Owning Company matches the selected Company': 'Deal belongs to this Company',
       'Expected Close Date is within the selected window': 'Expected Close Date is within the next number of days',
       'Required Quote pricing or SOW data is missing': 'Quote pricing or Scope of Work is missing',
       'Quote is viable': 'Quote can still be sent or accepted',
       'No viable related Quote remains': 'No related Quote can still be accepted'
     })[condition] || condition;
+  }
+
+  function automationConditionNeedsCompanyChoice(condition) {
+    return condition === 'Owning Company matches the selected Company';
+  }
+
+  function automationConditionIsValueComparison(condition) {
+    return condition === 'Deal value matches the selected operator and amount' || condition === 'Deal value matches the selected operator, amount and currency';
+  }
+
+  function automationConditionParameterKind(condition) {
+    if (automationConditionNeedsCompanyChoice(condition)) return 'company';
+    if (automationConditionIsValueComparison(condition)) return 'value';
+    if (/^Expected Close Date is (before|on|after) the selected date$/.test(condition || '')) return 'date';
+    if (condition === 'Expected Close Date is within the selected window') return 'days';
+    return '';
+  }
+
+  function automationConditionCompanyOptions(selectedId) {
+    return '<option value="">Choose a Company…</option>' + AUTOMATION_OWNING_COMPANIES.map(function (company) {
+      return '<option value="' + escapeAutomationHtml(company.id) + '"' + (company.id === selectedId ? ' selected' : '') + '>' + escapeAutomationHtml(company.name || company.shortName) + '</option>';
+    }).join('');
+  }
+
+  function automationConditionCompanyName(step) {
+    if (!step || !automationConditionNeedsCompanyChoice(step.condition) || !step.conditionCompanyId) return '';
+    const company = AUTOMATION_OWNING_COMPANIES.find(function (item) { return item.id === step.conditionCompanyId; });
+    return company ? (company.shortName || company.name) : '';
+  }
+
+  function automationConditionConfiguredCopy(step) {
+    const condition = step && step.condition || '';
+    const kind = automationConditionParameterKind(condition);
+    if (kind === 'company') {
+      const companyName = automationConditionCompanyName(step);
+      return companyName ? 'Deal belongs to ' + companyName : automationConditionUserCopy(condition);
+    }
+    if (kind === 'value' && Number(step.conditionValueAmount) > 0) {
+      const operator = ({ above: 'is above', below: 'is below', equal: 'equals' })[step.conditionValueOperator] || 'is above';
+      return 'Deal value ' + operator + ' ' + Number(step.conditionValueAmount).toLocaleString('en-GB') + ' in the Deal Company currency';
+    }
+    if (kind === 'date' && Number.isFinite(genericAutomationCalendarDay(step.conditionDate))) {
+      const relation = condition.match(/^Expected Close Date is (before|on|after)/);
+      const formatted = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(step.conditionDate + 'T12:00:00'));
+      return 'Expected Close Date is ' + (relation ? relation[1] : 'on') + ' ' + formatted;
+    }
+    if (kind === 'days' && Number(step.conditionDays) > 0) return 'Expected Close Date is within the next ' + Number(step.conditionDays) + ' days';
+    return automationConditionUserCopy(condition);
+  }
+
+  function automationConditionParameterReady(step) {
+    const kind = automationConditionParameterKind(step && step.condition);
+    if (!kind) return true;
+    if (kind === 'company') return AUTOMATION_OWNING_COMPANIES.some(function (company) { return company.id === step.conditionCompanyId; });
+    if (kind === 'value') return ['above', 'below', 'equal'].includes(step.conditionValueOperator) && Number.isFinite(Number(step.conditionValueAmount)) && Number(step.conditionValueAmount) > 0;
+    if (kind === 'date') return Number.isFinite(genericAutomationCalendarDay(step.conditionDate));
+    if (kind === 'days') return Number.isInteger(Number(step.conditionDays)) && Number(step.conditionDays) >= 1 && Number(step.conditionDays) <= 365;
+    return true;
+  }
+
+  function updateScratchConditionParameterFields(condition, focusSetting) {
+    const kind = automationConditionParameterKind(condition);
+    const fields = [
+      ['company', 'autScratchConditionCompanyField', 'autScratchConditionCompany'],
+      ['value', 'autScratchConditionValueField', 'autScratchConditionValueOperator'],
+      ['date', 'autScratchConditionDateField', 'autScratchConditionDate'],
+      ['days', 'autScratchConditionDaysField', 'autScratchConditionDays']
+    ];
+    fields.forEach(function (field) {
+      const wrapper = document.getElementById(field[1]);
+      if (wrapper) wrapper.hidden = field[0] !== kind;
+    });
+    if (!focusSetting || !kind) return;
+    const activeField = fields.find(function (field) { return field[0] === kind; });
+    const control = activeField && document.getElementById(activeField[2]);
+    if (control) control.focus();
   }
 
   const QUOTE_PLAYGROUND_ACTIONS = [
@@ -9050,7 +9328,13 @@
     const stages = quotePlaygroundStages(pipeline);
     quotePlaygroundState.stage = stages.includes(stageName) ? stageName : (stages[0] || 'Qualified');
     quotePlaygroundState.triggerId = '';
+    quotePlaygroundState.ruleCategory = '';
     quotePlaygroundState.rule = '';
+    quotePlaygroundState.ruleCompanyId = '';
+    quotePlaygroundState.ruleValueOperator = 'above';
+    quotePlaygroundState.ruleValueAmount = '';
+    quotePlaygroundState.ruleDate = '';
+    quotePlaygroundState.ruleDays = '';
     quotePlaygroundState.yesActionIds = [];
     quotePlaygroundState.noActionIds = [];
   }
@@ -9101,12 +9385,32 @@
   function quotePlaygroundPreview(stage, triggerChoice, incompatibleRule) {
     const triggerReady = Boolean(triggerChoice);
     const actionReady = quotePlaygroundState.yesActionIds.length > 0;
-    const ruleReady = !incompatibleRule;
+    const ruleKind = automationConditionParameterKind(quotePlaygroundState.rule);
+    const ruleStep = {
+      condition: quotePlaygroundState.rule,
+      conditionCompanyId: quotePlaygroundState.ruleCompanyId,
+      conditionValueOperator: quotePlaygroundState.ruleValueOperator,
+      conditionValueAmount: quotePlaygroundState.ruleValueAmount,
+      conditionDate: quotePlaygroundState.ruleDate,
+      conditionDays: quotePlaygroundState.ruleDays
+    };
+    const ruleSettingReady = automationConditionParameterReady(ruleStep);
+    const ruleReady = !incompatibleRule && ruleSettingReady;
     const ready = triggerReady && actionReady && ruleReady;
     let flow = quotePlaygroundFlowNode('STARTS WHEN', triggerChoice ? triggerChoice[1] : 'Choose what starts this flow', triggerChoice ? triggerChoice[2] : 'Select an event on the left.', triggerChoice ? 'trigger' : 'empty');
     flow += '<span class="aut-playground-flow-line"></span>';
     if (quotePlaygroundState.rule) {
-      flow += quotePlaygroundFlowNode('RULE (OPTIONAL)', automationConditionUserCopy(quotePlaygroundState.rule), incompatibleRule ? 'This Rule no longer fits the Starts when choice. Choose another Rule.' : 'WeQuote checks this, then follows Yes or No.', incompatibleRule ? 'rule warning' : 'rule');
+      const ruleTitle = automationConditionConfiguredCopy(ruleStep);
+      const missingSettingCopy = ({
+        company: 'Choose the Company this Rule should match.',
+        value: 'Choose above, below or equal and enter the amount.',
+        date: 'Choose the date this Rule should use.',
+        days: 'Enter how many days ahead this Rule should check.'
+      })[ruleKind] || 'Finish this Rule setting.';
+      const ruleDetail = incompatibleRule
+        ? 'This Rule no longer fits the Starts when choice. Choose another Rule.'
+        : (!ruleSettingReady ? missingSettingCopy : 'WeQuote checks this, then follows Yes or No.');
+      flow += quotePlaygroundFlowNode('RULE (OPTIONAL)', ruleTitle, ruleDetail, incompatibleRule || !ruleSettingReady ? 'rule warning' : 'rule');
       flow += '<span class="aut-playground-flow-line"></span><div class="aut-playground-branches">' +
         '<section class="aut-playground-branch yes"><b>YES</b>' + quotePlaygroundActionFlow(quotePlaygroundState.yesActionIds, 'Choose what WeQuote should do') + '</section>' +
         '<section class="aut-playground-branch no"><b>NO</b>' + (quotePlaygroundState.noActionIds.length ? quotePlaygroundActionFlow(quotePlaygroundState.noActionIds, '') : '<span class="aut-playground-end">END · do nothing</span>') + '</section></div>';
@@ -9116,7 +9420,7 @@
     const checkRows = [
       [true, 'Quote Stage selected: ' + quotePlaygroundState.stage],
       [triggerReady, triggerReady ? 'Starts when event selected' : 'Choose a Starts when event'],
-      [ruleReady, incompatibleRule ? 'Choose a different Rule for this Starts when choice' : (quotePlaygroundState.rule ? 'Rule fits this Starts when choice' : 'Rule is optional')],
+      [ruleReady, incompatibleRule ? 'Choose a different Rule for this Starts when choice' : (!ruleSettingReady ? 'Finish the selected Rule setting' : (quotePlaygroundState.rule ? 'Rule fits this Starts when choice' : 'Rule is optional'))],
       [actionReady, actionReady ? 'At least one Action selected' : 'Choose at least one Action'],
       [true, quotePlaygroundState.rule ? 'Rule creates a Yes path and a No path' : 'Without a Rule, the Actions always run']
     ];
@@ -9129,6 +9433,24 @@
         : 'Finish the missing choices above. This check explains the setup; it does not run the Automation.') + '</div></div></section>';
   }
 
+  function quotePlaygroundConditionConfig() {
+    const pipeline = quotePlaygroundPipeline();
+    const stages = quotePlaygroundStages(pipeline);
+    if (!stages.includes(quotePlaygroundState.stage)) quotePlaygroundReset(stages[0]);
+    const stage = automationStageDefinition(quotePlaygroundState.stage, pipeline && pipeline.id);
+    if (!stage) return null;
+    const triggerChoices = stage.triggerChoices || [];
+    if (quotePlaygroundState.triggerId && !triggerChoices.some(function (choice) { return choice[0] === quotePlaygroundState.triggerId; })) quotePlaygroundState.triggerId = '';
+    const triggerChoice = triggerChoices.find(function (choice) { return choice[0] === quotePlaygroundState.triggerId; });
+    return {
+      triggerStage: quotePlaygroundState.stage,
+      triggerPipelineId: pipeline && pipeline.id,
+      triggerEvent: triggerChoice ? triggerChoice[1] : '',
+      editableTrigger: triggerChoice ? { id: triggerChoice[0], title: triggerChoice[1], detail: triggerChoice[2] } : null,
+      objectType: triggerChoice ? triggerChoice[4] : 'Deal'
+    };
+  }
+
   function renderQuotePlayground() {
     if (!quotePlaygroundBody) return;
     const pipeline = quotePlaygroundPipeline();
@@ -9137,29 +9459,42 @@
     const stage = automationStageDefinition(quotePlaygroundState.stage, pipeline && pipeline.id);
     if (!stage) return;
     const triggerChoices = stage.triggerChoices || [];
-    if (quotePlaygroundState.triggerId && !triggerChoices.some(function (choice) { return choice[0] === quotePlaygroundState.triggerId; })) quotePlaygroundState.triggerId = '';
     const triggerChoice = triggerChoices.find(function (choice) { return choice[0] === quotePlaygroundState.triggerId; });
-    const conditionConfig = {
-      triggerStage: quotePlaygroundState.stage,
-      triggerPipelineId: pipeline && pipeline.id,
-      triggerEvent: triggerChoice ? triggerChoice[1] : '',
-      editableTrigger: triggerChoice ? { id: triggerChoice[0], title: triggerChoice[1], detail: triggerChoice[2] } : null,
-      objectType: triggerChoice ? triggerChoice[4] : 'Deal'
-    };
+    const conditionConfig = quotePlaygroundConditionConfig();
     const ruleChoices = automationConditionChoices(conditionConfig, false, { directFromTrigger: true });
     const incompatibleRule = Boolean(quotePlaygroundState.rule && !ruleChoices.includes(quotePlaygroundState.rule));
+    const ruleGroups = automationConditionChoiceGroups(conditionConfig, ruleChoices);
+    const categoryExists = ruleGroups.some(function (group) { return group.id === quotePlaygroundState.ruleCategory; });
+    const selectedRuleCategory = categoryExists ? quotePlaygroundState.ruleCategory : automationConditionCategoryId(ruleGroups, quotePlaygroundState.rule);
+    const visibleRuleGroup = ruleGroups.find(function (group) { return group.id === selectedRuleCategory; }) || ruleGroups[0];
     const stageOptions = stages.map(function (name) { return '<option' + (name === quotePlaygroundState.stage ? ' selected' : '') + '>' + escapeAutomationHtml(name) + '</option>'; }).join('');
     const triggerOptions = '<option value="">Choose a Starts when event…</option>' + triggerChoices.map(function (choice) { return '<option value="' + escapeAutomationHtml(choice[0]) + '"' + (choice[0] === quotePlaygroundState.triggerId ? ' selected' : '') + '>' + escapeAutomationHtml(choice[1]) + '</option>'; }).join('');
     const incompatibleRuleOption = incompatibleRule
       ? '<option value="' + escapeAutomationHtml(quotePlaygroundState.rule) + '" selected disabled>' + escapeAutomationHtml(automationConditionUserCopy(quotePlaygroundState.rule)) + ' — choose another Rule</option>'
       : '';
-    const ruleOptions = '<option value="">No Rule — always continue</option>' + incompatibleRuleOption + ruleChoices.map(function (rule) { return '<option value="' + escapeAutomationHtml(rule) + '"' + (rule === quotePlaygroundState.rule ? ' selected' : '') + '>' + escapeAutomationHtml(automationConditionUserCopy(rule)) + '</option>'; }).join('');
+    const ruleCategoryOptions = ruleGroups.map(function (group) {
+      return '<option value="' + escapeAutomationHtml(group.id) + '"' + (group.id === selectedRuleCategory ? ' selected' : '') + '>' + escapeAutomationHtml(group.label) + '</option>';
+    }).join('');
+    const ruleOptions = '<option value="">No Rule — always continue</option>' + incompatibleRuleOption + automationConditionOptionMarkup(visibleRuleGroup ? visibleRuleGroup.choices : [], quotePlaygroundState.rule, false);
+    const playgroundCompanyMarkup = automationConditionNeedsCompanyChoice(quotePlaygroundState.rule)
+      ? '<div class="aut-playground-field"><label for="autPlaygroundRuleCompany">Company</label><select id="autPlaygroundRuleCompany">' + automationConditionCompanyOptions(quotePlaygroundState.ruleCompanyId) + '</select><small>Continue on Yes only when the Deal belongs to this Company.</small></div>'
+      : '';
+    const playgroundRuleKind = automationConditionParameterKind(quotePlaygroundState.rule);
+    const playgroundValueMarkup = playgroundRuleKind === 'value'
+      ? '<div class="aut-playground-field"><label for="autPlaygroundRuleValueOperator">Compare Deal value</label><select id="autPlaygroundRuleValueOperator"><option value="above"' + (quotePlaygroundState.ruleValueOperator === 'above' ? ' selected' : '') + '>Is above</option><option value="below"' + (quotePlaygroundState.ruleValueOperator === 'below' ? ' selected' : '') + '>Is below</option><option value="equal"' + (quotePlaygroundState.ruleValueOperator === 'equal' ? ' selected' : '') + '>Is equal to</option></select></div><div class="aut-playground-field"><label for="autPlaygroundRuleValueAmount">Amount</label><input id="autPlaygroundRuleValueAmount" type="number" min="1" step="100" placeholder="e.g. 25000" value="' + escapeAutomationHtml(quotePlaygroundState.ruleValueAmount) + '"><small>Uses the Deal Company currency.</small></div>'
+      : '';
+    const playgroundDateMarkup = playgroundRuleKind === 'date'
+      ? '<div class="aut-playground-field"><label for="autPlaygroundRuleDate">Date to compare with</label><input id="autPlaygroundRuleDate" type="date" value="' + escapeAutomationHtml(quotePlaygroundState.ruleDate) + '"><small>WeQuote compares the Deal Expected Close Date with this date.</small></div>'
+      : '';
+    const playgroundDaysMarkup = playgroundRuleKind === 'days'
+      ? '<div class="aut-playground-field"><label for="autPlaygroundRuleDays">How many days ahead?</label><input id="autPlaygroundRuleDays" type="number" min="1" max="365" step="1" placeholder="e.g. 7" value="' + escapeAutomationHtml(quotePlaygroundState.ruleDays) + '"><small>Example: 7 checks whether the Expected Close Date is within the next 7 days.</small></div>'
+      : '';
     const mainLabel = quotePlaygroundState.rule ? 'If Yes — what should WeQuote do?' : 'What should WeQuote do?';
     quotePlaygroundBody.innerHTML = '<div class="aut-playground-layout"><section class="aut-playground-setup">' +
       '<div class="aut-playground-intro"><strong>Build it step by step</strong><span>NO SAVE</span></div>' +
       '<div class="aut-playground-step"><div class="aut-playground-step-head"><span class="aut-playground-step-number">1</span><div><strong>Choose the Quote Stage</strong><small>This decides which Starts when choices make sense.</small></div></div><div class="aut-playground-field"><label for="autPlaygroundStage">Quote Stage</label><select id="autPlaygroundStage">' + stageOptions + '</select></div></div>' +
       '<div class="aut-playground-step"><div class="aut-playground-step-head"><span class="aut-playground-step-number">2</span><div><strong>Choose Starts when</strong><small>This is the change or date that begins the flow.</small></div></div><div class="aut-playground-field"><label for="autPlaygroundTrigger">Starts when</label><select id="autPlaygroundTrigger">' + triggerOptions + '</select></div></div>' +
-      '<div class="aut-playground-step"><div class="aut-playground-step-head"><span class="aut-playground-step-number">3</span><div><strong>Add a Rule <em style="font-style:normal;color:#8190A4;font-weight:500;">(optional)</em></strong><small>A Rule asks a Yes or No question. WeQuote shows what happens for each answer.</small></div></div><div class="aut-playground-field"><label for="autPlaygroundRule">Rule</label><select id="autPlaygroundRule">' + ruleOptions + '</select>' + (incompatibleRule ? '<span class="aut-playground-rule-warning">Starts when changed. This Rule no longer fits. Choose a different Rule.</span>' : '') + '</div></div>' +
+      '<div class="aut-playground-step"><div class="aut-playground-step-head"><span class="aut-playground-step-number">3</span><div><strong>Add a Rule <em style="font-style:normal;color:#8190A4;font-weight:500;">(optional)</em></strong><small>A Rule asks a Yes or No question. WeQuote shows what happens for each answer.</small></div></div><div class="aut-playground-field"><label for="autPlaygroundRuleCategory">Rule type</label><select id="autPlaygroundRuleCategory">' + ruleCategoryOptions + '</select></div><div class="aut-playground-field"><label for="autPlaygroundRule">Rule</label><select id="autPlaygroundRule">' + ruleOptions + '</select>' + (incompatibleRule ? '<span class="aut-playground-rule-warning">Starts when changed. This Rule no longer fits. Choose a different Rule.</span>' : '') + '</div>' + playgroundCompanyMarkup + playgroundValueMarkup + playgroundDateMarkup + playgroundDaysMarkup + '</div>' +
       '<div class="aut-playground-step"><div class="aut-playground-step-head"><span class="aut-playground-step-number">4</span><div><strong>' + escapeAutomationHtml(mainLabel) + '</strong><small>Add one or more Actions. The Quote Actions shown here depend on the Stage you chose.</small></div></div><div class="aut-playground-action-picker"><select id="autPlaygroundYesAction" aria-label="Choose an Action">' + quotePlaygroundActionOptions(stage, pipeline) + '</select><button type="button" data-aut-playground-add-action="yes">Add</button></div><div class="aut-playground-picked">' + quotePlaygroundPickedActions(quotePlaygroundState.yesActionIds, 'yes') + '</div>' +
       (quotePlaygroundState.rule ? '<div class="aut-playground-no-path"><strong>If No — what should WeQuote do?</strong><small>Add an Action only if something must happen. Otherwise, leave it empty to stop.</small><div class="aut-playground-action-picker"><select id="autPlaygroundNoAction" aria-label="Choose an Action for If No">' + quotePlaygroundActionOptions(stage, pipeline) + '</select><button type="button" data-aut-playground-add-action="no">Add</button></div><div class="aut-playground-picked">' + quotePlaygroundPickedActions(quotePlaygroundState.noActionIds, 'no') + '</div></div>' : '') + '</div></section>' + quotePlaygroundPreview(stage, triggerChoice, incompatibleRule) + '</div>';
   }
@@ -9264,16 +9599,18 @@
       const compatibility = config ? automationRuleCompatibility(step.condition, config, { directFromTrigger: scratchRuleDirectlyFollowsTrigger(config, step) }) : { allowed: true };
       const hasCondition = !!String(step.condition || '').trim();
       const hasYesAction = automationSequenceHasYesPathAction(step.yesSteps);
+      const parameterReady = automationConditionParameterReady(step);
+      const conditionTitle = automationConditionConfiguredCopy(step);
       return {
         kicker: 'RULE',
-        title: step.condition ? automationConditionUserCopy(step.condition).replace(/\?+$/, '') + '?' : 'Choose a Rule',
+        title: step.condition ? conditionTitle.replace(/\?+$/, '') + '?' : 'Choose a Rule',
         detail: !hasCondition
           ? 'Choose what WeQuote should check'
           : (!compatibility.allowed
           ? 'Does not fit Starts when · choose another Rule'
-          : (hasYesAction ? 'If Yes runs its Action · If No may stop' : 'Add an Action under If Yes')),
+          : (!parameterReady ? 'Finish this Rule setting' : (hasYesAction ? 'If Yes runs its Action · If No may stop' : 'Add an Action under If Yes'))),
         icon: '&#xf126;',
-        nodeClass: 'condition' + (!hasCondition || !compatibility.allowed || !hasYesAction ? ' invalid' : '')
+        nodeClass: 'condition' + (!hasCondition || !compatibility.allowed || !parameterReady || !hasYesAction ? ' invalid' : '')
       };
     }
     if (step.action === 'Create Note') return { kicker: 'ACTION', title: 'Create Note · ' + (step.noteTitle || 'Follow-up note'), detail: 'Mention ' + (step.mention || 'Record owner') + ' · ' + followUpDelayLabel(step.followUpDelay || 'none'), icon: '&#xf249;', nodeClass: 'action' };
@@ -9750,10 +10087,10 @@
     scheduleScratchConnectorDraw(config);
     workflowTitle.textContent = config.title;
     const phaseOneRecipe = isPhaseOneTemplateRecipe(config);
-    workflowMeta.textContent = automationBuilderStatusLabel(config) + ' · ' + (phaseOneRecipe ? 'Template' : (config.templateKey ? 'Template copy' : 'Custom')) + ' · Applies to: ' + automationCompanyScopeLabel(config);
+    workflowMeta.textContent = automationBuilderStatusLabel(config) + ' · ' + (phaseOneRecipe ? 'Template' : (config.templateKey ? 'Template copy' : 'Start from scratch')) + ' · ' + automationPipelineName(config) + ' · ' + workflowStageName(config);
     plainSummary.textContent = phaseOneRecipe
       ? 'This Template keeps its starting point and step structure. You can change the settings shown here. The current version stays active until you publish your changes.'
-      : 'Starts when ' + trigger.title.toLowerCase() + ' for ' + automationCompanyScopeLabel(config) + (steps.length ? ', then runs ' + steps.length + ' editable step' + (steps.length === 1 ? '' : 's') + '. Select any step to change its settings, duplicate it, move it or delete it.' : '. Add the next step using the + button.');
+      : 'Starts when ' + trigger.title.toLowerCase() + (steps.length ? ', then runs ' + steps.length + ' editable step' + (steps.length === 1 ? '' : 's') + '. Select any step to change its settings, duplicate it, move it or delete it.' : '. Add the next step using the + button.');
     publishButton.textContent = config.editingVersion ? 'Publish changes' : (config.enabled ? 'Published' : 'Activate automation');
     publishButton.disabled = workflowNeedsSetup(config) || (config.enabled && !config.editingVersion);
     if (draftBanner) {
@@ -10327,7 +10664,7 @@
     const sequence = Array.isArray(steps) ? steps : [];
     return '<ol>' + sequence.map(function (step) {
       if (step.type !== 'condition') return scratchSummaryStepMarkup(step);
-      const checkMarkup = '<li class="aut-flow-summary-nested-check"><span class="aut-flow-summary-dot"></span><div><strong>Check: ' + escapeAutomationHtml(step.condition.replace(/\?+$/, '')) + '?</strong><span>' + (expandBranches === false ? 'Continue to this check' : 'Follow the matching branch') + '</span></div></li>';
+      const checkMarkup = '<li class="aut-flow-summary-nested-check"><span class="aut-flow-summary-dot"></span><div><strong>Check: ' + escapeAutomationHtml(automationConditionConfiguredCopy(step).replace(/\?+$/, '')) + '?</strong><span>' + (expandBranches === false ? 'Continue to this check' : 'Follow the matching branch') + '</span></div></li>';
       if (expandBranches === false) return checkMarkup;
       return checkMarkup + '<li class="aut-flow-summary-nested-branches"><div class="aut-flow-summary-branches">' +
         scratchSummaryBranchMarkup('IF YES', 'yes', step.yesSteps) + scratchSummaryBranchMarkup('IF NO', 'no', step.noSteps) +
@@ -10587,20 +10924,30 @@
       const compatibility = automationRuleCompatibility(step.condition, config, { directFromTrigger: directFromTrigger });
       const conditionChoices = automationConditionChoices(config, isConditionGroup, { directFromTrigger: directFromTrigger });
       if (phaseOneRecipe && conditionChoices.indexOf(step.condition) < 0) conditionChoices.unshift(step.condition);
+      const conditionGroups = isConditionGroup ? [] : automationConditionChoiceGroups(config, conditionChoices);
+      const selectedConditionCategory = automationConditionCategoryId(conditionGroups, step.condition);
+      const visibleConditionGroup = conditionGroups.find(function (group) { return group.id === selectedConditionCategory; }) || conditionGroups[0];
       const incompatibleRuleWarning = !phaseOneRecipe && !compatibility.allowed
         ? '<div class="aut-scratch-flow-warning error"><i class="fai">&#xf071;</i><span><strong>' + (step.condition ? 'Choose a different Rule' : 'Choose a Rule') + '</strong><small>' + escapeAutomationHtml(compatibility.reason) + '</small></span></div>'
         : '';
       const missingYesActionWarning = !phaseOneRecipe && !automationSequenceHasYesPathAction(step.yesSteps)
         ? '<div class="aut-scratch-flow-warning"><i class="fai">&#xf067;</i><span><strong>Add an Action under If Yes</strong><small>A Rule only checks information. Choose what WeQuote should do when the answer is Yes.</small></span></div>'
         : '';
-      const conditionOptionMarkup = (!phaseOneRecipe && !compatibility.allowed ? '<option value="" selected>Choose a Rule that adds a new check…</option>' : '') + conditionChoices.map(function (item) {
-        return '<option value="' + escapeAutomationHtml(item) + '"' + (compatibility.allowed && step.condition === item ? ' selected' : '') + '>' + escapeAutomationHtml(automationConditionUserCopy(item)) + '</option>';
+      const conditionOptionMarkup = isConditionGroup
+        ? automationConditionOptionMarkup(conditionChoices, compatibility.allowed ? step.condition : '', !compatibility.allowed)
+        : automationConditionOptionMarkup(visibleConditionGroup ? visibleConditionGroup.choices : [], compatibility.allowed ? step.condition : '', true);
+      const conditionCategoryMarkup = conditionGroups.map(function (group) {
+        return '<option value="' + escapeAutomationHtml(group.id) + '"' + (group.id === selectedConditionCategory ? ' selected' : '') + '>' + escapeAutomationHtml(group.label) + '</option>';
       }).join('');
+      const conditionCompanyMarkup = '<div class="aut-field" id="autScratchConditionCompanyField"' + (automationConditionNeedsCompanyChoice(step.condition) ? '' : ' hidden') + '><label for="autScratchConditionCompany">Company</label><select id="autScratchConditionCompany">' + automationConditionCompanyOptions(step.conditionCompanyId || '') + '</select><span class="aut-help">Continue on Yes only when the Deal belongs to this Company.</span></div>';
+      const conditionValueMarkup = '<div id="autScratchConditionValueField"' + (automationConditionParameterKind(step.condition) === 'value' ? '' : ' hidden') + '><div class="aut-field"><label for="autScratchConditionValueOperator">Compare Deal value</label><select id="autScratchConditionValueOperator"><option value="above"' + ((step.conditionValueOperator || 'above') === 'above' ? ' selected' : '') + '>Is above</option><option value="below"' + (step.conditionValueOperator === 'below' ? ' selected' : '') + '>Is below</option><option value="equal"' + (step.conditionValueOperator === 'equal' ? ' selected' : '') + '>Is equal to</option></select></div><div class="aut-field"><label for="autScratchConditionValueAmount">Amount (Deal Company currency)</label><input id="autScratchConditionValueAmount" type="number" min="1" step="100" placeholder="e.g. 25000" value="' + escapeAutomationHtml(step.conditionValueAmount || '') + '"><span class="aut-help">No currency choice is needed. WeQuote uses the currency of the Deal Company.</span></div></div>';
+      const conditionDateMarkup = '<div class="aut-field" id="autScratchConditionDateField"' + (automationConditionParameterKind(step.condition) === 'date' ? '' : ' hidden') + '><label for="autScratchConditionDate">Date to compare with</label><input id="autScratchConditionDate" type="date" value="' + escapeAutomationHtml(step.conditionDate || '') + '"><span class="aut-help">WeQuote compares the Deal Expected Close Date with this date.</span></div>';
+      const conditionDaysMarkup = '<div class="aut-field" id="autScratchConditionDaysField"' + (automationConditionParameterKind(step.condition) === 'days' ? '' : ' hidden') + '><label for="autScratchConditionDays">How many days ahead?</label><input id="autScratchConditionDays" type="number" min="1" max="365" step="1" placeholder="e.g. 7" value="' + escapeAutomationHtml(step.conditionDays || '') + '"><span class="aut-help">Example: 7 checks whether the Expected Close Date is within the next 7 days.</span></div>';
       setScratchInspectorContent(config, approvedHighValueRule
-        ? '<div class="aut-stage-lock-summary"><i class="fai">&#xf023;</i><span><small>FIXED RULE</small><strong>Quote value OR discount limit</strong><em>This Template sets the Rule and both results</em></span></div><div class="aut-field"><label for="autHighValueAmount">Quote value is over</label><div class="aut-prefixed-input"><span>£</span><input id="autHighValueAmount" type="number" min="1" step="100" value="' + Math.max(1, Number(config.quoteValueThreshold) || 25000) + '"></div><span class="aut-help">Uses the Company currency.</span></div><div class="aut-field"><label for="autHighValueDiscount">OR discount is over</label><div class="aut-suffixed-input"><input id="autHighValueDiscount" type="number" min="0" max="100" step="1" value="' + Math.max(0, Math.min(100, Number(config.discountThreshold) || 15)) + '"><span>%</span></div></div><div class="aut-rule"><strong>What happens</strong><div class="aut-help" style="margin-top:5px;">If Yes, create the approved high-value Note. If No, stop this path.</div></div>'
+        ? '<div class="aut-stage-lock-summary"><i class="fai">&#xf023;</i><span><small>FIXED RULE</small><strong>Quote value OR discount limit</strong><em>This Template sets the Rule and both results</em></span></div><div class="aut-field"><label for="autHighValueAmount">Quote value is over (Deal Company currency)</label><input id="autHighValueAmount" type="number" min="1" step="100" value="' + Math.max(1, Number(config.quoteValueThreshold) || 25000) + '"><span class="aut-help">No currency choice is needed. WeQuote uses the currency of the Deal Company.</span></div><div class="aut-field"><label for="autHighValueDiscount">OR discount is over</label><div class="aut-suffixed-input"><input id="autHighValueDiscount" type="number" min="0" max="100" step="1" value="' + Math.max(0, Math.min(100, Number(config.discountThreshold) || 15)) + '"><span>%</span></div></div><div class="aut-rule"><strong>What happens</strong><div class="aut-help" style="margin-top:5px;">If Yes, create the approved high-value Note. If No, stop this path.</div></div>'
         : (phaseOneRecipe
         ? '<div class="aut-field"><label>Rule</label><div class="aut-readonly-value">' + escapeAutomationHtml(automationConditionUserCopy(step.condition)) + '</div><span class="aut-help">This Rule is set by the Template and cannot be changed here.</span></div><div class="aut-rule"><strong>What happens</strong><div class="aut-help" style="margin-top:5px;">If Yes, run the saved Action. If No, stop this path.</div></div>'
-        : incompatibleRuleWarning + missingYesActionWarning + '<div class="aut-field"><label for="autScratchCondition">' + (isConditionGroup ? 'How should these Rules work together?' : 'What should WeQuote check?') + '</label><select id="autScratchCondition">' + conditionOptionMarkup + '</select><span class="aut-help">Choose a check that could be Yes or No here. If you want to check the same information again later, add a Wait first.</span></div><div class="aut-rule"><strong>If Yes · choose at least one Action</strong><div class="aut-help" style="margin-top:5px;">If No, choose an Action or let this path stop.</div></div><button class="aut-btn" type="button" ' + removeAttribute + '>Remove step</button>'));
+        : incompatibleRuleWarning + missingYesActionWarning + (isConditionGroup ? '' : '<div class="aut-field"><label for="autScratchConditionCategory">What kind of information?</label><select id="autScratchConditionCategory">' + conditionCategoryMarkup + '</select><span class="aut-help">Start with the Rules recommended for this Stage. Choose another group only when you need it.</span></div>') + '<div class="aut-field"><label for="autScratchCondition">' + (isConditionGroup ? 'How should these Rules work together?' : 'What should WeQuote check?') + '</label><select id="autScratchCondition">' + conditionOptionMarkup + '</select><span class="aut-help">A Rule asks one Yes or No question. Add a Wait first only if you need to check again later.</span></div>' + (isConditionGroup ? '' : conditionCompanyMarkup + conditionValueMarkup + conditionDateMarkup + conditionDaysMarkup) + '<div class="aut-rule"><strong>If Yes · choose at least one Action</strong><div class="aut-help" style="margin-top:5px;">If No, choose an Action or let this path stop.</div></div><button class="aut-btn" type="button" ' + removeAttribute + '>Remove step</button>'));
     } else {
       inspectorTitle.textContent = 'Take an action';
       const earlierSteps = (reference.list || []).slice(0, Math.max(0, reference.index)).map(function (candidate, candidateIndex) {
@@ -10934,8 +11281,7 @@
       }
       inspectorTitle.textContent = (isInactiveLeadWorkflow(config) || isQuoteWorkflow(config)) ? '2. Choose when the activity is due' : '2. Choose how long to wait';
       inspectorBody.innerHTML =
-        '<div class="aut-field"><label for="autWaitDays">Due after</label><input id="autWaitDays" type="number" min="0" max="90" value="' + config.waitDays + '"></div>' +
-        '<div class="aut-field"><label for="autWaitType">Day type</label><select id="autWaitType"><option>Calendar days</option><option>Business days</option></select><span class="aut-help">' + ((isInactiveLeadWorkflow(config) || isQuoteWorkflow(config)) ? 'The activity is created immediately with this future due date. The prototype does not pause and re-check later.' : 'The next step runs after this delay.') + '</span></div>';
+        '<div class="aut-field"><label for="autWaitDays">' + ((isInactiveLeadWorkflow(config) || isQuoteWorkflow(config)) ? 'Due after' : 'Wait for') + '</label><input id="autWaitDays" type="number" min="1" max="90" step="1" value="' + Math.max(1, Math.min(90, Number(config.waitDays) || 1)) + '"><span class="aut-help">Enter 1–90 whole calendar days. ' + ((isInactiveLeadWorkflow(config) || isQuoteWorkflow(config)) ? 'The activity is created immediately with this future due date.' : 'The next step runs after this delay.') + '</span></div>';
       return;
     }
 
@@ -11095,13 +11441,13 @@
         '<span class="aut-untitled-builder-icon"><i class="fai">&#xf542;</i></span>' +
         '<small>NEW QUOTE PIPELINE AUTOMATION</small>' +
         '<h2 id="autUntitledBuilderTitle">Choose a Stage and starting point</h2>' +
-        '<p>Choose any Quote Pipeline Stage, then build a compatible Custom Automation or use a matching Template.</p>' +
+        '<p>Choose any Quote Pipeline Stage, then start from scratch or choose a matching Template.</p>' +
         '<button class="aut-btn primary" type="button" id="autUntitledChooseTemplate">Choose Stage &amp; Starting Point</button>' +
       '</section>';
     workflowTitle.textContent = config.title || 'New Quote Pipeline Automation';
     workflowMeta.textContent = 'Draft · Quote Pipeline · Setup not complete';
     summaryLabel.textContent = 'Setup status:';
-    plainSummary.textContent = 'Choose a Stage, then build a compatible Custom Automation or use a matching Template before testing or publishing.';
+    plainSummary.textContent = 'Choose a Stage, then start from scratch or choose a matching Template before testing or publishing.';
     if (draftBanner) draftBanner.hidden = true;
     if (blockLibrary) blockLibrary.hidden = true;
     if (automationInspector) automationInspector.hidden = true;
@@ -11121,7 +11467,7 @@
       rightFlowSummary.hidden = false;
       rightFlowSummary.innerHTML = '<header><span class="aut-inspector-summary-icon"><i class="fai">&#xf542;</i></span><div><strong>Automation setup</strong><span>Untitled Draft</span></div></header>' +
         '<div class="aut-inspector-summary-row"><small>STATUS</small><strong>Setup not complete</strong><span>No Stage or Template has been selected yet.</span></div>' +
-        '<div class="aut-inspector-summary-row"><small>NEXT</small><strong>Choose a Quote Stage</strong><span>Custom starts first; matching Templates remain available.</span></div>';
+        '<div class="aut-inspector-summary-row"><small>NEXT</small><strong>Choose a Quote Stage</strong><span>Start from scratch is first; matching Templates remain available.</span></div>';
     }
     updateWorkflowList();
     syncAutomationDraftUi();
@@ -11267,7 +11613,7 @@
       else if (hasEditableStepModel(config)) activity = isPhaseOneTemplateRecipe(config) ? 'Configurable inactive template' : (config.templateKey ? 'Editable inactive template' : 'Inactive custom Automation');
       if (config.editingVersion) activity = 'Live version keeps running';
       return '<button class="aut-workflow' + (key === activeWorkflowKey ? ' active' : '') + '" type="button" data-aut-workflow="' + escapeAutomationHtml(key) + '">' +
-        '<span class="aut-workflow-line"><span class="aut-workflow-name">' + escapeAutomationHtml(config.title) + '</span><span class="aut-object-badge ' + objectBadgeClass(config.objectType) + '">' + escapeAutomationHtml(config.objectType.toUpperCase()) + '</span></span><span class="aut-workflow-scope"><i class="fai">&#xf1ad;</i>' + escapeAutomationHtml(automationCompanyScopeLabel(config, true)) + '</span>' +
+        '<span class="aut-workflow-line"><span class="aut-workflow-name">' + escapeAutomationHtml(config.title) + '</span><span class="aut-object-badge ' + objectBadgeClass(config.objectType) + '">' + escapeAutomationHtml(config.objectType.toUpperCase()) + '</span></span>' +
         '<span class="aut-workflow-meta"><span class="aut-status' + (config.enabled ? ' on' : '') + '">' + (config.editingVersion ? (config.enabled ? 'Active' : 'Inactive') + ' · Unpublished changes' : (config.enabled ? 'Active' : (needsSetup ? 'Draft' : 'Inactive'))) + '</span><span>' + escapeAutomationHtml(activity) + '</span></span></button>';
     }).join('');
     yourEmpty.hidden = keys.length > 0;
@@ -11277,31 +11623,20 @@
   }
 
   function renderCompanyScopeConflict(config, conflicts) {
-    const canResolve = config.companyScopeMode === 'selected' && conflicts.some(function (key) { return workflows[key].companyScopeMode === 'all'; });
-    inspectorStep.textContent = 'Activation check · Company scope';
-    inspectorTitle.textContent = 'Overlapping Automation blocked';
+    inspectorStep.textContent = 'Activation check · Duplicate outcome';
+    inspectorTitle.textContent = 'Possible duplicate Automation blocked';
     inspectorFoot.hidden = true;
-    inspectorBody.innerHTML = '<div class="aut-company-conflict"><i class="fai">&#xf071;</i><div><strong>This outcome would run twice</strong><span>' + escapeAutomationHtml(automationCompanyScopeLabel(config)) + ' overlaps with ' + conflicts.length + ' Active Automation' + (conflicts.length === 1 ? '' : 's') + ' using the same Stage and trigger.</span></div></div>' +
-      '<div class="aut-rule"><strong>Conflicting scope</strong><ul>' + conflicts.map(function (key) { return '<li><b>' + escapeAutomationHtml(workflows[key].title) + '</b> · ' + escapeAutomationHtml(automationCompanyScopeLabel(workflows[key])) + '</li>'; }).join('') + '</ul></div>' +
+    inspectorBody.innerHTML = '<div class="aut-company-conflict"><i class="fai">&#xf071;</i><div><strong>This outcome could run twice</strong><span>' + conflicts.length + ' Active Automation' + (conflicts.length === 1 ? '' : 's') + ' already use the same Stage, start and outcome.</span></div></div>' +
+      '<div class="aut-rule"><strong>Possible duplicates</strong><ul>' + conflicts.map(function (key) { return '<li><b>' + escapeAutomationHtml(workflows[key].title) + '</b></li>'; }).join('') + '</ul></div>' +
       '<div class="aut-info-note"><i class="fai">&#xf023;</i><span>Use one result for each record. WeQuote will still update Quote Stages automatically.</span></div>' +
-      (canResolve ? '<button class="aut-btn primary" type="button" data-aut-resolve-company-overlap>Exclude ' + escapeAutomationHtml(automationCompanyScopeLabel(config, true)) + ' from the global Automation</button>' : '<div class="aut-help">Turn off or narrow one of the overlapping Automations before trying again.</div>') +
+      '<div class="aut-help">Turn off or change one of the possible duplicates before trying again.</div>' +
       '<div class="aut-sim-actions"><button class="aut-btn" type="button" data-aut-back>Back to editing</button></div>';
   }
 
   function resolveCompanyScopeConflict() {
-    const config = activeConfig();
-    if (!config || config.companyScopeMode !== 'selected') return;
-    const conflicts = isPhaseOneTemplateRecipe(config) ? [] : automationCompanyScopeConflicts(config);
-    conflicts.forEach(function (key) {
-      const candidate = workflows[key];
-      if (candidate.companyScopeMode !== 'all') return;
-      candidate.companyScopeMode = 'all-except';
-      candidate.companyScopeIds = Array.from(new Set((candidate.companyScopeIds || []).concat(config.companyScopeIds)));
-    });
-    persistAutomationState();
-    updateWorkflowList();
-    renderScratchInspector('scratch-trigger');
-    showAutomationToast('Global Automation updated to exclude the selected Company scope. Review, then Turn on again.');
+    // Kept as a harmless compatibility hook for old saved prototype markup.
+    // Phase 1 has no Automation-wide Company scope to resolve.
+    showAutomationToast('This control is no longer used. Add an Owning Company Rule to check a specific Deal Company.');
   }
 
   function saveSelectedStep() {
@@ -11367,7 +11702,7 @@
         const discountInput = document.getElementById('autHighValueDiscount');
         config.quoteValueThreshold = Math.max(1, Number(amountInput && amountInput.value) || 25000);
         config.discountThreshold = Math.max(0, Math.min(100, Number(discountInput && discountInput.value) || 0));
-        step.condition = 'Quote value is over £' + config.quoteValueThreshold.toLocaleString('en-GB') + ' OR discount is over ' + config.discountThreshold + '%';
+        step.condition = 'Quote value is over ' + config.quoteValueThreshold.toLocaleString('en-GB') + ' in the Deal Company currency OR discount is over ' + config.discountThreshold + '%';
         config.condition = step.condition;
       } else if (step.type === 'condition') {
         const conditionSelect = document.getElementById('autScratchCondition');
@@ -11376,7 +11711,58 @@
           if (conditionSelect) conditionSelect.focus();
           return;
         }
-        step.condition = conditionSelect.value;
+        const selectedCondition = conditionSelect.value;
+        const conditionParameterKind = automationConditionParameterKind(selectedCondition);
+        const conditionSettings = {};
+        if (conditionParameterKind === 'company') {
+          const companySelect = document.getElementById('autScratchConditionCompany');
+          if (!companySelect || !companySelect.value) {
+            showAutomationToast('Choose the Company this Rule should match.');
+            if (companySelect) companySelect.focus();
+            return;
+          }
+          conditionSettings.conditionCompanyId = companySelect.value;
+        }
+        if (conditionParameterKind === 'value') {
+          const operatorSelect = document.getElementById('autScratchConditionValueOperator');
+          const amountInput = document.getElementById('autScratchConditionValueAmount');
+          const operator = operatorSelect && operatorSelect.value;
+          const amount = Number(amountInput && amountInput.value);
+          if (!['above', 'below', 'equal'].includes(operator) || !(amount > 0)) {
+            showAutomationToast('Choose above, below or equal and enter an amount greater than zero.');
+            if (!operator && operatorSelect) operatorSelect.focus();
+            else if (amountInput) amountInput.focus();
+            return;
+          }
+          conditionSettings.conditionValueOperator = operator;
+          conditionSettings.conditionValueAmount = amount;
+        }
+        if (conditionParameterKind === 'date') {
+          const dateInput = document.getElementById('autScratchConditionDate');
+          if (!dateInput || !Number.isFinite(genericAutomationCalendarDay(dateInput.value))) {
+            showAutomationToast('Choose the date this Rule should use.');
+            if (dateInput) dateInput.focus();
+            return;
+          }
+          conditionSettings.conditionDate = dateInput.value;
+        }
+        if (conditionParameterKind === 'days') {
+          const daysInput = document.getElementById('autScratchConditionDays');
+          const days = Number(daysInput && daysInput.value);
+          if (!Number.isInteger(days) || days < 1 || days > 365) {
+            showAutomationToast('Enter a whole number of days from 1 to 365.');
+            if (daysInput) daysInput.focus();
+            return;
+          }
+          conditionSettings.conditionDays = days;
+        }
+        delete step.conditionCompanyId;
+        delete step.conditionValueOperator;
+        delete step.conditionValueAmount;
+        delete step.conditionDate;
+        delete step.conditionDays;
+        Object.assign(step, conditionSettings);
+        step.condition = selectedCondition;
       }
       if (step.type === 'action') {
         const scratchAction = document.getElementById('autScratchAction');
@@ -11531,7 +11917,7 @@
       if (isNewLeadWorkflow(config)) {
         config.assignmentOwner = document.getElementById('autAssignmentOwner').value;
       } else if (!isLeadConversion(config) && !isWonHandoff(config)) {
-        config.waitDays = Math.max(0, Number(document.getElementById('autWaitDays').value) || 0);
+        config.waitDays = Math.max(1, Math.min(90, Number(document.getElementById('autWaitDays').value) || 1));
       }
     } else if (activeNode === 'condition') {
       config.condition = document.getElementById('autCondition').value;
@@ -11949,13 +12335,12 @@
       inspectorBody.innerHTML =
         builderVersionComparisonMarkup(config) +
         '<div class="aut-test-result"><strong>' + matches.length + ' ' + escapeAutomationHtml(config.objectType) + (matches.length === 1 ? '' : 's') + ' match the trigger</strong><div style="margin-top:4px;">' + escapeAutomationHtml(trigger.title) + '</div></div>' +
-        '<div class="aut-test-scope"><i class="fai">&#xf1ad;</i><span><small>APPLIES TO COMPANIES</small><strong>' + escapeAutomationHtml(automationCompanyScopeLabel(config)) + '</strong></span></div>' + automationCompanyScopePillsMarkup(config, 'test') +
         '<div class="aut-sim-timeline">' +
           '<div class="aut-sim-step"><span class="aut-sim-dot"><i class="fai">&#xf00c;</i></span><div class="aut-sim-copy"><strong>Trigger</strong><span>' + escapeAutomationHtml(trigger.detail) + '</span></div></div>' +
           testSequenceMarkup(config.steps, '') +
         '</div><div class="aut-help"><strong>Preview only:</strong> no CRM records are changed.</div><div class="aut-sim-actions"><button class="aut-btn" type="button" data-aut-back>Back to editing</button></div>';
-      workflowMeta.textContent = (config.enabled ? 'Active' : 'Inactive') + ' · Test Draft snapshot ready';
-      showAutomationToast('Test Draft snapshot ready. Complete the Simulator Timeline to pass the test.');
+      workflowMeta.textContent = automationRuntimeStateLabel(config) + ' · Test preview ready';
+      showAutomationToast('Test preview ready. Complete the Simulator Timeline to pass the test.');
       return;
     }
     const leadFlow = isLeadWorkflow(config);
@@ -11972,7 +12357,6 @@
     }).join('');
     inspectorBody.innerHTML =
       '<div class="aut-test-result"><strong>' + matches.length + ' ' + objectName + (matches.length === 1 ? '' : 's') + ' ' + (matches.length === 1 ? 'matches' : 'match') + ' the trigger</strong><div style="margin-top:4px;">' + (conversionFlow ? 'Event: Converted to Deal' : (isNewLeadWorkflow(config) ? 'Event: New Lead created' : (isInactiveLeadWorkflow(config) ? 'Rule: No next activity' : (isQuoteWorkflow(config) ? 'Event: Quote sent' : (isWonHandoff(config) ? 'Stage: ' + escapeAutomationHtml(automationPipelineName(config)) + ' · ' + escapeAutomationHtml(config.triggerFromStage) + ' → ' + escapeAutomationHtml(config.triggerToStage) : (isQuoteInvoice(config) ? 'Event: Quote accepted' : 'Stage: ' + escapeAutomationHtml(config.triggerStage))))))) + '</div></div>' +
-      '<div class="aut-test-scope"><i class="fai">&#xf1ad;</i><span><small>APPLIES TO COMPANIES</small><strong>' + escapeAutomationHtml(automationCompanyScopeLabel(config)) + '</strong></span></div>' + automationCompanyScopePillsMarkup(config, 'test') +
       (matches.length ? '<div class="aut-rule"><strong>Matching ' + objectName + 's</strong><ul style="margin:7px 0 0;padding-left:17px;line-height:1.6;">' + names + '</ul></div>' : '<div class="aut-help">No current ' + objectName + 's would enter this automation.</div>') +
       (matches.length ?
         '<div class="aut-sim-card">' +
@@ -11988,7 +12372,7 @@
         '</div>' : '') +
       '<div class="aut-help"><strong>Preview only:</strong> no time passes, and no CRM activities, Next Actions or records are created.</div>' +
       '<div class="aut-sim-actions"><button class="aut-btn" type="button" data-aut-back>Back to editing</button></div>';
-    workflowMeta.textContent = (config.enabled ? 'Active' : 'Inactive') + ' · Test Draft snapshot ready';
+    workflowMeta.textContent = automationRuntimeStateLabel(config) + ' · Test preview ready';
     showAutomationToast('Trigger checked without changing CRM data.');
   }
 
@@ -12507,6 +12891,7 @@
 
   function showActionPalette(position) {
     activeNode = 'palette';
+    showAutomationStepSettingsPane();
     document.querySelectorAll('#viewAutomation [data-aut-node]').forEach(function (node) { node.classList.remove('selected'); });
     inspectorStep.textContent = 'Add step · ' + position.replaceAll('-', ' ');
     inspectorTitle.textContent = hasEditableStepModel(activeConfig()) ? 'What should happen next?' : 'Choose an action';
@@ -12621,24 +13006,8 @@
 
   function renderCreatorCompanyPicker() {
     if (!creatorCompanyPicker) return;
-    const selected = selectedCompanyScopeIds.slice();
-    const allSelected = selectedCompanyScopeMode === 'all';
-    creatorCompanyPicker.innerHTML =
-      '<section class="aut-creator-company-picker' + (creatorCompanyPickerOpen ? ' open' : '') + '">' +
-        '<div class="aut-creator-company-heading"><span><small>COMPANY SCOPE</small><strong>Which Companies should use this Automation?</strong><em>Choose from existing Companies only.</em></span><button type="button" data-aut-creator-company-toggle aria-expanded="' + (creatorCompanyPickerOpen ? 'true' : 'false') + '"><i class="fai">&#xf1ad;</i> Change</button></div>' +
-        automationCompanyScopePillsMarkup(creatorCompanyScopeConfig(), 'creator') +
-        '<div class="aut-creator-company-menu"' + (creatorCompanyPickerOpen ? '' : ' hidden') + '>' +
-          '<label class="aut-creator-company-search"><i class="fai">&#xf002;</i><input id="autCreatorCompanySearch" type="search" autocomplete="off" placeholder="Search Companies" aria-label="Search existing Companies"></label>' +
-          '<button type="button" class="aut-creator-company-row all' + (allSelected ? ' selected' : '') + '" data-aut-creator-company-all aria-pressed="' + (allSelected ? 'true' : 'false') + '"><span><strong class="aut-creator-company-label all"><i class="fai">&#xf1ad;</i> All Companies</strong><small>Apply wherever the record\'s Owning Company is available.</small></span><b><i class="fai">&#xf00c;</i></b></button>' +
-          '<div class="aut-creator-company-divider"><span>Or select one or more Companies</span></div>' +
-          AUTOMATION_OWNING_COMPANIES.map(function (company) {
-            const isSelected = !allSelected && selected.indexOf(company.id) >= 0;
-            const searchName = ((company.shortName || '') + ' ' + (company.name || '')).trim().toLowerCase();
-            return '<button type="button" class="aut-creator-company-row' + (isSelected ? ' selected' : '') + '" data-aut-creator-company-id="' + escapeAutomationHtml(company.id) + '" data-aut-creator-company-search-name="' + escapeAutomationHtml(searchName) + '" aria-pressed="' + (isSelected ? 'true' : 'false') + '"><span><strong class="aut-creator-company-label"><i class="fai">&#xf1ad;</i> ' + escapeAutomationHtml(company.shortName || company.name) + '</strong><small>' + escapeAutomationHtml(company.name) + '</small></span><b><i class="fai">&#xf00c;</i></b></button>';
-          }).join('') +
-          '<p class="aut-creator-company-note"><i class="fai">&#xf023;</i> Companies are managed elsewhere in WeQuote. This list only controls where the Automation applies.</p>' +
-        '</div>' +
-      '</section>';
+    creatorCompanyPicker.innerHTML = '';
+    creatorCompanyPicker.hidden = true;
   }
 
   function renderTemplateStageNav() {
@@ -12702,9 +13071,9 @@
     if (templatesButton) templatesButton.hidden = !creationPolicy.templatesAllowed;
     const creatorHelp = creatorTemplates.querySelector('.aut-creator-toolbar .aut-help');
     if (creatorHelp) creatorHelp.textContent = scratchOnly
-      ? 'Choose a Stage for a Custom Automation'
+      ? 'Choose a Stage to start from scratch'
       : (selectedAutomationStage
-        ? (canBuildFromScratch ? 'Use a Template, or build a Custom Automation' : 'Showing matching Templates')
+        ? (canBuildFromScratch ? 'Start from scratch, or choose Templates' : 'Showing matching Templates')
         : 'Choose a Stage before Templates are shown');
     renderTemplateStageNav();
     creatorTemplates.querySelectorAll('[data-aut-template]').forEach(function (card) {
@@ -12851,7 +13220,7 @@
       creatorCopy.textContent = 'Select the existing Pipeline where this Automation belongs.';
     } else if (screen === 'home') {
       creatorTitle.textContent = 'Create automation';
-      creatorCopy.textContent = 'Choose Custom Automation or a matching Template for this Stage.';
+      creatorCopy.textContent = 'Start from scratch, or choose a matching Template for this Stage.';
       if (creatorAutomationName && creatorAutomationName.value !== pendingAutomationName) creatorAutomationName.value = pendingAutomationName;
       if (creatorAutomationDescription && creatorAutomationDescription.value !== pendingAutomationDescription) creatorAutomationDescription.value = pendingAutomationDescription;
       renderCreatorCompanyPicker();
@@ -12862,7 +13231,7 @@
       creatorCopy.textContent = scratchOnly
         ? 'Select where this Automation belongs. The next screen shows the Starts when choices for that Stage.'
         : (selectedAutomationStage
-          ? 'Choose a ready-made Template for ' + selectedAutomationStage + ', or build a Custom Automation using choices that work in this Stage.'
+          ? 'Start from scratch using choices that work in ' + selectedAutomationStage + ', or choose a ready-made Template.'
           : 'Select the Pipeline Stage first. Its matching Templates will then appear.');
     } else if (screen === 'template-preview') {
       creatorTitle.textContent = 'Preview template';
@@ -13034,8 +13403,7 @@
     const stage = automationStageDefinition(selectedAutomationStage, selectedTemplatePipelineId);
     const info = stage && stage.triggerChoices.find(function (item) { return item[0] === choice; });
     if (!info) return '<div class="aut-info-note"><i class="fai">&#xf05a;</i><span>This Starts when choice is not available at the selected Stage.</span></div>';
-    const scopeConfig = { companyScopeMode: selectedCompanyScopeMode, companyScopeIds: selectedCompanyScopeIds };
-    const fields = '<div class="aut-stage-lock-summary"><i class="fai">&#xf023;</i><span><small>PIPELINE STAGE</small><strong>' + escapeAutomationHtml(selectedAutomationStage) + '</strong><em>This Automation stays in the Stage you chose</em></span></div><div class="aut-stage-lock-summary company"><i class="fai">&#xf1ad;</i><span><small>OWNING COMPANIES</small><strong>' + escapeAutomationHtml(automationCompanyScopeLabel(scopeConfig)) + '</strong><em>Choose which Companies this Automation applies to</em></span></div>' + automationCompanyScopePillsMarkup(scopeConfig, 'inspector') + '<div class="aut-rule"><strong>Ready to add</strong><div class="aut-help" style="margin-top:5px;">' + escapeAutomationHtml(info[2]) + ' You can add a Rule, Wait or Action after this start.</div></div>';
+    const fields = '<div class="aut-stage-lock-summary"><i class="fai">&#xf023;</i><span><small>PIPELINE STAGE</small><strong>' + escapeAutomationHtml(selectedAutomationStage) + '</strong><em>This Automation stays in the Stage you chose</em></span></div><div class="aut-rule"><strong>Ready to add</strong><div class="aut-help" style="margin-top:5px;">' + escapeAutomationHtml(info[2]) + ' You can add a Rule, Wait or Action after this start. To check one specific Company, add an Owning Company Rule later.</div></div>';
     return '<div class="aut-config-card"><div class="aut-config-title"><i class="fai">' + info[3] + '</i><div><strong>' + escapeAutomationHtml(info[1]) + '</strong><span>' + escapeAutomationHtml(info[2]) + '</span></div></div><div class="aut-config-grid">' + fields + '</div><div class="aut-config-actions"><button class="aut-btn" type="button" data-aut-creator-back="triggers">Back</button><button class="aut-btn primary" type="button" id="autApplyScratchTrigger">Add trigger</button></div></div>';
   }
 
@@ -13188,7 +13556,7 @@
     if (!automationPipelineUsesQuoteLifecycle(pipeline) && !isGenericStageStarter) {
       creatorStartMode = 'scratch';
       setCreatorScreen(selectedAutomationStage ? 'triggers' : 'templates');
-      showAutomationToast('Quote Templates need a Quote Pipeline. Build a Custom Automation in this Stage instead.');
+      showAutomationToast('Quote Templates need a Quote Pipeline. Start from scratch in this Stage instead.');
       return;
     }
     const templateStage = automationStageForTemplateKey(templateKey, selectedAutomationStage);
@@ -13819,6 +14187,26 @@
   });
 
   automationView.addEventListener('change', function (event) {
+    if (event.target.id === 'autScratchConditionCategory' && hasEditableStepModel(activeConfig()) && !isPhaseOneTemplateRecipe(activeConfig())) {
+      const config = activeConfig();
+      const reference = scratchStepReference(config, activeNode);
+      const step = reference.step;
+      const conditionSelect = document.getElementById('autScratchCondition');
+      if (!step || step.type !== 'condition' || !conditionSelect) return;
+      const directFromTrigger = scratchRuleDirectlyFollowsTrigger(config, step);
+      const choices = automationConditionChoices(config, false, { directFromTrigger: directFromTrigger });
+      const groups = automationConditionChoiceGroups(config, choices);
+      const group = groups.find(function (item) { return item.id === event.target.value; }) || groups[0];
+      conditionSelect.innerHTML = automationConditionOptionMarkup(group ? group.choices : [], '', true);
+      updateScratchConditionParameterFields('', false);
+      conditionSelect.focus();
+      return;
+    }
+    if (event.target.id === 'autScratchCondition' && hasEditableStepModel(activeConfig()) && !isPhaseOneTemplateRecipe(activeConfig())) {
+      updateScratchConditionParameterFields(event.target.value, true);
+      setAutomationSaveStatus(false);
+      return;
+    }
     if (event.target.id === 'autActionCompletion' || event.target.id === 'autScratchCompletion') {
       const target = inspectorBody.querySelector('[data-aut-completion-target]');
       if (target) target.hidden = event.target.value !== 'required';
@@ -13943,7 +14331,7 @@
   function runAutomationTestSimulator() {
     if (!prepareAutomationTestDraft()) return;
     openPipelineJourneyPreview();
-    showAutomationToast('Safe Test Draft snapshot saved. Use Play or Step to complete the Timeline.');
+    showAutomationToast('Safe test preview state saved. Use Play or Step to complete the Timeline.');
   }
 
   document.getElementById('autSaveStep').addEventListener('click', saveSelectedStep);
@@ -14021,9 +14409,56 @@
         renderQuotePlayground();
         return;
       }
+      if (event.target.id === 'autPlaygroundRuleCategory') {
+        quotePlaygroundState.ruleCategory = event.target.value;
+        quotePlaygroundState.rule = '';
+        quotePlaygroundState.ruleCompanyId = '';
+        quotePlaygroundState.ruleValueOperator = 'above';
+        quotePlaygroundState.ruleValueAmount = '';
+        quotePlaygroundState.ruleDate = '';
+        quotePlaygroundState.ruleDays = '';
+        quotePlaygroundState.noActionIds = [];
+        renderQuotePlayground();
+        const ruleSelect = document.getElementById('autPlaygroundRule');
+        if (ruleSelect) ruleSelect.focus();
+        return;
+      }
       if (event.target.id === 'autPlaygroundRule') {
         quotePlaygroundState.rule = event.target.value;
+        const ruleKind = automationConditionParameterKind(quotePlaygroundState.rule);
+        if (ruleKind !== 'company') quotePlaygroundState.ruleCompanyId = '';
+        if (ruleKind !== 'value') {
+          quotePlaygroundState.ruleValueOperator = 'above';
+          quotePlaygroundState.ruleValueAmount = '';
+        }
+        if (ruleKind !== 'date') quotePlaygroundState.ruleDate = '';
+        if (ruleKind !== 'days') quotePlaygroundState.ruleDays = '';
         if (!quotePlaygroundState.rule) quotePlaygroundState.noActionIds = [];
+        renderQuotePlayground();
+        return;
+      }
+      if (event.target.id === 'autPlaygroundRuleCompany') {
+        quotePlaygroundState.ruleCompanyId = event.target.value;
+        renderQuotePlayground();
+        return;
+      }
+      if (event.target.id === 'autPlaygroundRuleValueOperator') {
+        quotePlaygroundState.ruleValueOperator = event.target.value;
+        renderQuotePlayground();
+        return;
+      }
+      if (event.target.id === 'autPlaygroundRuleValueAmount') {
+        quotePlaygroundState.ruleValueAmount = event.target.value;
+        renderQuotePlayground();
+        return;
+      }
+      if (event.target.id === 'autPlaygroundRuleDate') {
+        quotePlaygroundState.ruleDate = event.target.value;
+        renderQuotePlayground();
+        return;
+      }
+      if (event.target.id === 'autPlaygroundRuleDays') {
+        quotePlaygroundState.ruleDays = event.target.value;
         renderQuotePlayground();
       }
     });
@@ -14264,7 +14699,7 @@
     if (event.target === event.currentTarget) closeExitAutomationDialog();
   });
   backToListButton.addEventListener('click', exitAutomationEditor);
-  if (closeInspectorButton) closeInspectorButton.addEventListener('click', showAutomationBlockLibraryPane);
+  if (closeInspectorButton) closeInspectorButton.addEventListener('click', function () { showAutomationBlockLibraryPane(true); });
   document.getElementById('autCancelStep').addEventListener('click', function () { renderInspector(activeNode === 'test' || activeNode === 'palette' ? (hasEditableStepModel(activeConfig()) ? 'scratch-trigger' : 'trigger') : activeNode); });
   selectedPlayButton.addEventListener('click', openPipelineJourneyPreview);
   document.getElementById('autTestWorkflow').addEventListener('click', runAutomationTestSimulator);
@@ -14480,7 +14915,7 @@
       if (!automationPipelineUsesQuoteLifecycle(pipeline)) {
         creatorStartMode = 'scratch';
         setCreatorScreen(selectedAutomationStage ? 'triggers' : 'templates');
-        showAutomationToast('This Pipeline has no Quote Templates. Build a Custom Automation instead.');
+        showAutomationToast('This Pipeline has no Quote Templates. Start from scratch instead.');
         return;
       }
       if (template.dataset.autTemplate === 'client-proposal-approval') {
@@ -14611,7 +15046,7 @@
     const conflicts = isPhaseOneTemplateRecipe(config) ? [] : automationCompanyScopeConflicts(config);
     if (conflicts.length) {
       renderCompanyScopeConflict(config, conflicts);
-      showAutomationToast('Publish blocked: this Owning Company scope overlaps an Active Automation with the same outcome.');
+      showAutomationToast('Publish blocked: another Active Automation uses the same Stage, start and outcome.');
       return;
     }
     if (automationHasDraftChanges(config)) {

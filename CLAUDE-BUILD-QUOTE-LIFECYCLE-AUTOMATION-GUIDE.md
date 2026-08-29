@@ -41,7 +41,7 @@ It must remain at the repository root so colleagues can find it immediately and 
 Use these sources in this order:
 
 1. `docs/quote-automation/QUOTE-LIFECYCLE-AUTOMATION-PRODUCT-DIRECTION-2026-08-29.md` — the current product decision and precedence record.
-2. `docs/WeQuote-CRM-Phase-1-PRD.html` — the formal Phase 1 authority, read together with its 29 August current-direction addendum.
+2. `docs/WeQuote-CRM-Phase-1-PRD.html` — the single canonical **Version 9 · Managed + Custom · Draft for sign-off** PRD. Preserve FR-71–95 and AC-CUS-01–25 when reconciling Guide content.
 3. `docs/quote-automation/QUOTE-LIFECYCLE-FROM-SCRATCH-STAGE-CATALOGUE.md` — the detailed lifecycle, Trigger, Rule, Action and candidate-recipe evidence.
 4. The existing root `QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html` — interaction and content reference, not an authority where it conflicts with the decision record, PRD addendum or catalogue.
 5. `docs/visuals/template-vs-scratch-scope.html` — the verified scope calculations and colleague-facing comparison.
@@ -73,15 +73,28 @@ For each fixed Template, WeQuote locks the Template name, Quote context, Starts 
 
 ### Layer 2 — compatible Custom Automation in every existing Quote context
 
-The 29 August product direction selects a separate **Custom** route in Qualified, In Progress, In Review, Passed Review,
-Sent, Won and Lost. A user may choose compatible Starts when events, optional Rules, Waits, Yes/No paths and permitted
-Actions in the selected context. Choosing the Starts when event creates an **Inactive Custom Automation draft** with that
-Trigger placed.
+The 29 August product direction selects a separate **Start from scratch** route in Qualified, In Progress, In Review,
+Passed Review, Sent, Won and Lost. It appears first; **Templates** appears second. A user may choose compatible Starts when
+events, optional Rules, Waits, Yes/No paths and permitted Actions in the selected context. Choosing the Starts when event
+creates a **Draft Custom Automation** with that Trigger placed.
 
 This does not unlock or convert a managed Template. The selected Quote context stays fixed, and protected Quote lifecycle
 operations remain unavailable. At the **28 August baseline**, the runnable front end still used the old protected-context
 gate. The **29 August front end has now been updated** to expose the separate Custom route in all seven contexts. This is
 prototype implementation evidence only; production runtime readiness remains unproven.
+
+Use only these Automation states throughout the Guide:
+
+| State | Meaning | Available control |
+|---|---|---|
+| **Draft** | Saved but incomplete or invalid. | **Edit** / **Save draft**. Do not show it as “Needs setup” or pretend the on/off switch is usable. |
+| **Inactive** | Complete and valid, but switched off. | **Edit**, **Preview** and an off toggle that can activate this Automation. |
+| **Active** | Complete, valid and switched on. | **Edit**, **Preview** and an on toggle that can deactivate this Automation. |
+
+Adding a fixed Template with valid defaults produces **Inactive**. Selecting only a Starts when event for Start from
+scratch produces **Draft** until the flow has at least one permitted Yes Action and all selected settings are valid. One
+Draft never blocks a different complete Automation from becoming Active. If the user tries to activate a Draft, validate
+that Automation only and name its exact missing Trigger, Rule parameter or Action.
 
 ### Layer 3 — Custom Stages and new Pipelines
 
@@ -105,7 +118,7 @@ The seven-context decision does not by itself approve either Pipeline-management
 Show a visible banner near the top:
 
 > **Decision-support Guide**  
-> Every existing Quote context offers two product routes: 12 managed fixed Templates or compatible Custom Automation.
+> Every existing Quote context offers two product routes: Start from scratch or 12 managed fixed Templates.
 > The 29 August front end now demonstrates this direction, while production runtime readiness remains unproven. Custom
 > Stages, another Quote-lifecycle Pipeline and Standalone Pipelines are shown separately so the team can review their
 > additional product and QA scope. The additional Pipeline routes are not confirmed Phase 1 scope.
@@ -117,7 +130,7 @@ Use the 29 August decision record unless the product owner gives a newer written
 - the 12 managed Templates remain the complete managed Template set;
 - rename the current 79-row “Templates” explorer to **Reviewed examples**;
 - the 79 examples may be loaded into the practice Builder for learning, but they are not promoted to approved Templates;
-- every existing Quote lifecycle context offers a separate compatible Custom route that creates an Inactive draft; and
+- every existing Quote lifecycle context shows **Start from scratch first** and **Templates second**; Start from scratch creates a Draft Custom Automation; and
 - Custom Stage behaviour, another Quote-lifecycle Pipeline and Standalone Pipeline behaviour remain reviewable product
   guidance rather than confirmed Phase 1 runtime scope.
 
@@ -271,6 +284,61 @@ The Builder must support:
 - multiple Rules with simple **all of these / any of these** wording; and
 - multiple Actions where allowed.
 
+#### Rule picker and parameter settings
+
+Do not show one long ungrouped Rule dropdown. Use a first picker called **What kind of information?**, followed by a second
+picker called **What should WeQuote check?**. The discovery groups are:
+
+1. **Recommended for this Stage**
+2. **Deal & owner**
+3. **Follow-up & activity**
+4. **Tasks, files & Quote checks**
+5. **Dates & value**
+6. **Labels & interests**
+7. **More checks**
+
+Do not append counts such as `(2)` or `(9)` to the visible group names. A group only filters the Rule picker; it is not a
+saved Rule and must never appear as a canvas block. Changing the group or Rule clears parameters that no longer apply.
+
+The Guide must demonstrate the exact parameter contract below. Each row is one stable Rule family, not several unrelated
+sentences that the runtime later has to parse.
+
+| Stable Rule | Fields shown after selection | Required validation | Readable configured question |
+|---|---|---|---|
+| **R10 · Deal belongs to this Company** | Company picker; save exact `conditionCompanyId` | One available Company is required; compare exact stable ID after the account boundary is asserted. | `Deal belongs to Los Angeles?` |
+| **R09 · Deal value** | `conditionValueOperator` = `above`, `below` or `equal`; positive `conditionValueAmount` | Operator required; finite amount must be greater than zero. Currency comes from the owning Company; do not offer a free currency picker. | `Deal value is below 25,000 in the Deal Company currency?` |
+| **R11 · Expected Close Date is missing** | No extra field | No parameter required. | `Expected Close Date is missing?` |
+| **R11 · Expected Close Date is before / on / after** | Relation plus ISO `conditionDate` | A valid calendar date is required. | `Expected Close Date is before 12 Sep 2026?` |
+| **R11 · Expected Close Date is within the next N days** | Integer `conditionDays` | Whole number from 1 to 365. | `Expected Close Date is within the next 7 days?` |
+| **R11 · Expected Close Date is overdue** | No extra field | No parameter required. | `Expected Close Date is overdue?` |
+
+The embedded dataset and round-trip examples use this normalized saved shape:
+
+```json
+{ "ruleId": "R10", "params": { "companyId": "company-stable-id" } }
+{ "ruleId": "R09", "params": { "operator": "above|below|equal", "amount": 25000 } }
+{ "ruleId": "R11", "params": { "operator": "missing|overdue" } }
+{ "ruleId": "R11", "params": { "operator": "before|on|after", "date": "2026-09-12" } }
+{ "ruleId": "R11", "params": { "operator": "within_next_days", "days": 7 } }
+```
+
+Only one R11 operator is saved. `date` exists only for before/on/after; `days` exists only for within-next-days. The
+Guide may map these normalized values to the current prototype's `condition*` fields at its boundary, but its embedded
+source of truth must not be a display sentence.
+
+The product contract is:
+
+- R09 reads agreed **Deal value**, not Quote total, cost, discount or margin.
+- R09 displays and compares in the owning Company's currency. The current prototype follows this rule and offers no free
+  currency picker.
+- R10 is a per-Rule exact Company check, not Automation-wide Company scope and not permission.
+- R11 date-only comparisons use one declared account/company timezone. **Within the next N days** includes today through
+  day N and excludes already-overdue dates; **overdue** is strictly before today.
+- Editor, canvas summary, saved JSON, reload, version history, practice result and production evaluator use stable Rule ID
+  plus structured parameters. Never parse visible or translated copy to decide behaviour.
+- A missing parameter keeps only that Automation in **Draft** and blocks only its own activation. Name the exact missing
+  Company, operator, amount, date or day count.
+
 ### G. Automation Check
 
 Call this feature **Check this flow**, not Flow checker.
@@ -423,7 +491,7 @@ Qualified 6
 
 One Starts when type can appear in more than one context, which is why 18 unique types become 33 placements.
 
-### 8.2 Sixteen Action types requiring compatibility decisions
+### 8.2 Fourteen shared Actions plus two guarded Quote Actions
 
 Fourteen candidate Action types enter the shared context-compatibility calculation. Do not describe all fourteen as
 universally selectable: Remove Deal label is limited to an owned system/Automation-managed Label, and Add Interest
@@ -450,13 +518,19 @@ Two additional Quote-creation Actions are placement-specific:
 16. Create another Quote option — In Progress only
 
 ```text
-14 candidate shared Action types × 7 Quote contexts = 98 context/type checks
+14 candidate shared Action types × 7 Quote contexts = 98 allowed placements
 + Create the first Quote in Qualified = 1
 + Create another Quote option in In Progress = 1
-= 100 static Action compatibility decisions
+= 100 allowed candidate Action placements
 ```
 
 Do not add **Remove Interest** to this list. Removing a product/system Interest can destroy useful customer-history information. It remains a manual CRM operation, withheld from general Automation and recommended recipes. Label removal is different: an Automation may remove only a system-managed Label that it owns. Visible picker totals must be derived after those conditions are applied; do not present 14 as an always-selectable card count.
+
+The prototype and catalogue also contain `action-add-quote-label` / **Add Quote Label** in In Progress, In Review, Passed
+Review and Sent. It is not **Add Deal label**, is not part of the fourteen shared types, and is not either guarded Quote
+Action. Keep it unavailable and visibly label it **Decision required** until Product defines the Quote-label model,
+multi-Quote ownership, eligible contexts, permissions, audit/event behaviour and whether it may start another Automation.
+Do not include it in 14, 16, 100, 1,300 or 15,238.
 
 ### 8.3 Minimum 1,300 static compatibility decisions
 
@@ -477,6 +551,9 @@ Minimum static compatibility decisions:
 126 + 112 + 1,062 = 1,300
 ```
 
+The 112 figure is the minimum **yes/no compatibility checks** across all seven contexts and all sixteen calculation types.
+It is not the allowed-placement count: the reviewed candidate matrix permits 100 of those context/type placements.
+
 The Guide must call this a **minimum compatibility decision count**. It is not a count of automated tests and does not include Waits, multiple Rules, AND/OR groups, multiple Actions, Yes/No branch outcomes, activation, permissions, replay safety, date rescheduling or multi-Quote handling.
 
 ### 8.4 The 15,238 simple-shape comparison
@@ -494,11 +571,11 @@ The current prototype allows 1,026 of the 1,062 Starts-when × Rule pairs. Count
 | Sent | 6 | 14 | 188 | `14 × (6 + 188)` | 2,716 |
 | Won | 4 | 14 | 125 | `14 × (4 + 125)` | 1,806 |
 | Lost | 3 | 14 | 95 | `14 × (3 + 95)` | 1,372 |
-| **Total** | **33** | **100 context/type checks** | **1,026** |  | **15,238** |
+| **Total** | **33** | **100 allowed placements** | **1,026** |  | **15,238** |
 
 Required explanatory note:
 
-> **15,238 is not the total possible configuration space, a visible picker count or a time estimate.** It is an upper-bound controlled comparison using only one Starts when, zero or one compatible Rule and one candidate Action type. It excludes Remove Interest but counts conditional Remove Label/Add Interest types before record-level eligibility is applied. Multiple Rules, AND/OR groups, Waits, multiple Actions and Yes/No paths make the real QA space larger and not usefully represented by one finite headline number.
+> **15,238 is not the total possible configuration space, a visible picker count or a time estimate.** It is an upper-bound controlled comparison using only one Starts when, zero or one compatible Rule and one candidate Action type. It excludes Remove Interest and Add Quote Label but counts conditional Remove Label/Add Interest types before record-level eligibility is applied. Parameter values, multiple Rules, AND/OR groups, Waits, multiple Actions and Yes/No paths are not counted; they make the real QA space larger and not usefully represented by one finite headline number.
 
 ### 8.5 Separate source-catalogue counts
 
@@ -541,7 +618,9 @@ For a Quote-connected Custom Stage, explain the count accurately:
 - 9 shared Deal Starts when choices;
 - plus **Deal enters this Custom Stage** as the Stage-specific entry choice;
 - 11 shared Rules;
-- the current eligible shared Action set derived from the historical catalogue, with Remove Interest excluded and Remove Label/Add Interest conditions applied;
+- the eligible subset of the fourteen shared candidate Deal Actions, with Remove Interest and Add Quote Label excluded,
+  Remove Label/Add Interest conditions applied, and Attach/Request File shown only when the underlying Deal file capability
+  is available;
 - plus a conditional Quote-creation Action only in an approved early gap.
 
 Do not say “9 ways to start in total” while displaying ten cards. Say **9 shared choices, plus the Custom Stage entry choice**.
@@ -572,6 +651,23 @@ These recalculated maxima exclude Remove Interest. They include Remove Label and
 an actual picker/flow must apply their ownership and structured-evidence conditions and may therefore show fewer Actions.
 The triples explain an upper scope bound, not recommended recipes. They exclude no-Rule flows, Waits, multiple Rules,
 AND/OR groups, branches and multiple Actions.
+
+For the separate colleague-facing three-level scope visual, the Guide compatibility table can also be used to count
+**no Rule or one compatible Rule card + one Action**. Keep this as a different, clearly named comparison unit:
+
+| Custom Stage gap | Allowed Start × Rule-card pairs | Simple Guide-card shapes |
+|---|---:|---:|
+| Qualified → In Progress | 127 | `15 × (10 + 127) = 2,055` |
+| In Progress → In Review | 153 | `15 × (12 + 153) = 2,475` |
+| In Review → Passed Review | 164 | `14 × (12 + 164) = 2,464` |
+| Passed Review → Sent | 161 | `14 × (11 + 161) = 2,408` |
+| Sent → Won/Lost | 195 | `14 × (13 + 195) = 2,912` |
+| Exactly one Custom Stage in every gap | **800** | **12,314** |
+
+Do not present 12,314 as like-for-like with the existing-context 15,238 figure. The 15,238 model expands Rules into
+32–33 selectable Rule choices, while this Custom-Stage table counts 13–16 Guide cards. The current implementation and
+Version 9 target also disagree on Custom-Stage Start/Action inventories, so the 12,314 figure is a Guide-card scope
+comparison rather than an approved whole-product total.
 
 ### Quote creation rules
 
@@ -647,8 +743,9 @@ For a Standalone Pipeline:
 - use a simple example such as New → In Progress → Complete;
 - Won and Lost remain protected results;
 - each working Stage gets 9 shared Deal Starts when choices, plus **Deal enters this Stage**;
-- each working Stage gets 11 shared Rules and the current eligible shared Deal Action set;
+- each working Stage gets 11 shared Rules and the eligible subset of the fourteen shared candidate Deal Actions;
 - Quote-specific Starts when, Quote Rules, Create Quote Actions and automatic Quote lifecycle movement are not shown;
+- Add Quote Label is not shown because a Standalone Pipeline has no Quote lifecycle/Quote-context ownership contract;
 - users may move Deals manually between named working Stages; and
 - automatic Stage movement remains unavailable until Stage targets, permissions, duplicate prevention and required-work rules are approved.
 
@@ -748,6 +845,8 @@ Include:
 - seven contexts;
 - Starts when definitions and placements;
 - Rule definitions and placements;
+- Rule discovery-group metadata with no hard-coded visible count suffixes;
+- R09/R10/R11 parameter schemas, validation and evaluation semantics;
 - Action definitions and placements;
 - 12 fixed Templates and editable settings;
 - 79 candidate examples and five withheld ideas;
@@ -756,7 +855,10 @@ Include:
 - Standalone Pipeline choices; and
 - validation rules.
 
-Store behaviour as structured data. Never infer control state by parsing translated display text. At minimum, every example must carry:
+Store behaviour as structured data. Never infer control state by parsing translated display text. At minimum, every Rule
+step must carry a stable Rule ID plus a structured parameter object where required. Preserve the canonical prototype field
+mapping during import/export: `conditionCompanyId`, `conditionValueOperator`, `conditionValueAmount`, `conditionDate` and
+`conditionDays`. Every example must carry:
 
 - stable Trigger, Rule and Action IDs;
 - `waitKind: "none" | "days"` plus a numeric duration where needed;
@@ -783,6 +885,10 @@ The Guide must catch and explain these cases:
 - no Starts when selected;
 - no Yes Action selected;
 - selected choice is not allowed in the chosen Stage;
+- a Rule requires a Company but no Company is selected;
+- Deal value operator is missing or amount is not a finite number greater than zero;
+- before/on/after Expected Close comparison has no valid date;
+- within-next-days is not a whole number from 1 to 365;
 - a Rule only repeats the Starts when condition;
 - a Wait exists but there is no post-Wait Stage/state check;
 - an Action can start the same flow again;
@@ -804,6 +910,12 @@ Use direct messages such as:
 
 > Create another Quote option is available only after the first Quote exists and while the Deal is In Progress.
 
+> Choose the Company that this Rule should check.
+
+> Enter a Deal value amount greater than zero. WeQuote uses the owning Company's currency.
+
+> Choose a date to compare with the Expected Close Date.
+
 ---
 
 ## 15. Acceptance tests
@@ -816,14 +928,19 @@ Claude must complete all of these before handing back the file.
 - [ ] Editable settings total exactly 63.
 - [ ] The 14 field types and 12/14 = 86% explanation are visible.
 - [ ] The seven-context Custom compatibility matrix shows 18 unique Starts when types and 33 placements.
-- [ ] The seven-context Custom compatibility matrix shows 16 Action types and 100 placements.
+- [ ] The matrix separates 14 shared candidate Actions from two guarded Quote-creation candidates and shows `14 × 7 + 1 + 1 = 100` allowed placements.
 - [ ] The 1,300 minimum compatibility calculation is rendered exactly.
+- [ ] The Guide explains that 112 is the Action compatibility-decision count and 100 is the allowed-placement count.
 - [ ] The seven-context simple-shape rows total 15,238.
 - [ ] The 15,238 caveat is visible next to the number.
 - [ ] The 79 candidate examples are not called Templates.
 - [ ] The 79/5/75/4/0 readiness figures come from one dataset.
 - [ ] Another Pipeline with Quote Lifecycle is visibly separate from Standalone/without Quote lifecycle and is labelled
       as a review proposal that is not confirmed for Phase 1.
+- [ ] Add Quote Label is visibly unresolved/unavailable and excluded from every headline count.
+- [ ] R09 Deal value, R10 Company and R11 Expected Close Date use the exact parameter and evaluation contracts above.
+- [ ] Draft, Inactive and Active are the only Automation states; fixed Templates with valid defaults start Inactive,
+      Trigger-only scratch flows stay Draft, and no “Needs setup” state is shown.
 
 ### Interaction tests
 
@@ -831,6 +948,12 @@ Claude must complete all of these before handing back the file.
 - [ ] All four main modes work.
 - [ ] Search and counts update together.
 - [ ] Changing Stage removes or explains incompatible selected blocks.
+- [ ] Rule groups have no numeric suffixes and selecting a group never creates a Rule block.
+- [ ] Changing Rule clears parameters that do not belong to the new Rule.
+- [ ] Missing/invalid Company, Deal-value, date and day-count parameters produce the exact validation error and keep only
+      that Automation in Draft.
+- [ ] One incomplete Draft never blocks activation of another complete Inactive Automation.
+- [ ] Saving/reloading a configured Rule preserves its stable ID and structured parameters and renders the same readable question.
 - [ ] Disabled/withheld blocks cannot be selected and display a reason.
 - [ ] A reviewed example loads the exact Starts when, Wait, Rules, Yes and No Actions into the Builder.
 - [ ] All 79 reviewed examples round-trip without changing `waitKind`, duration, `ruleJoin`, block IDs or branch contents.
@@ -878,4 +1001,4 @@ Do not claim the Guide is production behaviour. Say separately whether an item i
 
 ## 17. Copy-paste instruction for Claude
 
-> Build the repository-root `QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html` exactly from this brief. Use the 29 August product-direction record first, then the repository PRD with its current-direction addendum, and use the detailed Quote lifecycle catalogue as compatibility evidence. Keep the Guide self-contained, white-background, interactive, responsive and understandable to a new user. Show two separate routes in every existing Quote context: 12 managed fixed Templates and compatible Custom Automation that creates an Inactive draft. Keep the 79 reviewed examples separate from the 12 Templates, and keep Custom Stage and Standalone Pipeline scope separately labelled. Report product direction, prototype implementation and runtime readiness independently. Derive every visible count from one embedded dataset, show the full calculation for 63, 86%, 33, 100, 1,300 and 15,238, and complete every acceptance test before handing the file back. Do not modify the PRD or runnable CRM prototype as part of this Guide task.
+> Build the repository-root `QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html` exactly from this brief. Use the 29 August product-direction record first, then the canonical Version 9 PRD, and use the detailed Quote lifecycle catalogue as compatibility evidence. Keep the Guide self-contained, white-background, interactive, responsive and understandable to a new user. In every existing Quote context show **Start from scratch first** and **Templates second**; Start from scratch creates a Draft Custom Automation. Keep the 79 reviewed examples separate from the 12 fixed Templates, and keep Custom Stage and Standalone Pipeline inheritance separately labelled. Implement the grouped Rule picker and exact R09 Deal-value, R10 Company and R11 Expected-Close parameter contracts with stable IDs, structured saved values and precise validation. Separate fourteen shared candidate Actions from two guarded Quote-creation candidates; exclude Remove Interest and keep Add Quote Label visibly unresolved and out of all totals. Report product direction, prototype implementation and runtime readiness independently. Derive every visible count from one embedded dataset, show the full calculation and caveats for 63, 86%, 33, 100, 1,300 and 15,238, and complete every acceptance test before handing the file back. Do not modify the PRD or runnable CRM prototype as part of this Guide task.

@@ -1,7 +1,7 @@
 # Claude PRD Writing Brief — WeQuote CRM Automation
 
 **Prepared:** 29 August 2026  
-**Status:** canonical update brief for the formal Phase 1 PRD  
+**Status:** canonical Version 9 review/reconciliation brief for the formal Phase 1 PRD
 **Repository root:** `/Users/candy/Documents/1.WeQuote/1.Design/17-Prototype-html/CRM-automation`  
 **Primary output:** `docs/WeQuote-CRM-Phase-1-PRD.html`
 
@@ -9,7 +9,9 @@
 
 ## 1. Claude's task
 
-Write a complete, evidence-based PRD for **WeQuote CRM Automation**.
+Reconcile and complete the existing **Version 9 · Managed + Custom** PRD for **WeQuote CRM Automation**. Version 9
+already contains FR-71 to FR-95 and AC-CUS-01 to AC-CUS-25; preserve those IDs and extend them rather than creating a
+second PRD or reverting to the older Templates-only model.
 
 The PRD must explain the product as two top-level branches:
 
@@ -24,6 +26,19 @@ Within the Quote Lifecycle branch, it must explain the difference between:
 - another Pipeline that still uses the protected Quote lifecycle.
 
 Within the branch without Quote Lifecycle, it must explain a Standalone Pipeline with user-defined working Stages and Deal-only Automation choices.
+
+Use one consistent scope model throughout the PRD: **three scope levels and five product cases**.
+
+1. Existing Quote lifecycle
+   - Start from scratch in the seven existing Quote contexts;
+   - twelve managed fixed Templates.
+2. Custom Stages inserted into the existing Quote lifecycle.
+3. New Pipelines
+   - another Quote-connected Pipeline;
+   - a Standalone Pipeline without the Quote lifecycle.
+
+Do not renumber Start from scratch and Templates as if they were the same kind of level as Custom Stages and Pipelines.
+They are the two creation routes inside Level 1.
 
 The PRD must distinguish:
 
@@ -77,13 +92,13 @@ All relative paths below are relative to:
 | Order | Relative path | Status | Use in the PRD |
 |---:|---|---|---|
 | 1 | `docs/quote-automation/QUOTE-LIFECYCLE-AUTOMATION-PRODUCT-DIRECTION-2026-08-29.md` | **Current Automation decision authority** | Controls Template versus Custom authoring, Action policy and the distinction between Quote-connected and Standalone Pipelines. |
-| 2 | `docs/WeQuote-CRM-Phase-1-PRD.html` | **Current wider Phase 1 baseline, with 29 August Automation addendum** | Controls the wider CRM scope. Read superseded Automation wording together with its visible addendum notices. |
+| 2 | `docs/WeQuote-CRM-Phase-1-PRD.html` | **Version 9 · Managed + Custom · Draft for sign-off** | The single canonical wider Phase 1 PRD. It already contains FR-71–95 and AC-CUS-01–25, including the parameterised Rule contract; review and reconcile that current contract without removing the wider CRM scope. |
 | 3 | `QUOTE-LIFECYCLE-AUTOMATION-MIND-MAP.html` | **Current colleague-facing scope overview** | Shows the two top-level branches and the relationship between Templates, Custom, Custom Stages and Pipelines. |
 | 4 | `docs/quote-automation/QUOTE-LIFECYCLE-FROM-SCRATCH-STAGE-CATALOGUE.md` | Detailed review evidence | Provides Starts when, Rule, Action, Stage, recipe, evidence and readiness detail. Its 79 examples are candidates, not the twelve Templates. |
 | 5 | `CLAUDE-BUILD-QUOTE-LIFECYCLE-AUTOMATION-GUIDE.md` | Verified Guide specification and calculation record | Use the verified 12-Template settings, 63/14/86%, 33/100/1,300/15,238 calculations, safety rules and acceptance tests. |
 | 6 | `QUOTE-LIFECYCLE-AUTOMATION-GUIDE.html` | Interactive reference | Use to understand the current interaction model and embedded catalogue. It is not allowed to overrule the product-direction record or PRD addendum. |
-| 7 | `docs/visuals/template-vs-scratch-scope.html` | Verified colleague-facing comparison | Use the white-background scope comparison and its explanatory calculations. |
-| 8 | `docs/handoffs/NEXT-CHAT-HANDOFF-AUTOMATION-TRIGGER-FIRST-BUILDER-2026-08-28.md` | Current implementation handoff | Use for the implemented Trigger-first creator journey and test evidence. Treat dated behaviour as implementation history where a newer decision exists. |
+| 7 | `docs/visuals/template-vs-scratch-scope.html` | Verified colleague-facing three-level scope comparison | Use its white-background map of three scope levels and five product cases, including the Custom-Stage gap calculations and the explicit limits on any grand-total claim. |
+| 8 | `docs/handoffs/NEXT-CHAT-HANDOFF-AUTOMATION-TRIGGER-FIRST-BUILDER-2026-08-28.md` | **Historical 28 August implementation handoff** | Use only for dated Trigger-first implementation evidence. Current product direction and the current root prototype overrule its Templates-first/protected-context gate. |
 
 ### 3.2 Runnable prototype evidence
 
@@ -108,7 +123,7 @@ All relative paths below are relative to:
 | `docs/needs-your-attention/PHASE-1-NEEDS-YOUR-ATTENTION-SCOPE-2026-08-28.md` | Phase 1 Needs Your Attention boundary. |
 | `docs/needs-your-attention/PRD-NEEDS-YOUR-ATTENTION-CROSS-MODULE-CREATE-2026-08-28.md` | Cross-module Create Note, Meeting and follow-up requirements. |
 | `docs/PRD-PLATFORM-TASK-WIDGET.md` | Platform task-widget decisions that affect shared Automation outcomes. |
-| `docs/CRM-PHASE-1-SPEC.md` | Wider CRM Phase 1 specification. |
+| `docs/CRM-PHASE-1-SPEC.md` | **Historical 25 August extraction only.** Use only to trace an old identifier or wording change; never use it to override the Version 9 HTML PRD or current product-direction record. |
 | `docs/WeQuote-CRM-Design-System.html` | Current design-system reference. |
 | `docs/UI-ALIGNMENT-PROTOTYPE-VS-PORTAL.md` | Prototype-versus-Portal UI alignment evidence. |
 
@@ -121,7 +136,23 @@ All relative paths below are relative to:
 | `docs/quote-automation/README.md` | Automation-specific reading order. |
 | `docs/WeQuote-CRM-Phase-1-QA-Checklist.xlsx` | Frozen/local workbook supporting the live QA Sheet. Do not replace the live Sheet by importing it again. |
 
-### 3.5 Historical or excluded material
+### 3.5 Canonical placement after reconciliation
+
+Keep exactly one current copy of each authority or colleague-facing artifact:
+
+| Canonical location | Content |
+|---|---|
+| Repository root | `README.md`, `UPLOAD-MANIFEST.md`, both Claude briefs, the runnable `index.html`, `quote-detail.html`, the Guide and the Mind Map. |
+| `docs/WeQuote-CRM-Phase-1-PRD.html` | The only canonical PRD. Update this HTML in place. |
+| `docs/quote-automation/` | Current Automation product direction, detailed source catalogue and Automation reading-order README. |
+| `docs/visuals/` | Colleague-facing scope comparison assets. |
+| `docs/handoffs/` | Dated implementation evidence only. A dated handoff is not a second authority. |
+| `docs/needs-your-attention/` | Adjacent Needs Your Attention requirements and review evidence. |
+
+Do not put a current PRD, Guide, catalogue or prototype under `handoff/…`. The physical snapshot folders may remain for
+history, but Claude must not edit them, cite them as current, or copy them into the canonical package.
+
+### 3.6 Historical or excluded material
 
 Do not use these as current authority:
 
@@ -143,7 +174,7 @@ These can be cited only to explain historical implementation or a superseded dec
 When sources disagree, use this order:
 
 1. The 29 August product-direction record for Automation authoring and Action policy.
-2. The repository-level Phase 1 PRD for wider committed CRM scope, read with its addendum.
+2. The repository-level Version 9 PRD for the wider committed CRM scope and its existing FR-71–95 / AC-CUS-01–25 contract.
 3. A newer dated product-owner decision recorded in the canonical root or `docs/quote-automation/`.
 4. The detailed catalogue for compatibility and evidence.
 5. The current runnable prototype for implementation evidence.
@@ -191,10 +222,10 @@ Archived remains a Deal status, not an Automation placement context.
 Every one of the seven contexts provides two separate creation routes:
 
 ```text
-Custom | Templates
+Start from scratch | Templates
 ```
 
-The current prototype presents **Custom first** and **Templates second**. Templates remain important because they lower the learning curve; they are not the only route.
+The current prototype presents **Start from scratch first** and **Templates second**. “Start from scratch” creates a compatible **Custom Automation**. Templates remain important because they lower the learning curve; they are not the only route.
 
 This branch contains four layers:
 
@@ -276,12 +307,12 @@ Adding a Template creates a complete, valid **Inactive** instance using approved
 
 ---
 
-## 7. Custom Automation in every Quote context
+## 7. Start from scratch / Custom Automation in every Quote context
 
 Custom uses a Trigger-first journey:
 
 1. select the fixed Quote context;
-2. select **Custom**;
+2. select **Start from scratch**;
 3. choose one compatible **Starts when** event;
 4. create a **Draft** with that Trigger placed;
 5. open Builder;
@@ -306,6 +337,19 @@ Do not use a confusing separate **Needs setup** lifecycle state. An incomplete D
 The persisted `enabled` value for a Draft is false, so older technical notes may call it an “Inactive Custom draft.” In the
 user interface, show **Draft** until the flow is complete and valid; then show **Inactive** while it remains switched off.
 
+### Version 9 reconciliation clean-up
+
+The current HTML already contains the selected FR-71–95 and AC-CUS-01–25 tables, but older baseline rows and addendum copy
+remain elsewhere in the same file. Reconcile, rather than layering another addendum:
+
+- update the stale AC-BLD-04 note that says Trigger selection creates an “Inactive Custom draft”; it creates a **Draft**;
+- keep superseded Templates-only text only where it is visibly historical and cannot be mistaken for current behaviour;
+- make FR-80 / AC-CUS-10 point to the fourteen shared candidate Actions, while FR-85/86 cover the two separately guarded
+  Quote-creation candidates;
+- make FR-84 and FR-88 inherit only the eligible shared set and explicitly exclude Remove Interest and unresolved Add
+  Quote Label; and
+- verify that FR-91–95 and AC-CUS-21–25 fully carry the Rule-parameter contract and extend only if genuinely missing traceability requires new stable IDs.
+
 ### Plain-language block model
 
 | Block | Meaning |
@@ -319,6 +363,68 @@ user interface, show **Draft** until the flow is complete and valid; then show *
 
 Avoid academic terms in the main UI and PRD user stories. Technical event, idempotency and adapter detail belongs in the implementation section.
 
+### Parameterised Rule contract — mandatory Version 9 review
+
+Version 9 now defines these settings in FR-91–95 and AC-CUS-21–25. Verify the existing requirements against the contract
+below and extend only when a genuine gap requires a new stable ID. Do not rewrite the following Rules as dozens of
+unrelated display strings: each is one stable Rule type plus structured parameters.
+
+The Rule picker uses these plain-language groups for discovery only:
+
+1. **Recommended for this Stage**
+2. **Deal & owner**
+3. **Follow-up & activity**
+4. **Tasks, files & Quote checks**
+5. **Dates & value**
+6. **Labels & interests**
+7. **More checks**
+
+Do not append item counts to the visible group names. Selecting a group filters the second picker; it does not add or
+change a Rule. Changing group or Rule must not silently retain parameters that belong to a different Rule.
+
+| Rule family | Required user settings | Saved contract | Plain configured summary |
+|---|---|---|---|
+| **Deal belongs to this Company** | Choose one Company. No default. | Stable Rule ID plus exact `companyId`; the display name is copied only for reading. | `Deal belongs to Los Angeles?` |
+| **Deal value is above, below or equal to an amount** | Choose `above`, `below` or `equal`; enter an amount greater than zero. | Stable Rule ID plus `operator` and numeric `amount`. Currency comes from the Deal's owning Company; there is no free currency selector. | `Deal value is below 25,000 in the Deal Company currency?` |
+| **Expected Close Date is missing** | No extra setting. | Stable Rule ID; no parameter object is required. | `Expected Close Date is missing?` |
+| **Expected Close Date is before / on / after a selected date** | Choose one calendar date. | Stable Rule ID plus ISO date and the selected relation. | `Expected Close Date is before 12 Sep 2026?` |
+| **Expected Close Date is within the next number of days** | Enter a whole number from 1 to 365. | Stable Rule ID plus integer `days`. | `Expected Close Date is within the next 7 days?` |
+| **Expected Close Date is overdue** | No extra setting. | Stable Rule ID; no parameter object is required. | `Expected Close Date is overdue?` |
+
+Use this canonical saved shape in the PRD and implementation examples:
+
+```json
+{ "ruleId": "R10", "params": { "companyId": "company-stable-id" } }
+{ "ruleId": "R09", "params": { "operator": "above|below|equal", "amount": 25000 } }
+{ "ruleId": "R11", "params": { "operator": "missing|overdue" } }
+{ "ruleId": "R11", "params": { "operator": "before|on|after", "date": "2026-09-12" } }
+{ "ruleId": "R11", "params": { "operator": "within_next_days", "days": 7 } }
+```
+
+Only one R11 operator is saved. `date` exists only for before/on/after; `days` exists only for within-next-days. Importers
+may map these values to the current prototype fields `conditionCompanyId`, `conditionValueOperator`,
+`conditionValueAmount`, `conditionDate` and `conditionDays`, but those UI implementation names are not permission to parse
+the visible English condition string.
+
+The PRD must define these semantics, not leave them to UI copy:
+
+- Company comparison is an exact stable Company-ID match after the account boundary is asserted.
+- Deal value reads the agreed Deal value, not Quote total, cost, discount or margin. The owning Company's currency is used
+  for display and comparison. The current prototype inherits this currency and offers no free currency picker.
+- Date-only comparisons use one declared account/company timezone and compare calendar days, not browser-local timestamps.
+- **Within the next N days** includes today and future dates through day N; an already-overdue date does not match.
+- **Overdue** means strictly before today. **On the selected date** is equality, not a 24-hour timestamp range.
+- Editor, readable canvas summary, validation, practice run and production evaluator use the same stable ID and parameters.
+  No part of the product may parse translated display text to decide runtime behaviour.
+- Missing/invalid parameters keep only that Automation in **Draft** and block only its own activation. The refusal names the
+  exact missing Company, operator, amount, date or day count.
+- Save, reload, version history and duplication preserve the stable Rule ID and structured parameters without changing
+  their meaning.
+
+The detailed catalogue's current R09 wording now agrees that currency comes from the Deal Company. Preserve that corrected
+contract and do not regress to the older “operator, amount and currency” UI. R10 and R11 remain the evidence families, but
+their required parameter fields and exact semantics are defined here.
+
 ---
 
 ## 8. Compatibility and scale facts
@@ -327,8 +433,8 @@ For the seven existing Quote contexts, the reviewed Creator matrix contains:
 
 - 18 unique Starts when types;
 - 33 allowed Starts-when placements;
-- 16 Action types in the compatibility calculation;
-- 100 static Stage × Action placement decisions;
+- 14 shared candidate Action types, plus 2 guarded placement-specific Quote-creation candidates used only in the scope calculation;
+- 100 allowed candidate Action placements: `14 × 7 + 1 + 1`;
 - at least 1,300 static compatibility decisions before runtime testing; and
 - 15,238 deliberately simplified flow shapes using one Starts when, zero or one compatible Rule and one candidate Action.
 
@@ -341,6 +447,11 @@ The PRD must include these caveats:
 - the counts compare product surface area, not engineering days.
 
 Use the exact formulas and per-context tables from `CLAUDE-BUILD-QUOTE-LIFECYCLE-AUTOMATION-GUIDE.md`. Do not recalculate them from memory.
+
+For the 1,300 minimum, distinguish **allowed placements** from **yes/no compatibility checks**. The Action part of that
+minimum is `7 contexts × 16 calculation types = 112` decisions; 100 of those context/type placements are allowed by the
+current candidate matrix. Parameter values are not included in 1,300 or 15,238, so they add validation and QA coverage
+without changing either headline comparison number.
 
 The catalogue's 79 rows are **reviewed candidate examples**, not Templates. Five additional ideas are withheld. At the reviewed baseline, none of the 79 was proven live end to end.
 
@@ -364,6 +475,29 @@ The shared selectable Action catalogue contains fourteen Action types:
 12. Set Expected Close Date
 13. Attach file to Deal
 14. Request a file
+
+These are the **fourteen shared candidate types**. Two separate guarded candidates — **Create the first Quote** in
+Qualified and **Create another Quote option** in In Progress — produce the 100-placement scope calculation. They are not
+extra shared Actions and remain review proposals until their contracts are approved.
+
+### Pending Add Quote Label mismatch
+
+The prototype source and source catalogue retain `action-add-quote-label` / **Add Quote Label** for In Progress, In Review,
+Passed Review and Sent, but the current UI keeps it disabled as **Pending decision**. This is not the shared **Add Deal
+Label** Action and is not one of the fourteen shared types. The current product-direction record does not approve it as a
+fifteenth shared Action or as one of the two guarded Quote-create Actions. The current prototype also blocks activation of
+any legacy Draft that still contains this Action, and keeps a defensive runtime no-op so old saved data cannot silently
+apply a Quote Label.
+
+The PRD must record this explicitly as an open mismatch:
+
+- do not merge Quote Label and Deal Label silently;
+- do not include Add Quote Label in the 14, 16, 100, 1,300 or 15,238 calculations;
+- keep it unavailable in the canonical Custom contract until Product defines whether Quote Labels are a separate CRM
+  capability, which Quote owns the Label in a multi-Quote Deal, its eligible contexts, permissions, event/audit behaviour
+  and whether it may start another Automation; and
+- cite `assets/js/automation.js` (`action-add-quote-label`) and the source-catalogue mismatch table as prototype evidence,
+  not as product approval.
 
 ### Interest and Label rules
 
@@ -461,8 +595,48 @@ Each Custom Stage gets:
 - nine shared Deal Starts when choices;
 - **Deal enters this Custom Stage** as an additional Stage-specific choice;
 - eleven shared Rules;
-- the eligible shared Action set; and
+- the eligible subset of the fourteen shared candidate Deal Actions, with Remove Interest and unresolved Add Quote Label
+  excluded and the Add Interest/Remove Label guards applied; and
 - only the Quote-specific choices safe in its lifecycle gap.
+
+### 11.1 Custom-Stage choice and comparison counts
+
+Use the Guide-card compatibility table to explain the missing middle quantitatively:
+
+| Custom Stage gap | Starts shown | Rule cards shown | Allowed Start × Rule-card pairs | Maximum candidate Actions | Simple Guide-card shapes |
+|---|---:|---:|---:|---:|---:|
+| Qualified → In Progress | 10 | 13 | 127 | 15 | 2,055 |
+| In Progress → In Review | 12 | 13 | 153 | 15 | 2,475 |
+| In Review → Passed Review | 12 | 14 | 164 | 14 | 2,464 |
+| Passed Review → Sent | 11 | 15 | 161 | 14 | 2,408 |
+| Sent → Won/Lost | 13 | 16 | 195 | 14 | 2,912 |
+| Exactly one inserted Stage in each gap | **58 placements** | **71 placements** | **800 allowed pairs** | **72 placements** | **12,314** |
+
+For `n1…n5` Custom Stages in the five gaps:
+
+- Start placements = `10n1 + 12n2 + 12n3 + 11n4 + 13n5`;
+- Rule-card placements = `13n1 + 13n2 + 14n3 + 15n4 + 16n5`;
+- Action placements = `15n1 + 15n2 + 14n3 + 14n4 + 14n5`; and
+- simple Guide-card shapes = `2,055n1 + 2,475n2 + 2,464n3 + 2,408n4 + 2,912n5`.
+
+The 12,314 figure is exact only for the Guide-card unit: one Start, no Rule or one compatible Rule card, and one Action,
+with exactly one Custom Stage in every gap. It is **not like-for-like with 15,238**, because the existing-context baseline
+expands Rules into 32–33 selectable Rule choices while the Custom-Stage inventory counts 13–16 Guide cards. Do not add
+12,314 to 15,238 or call either figure a test-case count, delivery multiplier or whole-product total.
+
+Record and reconcile these current source conflicts rather than silently selecting one source:
+
+- the current 15,238 prototype comparison uses 33 curated Start placements, while the Version 9 shared-core target implies
+  76 Start placements across the same seven Quote contexts;
+- `genericCustomStageTriggerChoices()` currently produces the Stage entry plus eight shared choices, while the Guide/Mind Map
+  contract says nine shared choices plus the Stage entry;
+- the current Custom-Stage code exposes a different Passed Review/Sent Trigger composition from the Guide contract; and
+- the code can expose Move Deal Stage when another Custom Stage exists in the same gap, while current product direction keeps
+  automatic customer-defined Stage movement separately guarded and outside the formal 14/15 Action counts.
+
+There is no single approved total for Levels 2 and 3. More than one Custom Stage may exist in a gap, and no maximum Pipeline
+or Stage count has been agreed. The PRD must say that exact Level 1 counts exist, Level 2 is countable per inserted Stage, and
+Level 3 remains variable until Product sets the limits and Engineering publishes the final compatibility matrix.
 
 The protected Quote Stages and derived results retain their identity and automatic Quote-driven movement. Automatic customer-defined Stage movement is not approved until target, permission, required-work, duplicate and loop contracts exist.
 
@@ -495,7 +669,8 @@ It uses:
 - user-defined working Stages;
 - nine shared Deal starts plus Deal enters this Stage;
 - eleven shared Rules; and
-- the eligible shared Deal Action set.
+- the eligible subset of the fourteen shared candidate Deal Actions; Add Quote Label is not inherited because there is no
+  Quote context, and Remove Interest remains withheld/manual.
 
 It does not show Quote-specific events, Quote Rules, Create Quote Actions or automatic Quote lifecycle movement.
 
@@ -518,6 +693,10 @@ The PRD must include these current UX decisions:
 - The Automation map and Builder hide the floating Needs Your Attention widget so it cannot cover controls.
 - Custom Trigger selection creates a Draft and opens Builder.
 - Templates remain structurally locked and expose only approved settings.
+- Rule discovery first shows plain-language groups without numerical suffixes, then the Rules in that group. A group is a
+  browsing aid, not a flow block and not a saved condition.
+- A parameterised Rule shows only the fields it needs: Company, operator and amount, comparison date, or number of days.
+  The canvas displays the configured question rather than the generic family name.
 - Edit remains available from the Automation list.
 - Incomplete Drafts are saved but cannot activate; they do not block activation of other complete Automations.
 - Activation errors name the exact missing Trigger, Rule setting or Action rather than showing a generic message.
@@ -537,12 +716,15 @@ Known blockers or gaps that require explicit treatment include:
 2. **First Quote** must mean no current Quote → one current Quote; it must not fire for every `quote.created`, option, revision, template or unrelated Quote.
 3. Next Action created, edited, due, overdue, completed, rescheduled and cleared must remain distinguishable.
 4. The selectable Rule catalogue and runtime evaluator must have one canonical compatibility source; an unsupported Rule must never silently produce the wrong result.
-5. Persisted Automation definitions, versions, Drafts and active revisions need a durable model.
-6. Permissions, account boundary, audit history, idempotency, retry/replay and duplicate prevention are mandatory.
-7. Wait, expected-close, inactivity and Quote-expiry paths require dependable schedulers and rescheduling/cancellation behaviour.
-8. File Request needs a real named request model and exact request-to-file linkage.
-9. Multi-Quote option, revision and variation identity must be durable.
-10. Customer-view behaviour requires the proven durable activity/event contract, not an invented generic boolean flag.
+5. Parameterised Rules require durable stable IDs and parameter objects. Company, Deal-value and Expected-Close Rules
+   must not be evaluated by parsing display text; owning-Company currency and account-timezone connections remain runtime
+   dependencies.
+6. Persisted Automation definitions, versions, Drafts and active revisions need a durable model.
+7. Permissions, account boundary, audit history, idempotency, retry/replay and duplicate prevention are mandatory.
+8. Wait, expected-close, inactivity and Quote-expiry paths require dependable schedulers and rescheduling/cancellation behaviour.
+9. File Request needs a real named request model and exact request-to-file linkage.
+10. Multi-Quote option, revision and variation identity must be durable.
+11. Customer-view behaviour requires the proven durable activity/event contract, not an invented generic boolean flag.
 
 Where the catalogue supplies blocker IDs, retain them so Engineering and QA can trace the requirement:
 
@@ -580,6 +762,8 @@ Where production already emits a Quote event, identify the exact event and still
 - Customer-view boundary: first/every/per-revision and its independence from legacy email preferences.
 - Quote-save and pricing materiality, including pricing categories and old/new payload.
 - Structured SOW source and event.
+- Whether the prototype-only **Add Quote Label** block becomes a separately approved Quote capability or is removed; it
+  must not be treated as Add Deal Label while unresolved.
 - Deterministic fields or validators for content complete, review destination, review Note, deposit, commercial handoff and Loss Reason.
 - Pipeline creation, Stage migration, permissions, reporting, deletion safeguards and active-Automation impact.
 
@@ -621,8 +805,8 @@ Write the Markdown draft in this order:
 9. Twelve managed Templates and editable settings.
 10. Custom Automation creation and Builder model.
 11. Starts when catalogue and placement rules.
-12. Rule, Wait and branch behaviour.
-13. Action catalogue and safety boundaries.
+12. Rule picker groups, parameter fields, exact evaluation, Wait and branch behaviour.
+13. Action catalogue, the 14-shared-plus-2-guarded calculation, Add Quote Label mismatch and safety boundaries.
 14. Custom Stage placement rules.
 15. Another Quote-lifecycle Pipeline proposal.
 16. Standalone Pipeline proposal.
@@ -667,6 +851,10 @@ Every functional requirement must contain:
 - Do not call the 79 reviewed examples Templates.
 - Do not claim 15,238 independent tests.
 - Do not count Remove Interest as selectable merely to preserve an old total.
+- Do not call the two guarded Quote-creation candidates shared Actions, and do not count the unresolved Add Quote Label
+  block in any current headline total.
+- Do not leave parameterised Rules as display copy only. Define their saved fields, validation, readable summary and
+  exact evaluation semantics.
 - Do not hide a source conflict. Put it in Open decisions with an owner.
 - Do not invent a CRM field, event, status, model, scheduler or permission because an Automation block would be convenient.
 - Cite repository-relative source paths next to material requirements.
@@ -683,10 +871,14 @@ Every functional requirement must contain:
 - [ ] Exactly twelve managed Templates and 63 editable control instances are documented.
 - [ ] Fixed Template structure and editable values are separated.
 - [ ] Custom Trigger-first creation, Draft semantics and activation rules are documented.
-- [ ] Eighteen Starts when types, 33 placements, 16 Action types, 100 placements, 1,300 decisions and 15,238 simple shapes include their caveats.
+- [ ] Eighteen Starts when types and 33 placements are documented.
+- [ ] Fourteen shared candidate Actions and two guarded placement-specific Quote-creation candidates are separated; `14 × 7 + 1 + 1 = 100` is shown.
+- [ ] The 1,300 minimum explains 112 Action compatibility decisions versus 100 allowed candidate placements, and 15,238 simple shapes includes its caveats.
 - [ ] The 79 reviewed examples are not called Templates.
 - [ ] Remove Interest is withheld/manual.
 - [ ] Add Interest and Remove Label include their conditions.
+- [ ] Add Quote Label is recorded as an unresolved prototype/catalogue mismatch and is excluded from current totals.
+- [ ] Company, Deal-value and Expected-Close Rule parameters, validation, readable summaries, persistence and runtime semantics are complete.
 - [ ] The two guarded Create Quote Actions and multi-Quote behaviour are separated.
 - [ ] All five Quote-connected Custom Stage gaps are documented.
 - [ ] Another Quote-lifecycle Pipeline is labelled review proposal, not confirmed Phase 1.
@@ -706,6 +898,7 @@ Every functional requirement must contain:
 - [ ] Requirements and acceptance criteria have stable IDs and traceability.
 - [ ] Draft/Inactive/Active language is consistent.
 - [ ] An incomplete Draft does not block another Automation.
+- [ ] A missing Rule parameter blocks only that Draft and names the exact missing value.
 - [ ] Protected Quote lifecycle operations remain unavailable to free-form customer Actions.
 - [ ] UX requirements cover Stage jump, minimap, zoom out, panel animation, canvas-drag close and widget suppression.
 - [ ] Open decisions list an owner and decision deadline rather than silently guessing.
@@ -730,4 +923,4 @@ Do not say the PRD is final until Product, Engineering and QA have reviewed the 
 
 ## 20. Copy-paste instruction for Claude
 
-> Read `CLAUDE-WRITE-CRM-AUTOMATION-PRD.md` completely, then read the canonical sources in its stated authority order. Update the single canonical `docs/WeQuote-CRM-Phase-1-PRD.html` in place; do not create a second PRD source or differently named copy. Preserve its wider Phase 1 content and self-contained HTML format while writing a complete, traceable CRM Automation section with two top-level product branches: With Quote Lifecycle and Without Quote Lifecycle. In every existing Quote context, document both separate routes: compatible Custom Automation and the twelve managed fixed Templates. Keep Template structure locked, describe only its approved editable settings, and preserve the verified 63/14/86% calculations. Document the Custom Trigger-first journey, Draft/Inactive/Active states, compatible Starts when, Wait, Rules, Yes/No paths, Actions, protected lifecycle boundaries, five Custom Stage gaps, guarded multi-Quote Create Quote behaviour, the separate review proposal for another Quote-lifecycle Pipeline, and the separate Standalone Pipeline branch without Quote lifecycle. Treat the 79 rows as reviewed candidate examples, not Templates. Separate product direction, prototype implementation and runtime readiness for every major capability. Do not invent CRM functionality, events or production readiness. Include stable functional-requirement and acceptance-criterion IDs, source-path traceability, a phase table, a runtime-blocker table and an owned open-decision register. Report all unresolved conflicts when handing back the updated PRD.
+> Read `CLAUDE-WRITE-CRM-AUTOMATION-PRD.md` completely, then read the canonical sources in its stated authority order. Review and reconcile the existing Version 9 `docs/WeQuote-CRM-Phase-1-PRD.html` in place; preserve FR-71–95 and AC-CUS-01–25, extending them only when genuinely missing traceability requires new stable IDs. Do not create a second PRD source or differently named copy. Preserve the wider Phase 1 content and self-contained HTML format while maintaining two top-level branches: With Quote Lifecycle and Without Quote Lifecycle. Every existing Quote context has Start from scratch first and Templates second. Keep the twelve Template structures locked and preserve the verified 63/14/86% calculations. Verify the Company, Deal-value and Expected-Close Rule parameters, validation, display summaries, persistence and exact runtime semantics. Use Draft/Inactive/Active only. Separate the fourteen shared candidate Actions from the two guarded Quote-creation candidates, preserve the qualified `100 / 1,300 / 15,238` calculations, exclude Remove Interest, and record the disabled Pending-decision Add Quote Label residue as an unresolved mismatch rather than silently counting or merging it. Document Custom Stage and Standalone inheritance, multi-Quote safeguards and canonical file placement. Treat the 79 rows as reviewed candidate examples, not Templates. Separate product direction, prototype implementation and runtime readiness for every major capability; do not invent production readiness. Include stable functional-requirement and acceptance-criterion IDs, source-path traceability, a phase table, a runtime-blocker table and an owned open-decision register. Report every unresolved conflict when handing back the updated PRD.
