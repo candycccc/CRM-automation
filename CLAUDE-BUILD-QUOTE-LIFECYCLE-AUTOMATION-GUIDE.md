@@ -489,6 +489,14 @@ Visible reviewed-example counts by context are Qualified 25, In Progress 30, In 
 
 Never call the 79 candidate examples Templates. Phase 1 has exactly 12 fixed Templates.
 
+For orientation only, the shared catalogue alone has this raw one-Rule/one-Action product:
+
+```text
+9 shared Starts when × 11 shared Rules × 15 shared Actions = 1,485 raw triples
+```
+
+This is not a recommended-example count and not the complete configuration space.
+
 ---
 
 ## 9. Custom Stage behaviour
@@ -516,6 +524,20 @@ Do not say “9 ways to start in total” while displaying ten cards. Say **9 sh
 | In Review → Passed Review | A Quote is in formal internal review | Submission and review-note choices | No Create Quote Action yet |
 | Passed Review → Sent | Review passed but customer send has not succeeded | Passed-review choices | No Create Quote Action yet |
 | Sent → Won/Lost | A sent Quote is waiting for a result | Sent, viewed and expiry choices | No Create Quote Action yet |
+
+### How each Custom Stage gap expands the choice set
+
+Show this table so colleagues can see why each inserted Stage is not the same:
+
+| Custom Stage gap | Starts when shown | Rules shown | Actions shown | Raw one-Rule/one-Action triples |
+|---|---:|---:|---:|---:|
+| Qualified → In Progress | 10 | 13 | 16 | `10 × 13 × 16 = 2,080` |
+| In Progress → In Review | 12 | 13 | 16 | `12 × 13 × 16 = 2,496` |
+| In Review → Passed Review | 12 | 14 | 15 | `12 × 14 × 15 = 2,520` |
+| Passed Review → Sent | 11 | 15 | 15 | `11 × 15 × 15 = 2,475` |
+| Sent → Won/Lost | 13 | 16 | 15 | `13 × 16 × 15 = 3,120` |
+
+These are raw triples for explaining scope, not recommended recipes. They exclude no-Rule flows, Waits, multiple Rules, AND/OR groups, branches and multiple Actions.
 
 ### Quote creation rules
 
@@ -590,6 +612,17 @@ For a Standalone Pipeline:
 - Quote-specific Starts when, Quote Rules, Create Quote Actions and automatic Quote lifecycle movement are not shown;
 - users may move Deals manually between named working Stages; and
 - automatic Stage movement remains unavailable until Stage targets, permissions, duplicate prevention and required-work rules are approved.
+
+The simple Standalone picker baseline is:
+
+```text
+10 Starts when choices
+× 11 Rules
+× 15 Deal Actions
+= 1,650 raw one-Rule/one-Action triples
+```
+
+The ten Starts when choices are the nine shared Deal choices plus **Deal enters this Stage**. Again, 1,650 is a raw scope illustration, not a list of recommended flows.
 
 Explain the additional scope clearly:
 
@@ -694,6 +727,8 @@ Store behaviour as structured data. Never infer control state by parsing transla
 
 The existing Guide currently misreads the display text **Start at once** as a days-based Wait and can misread lowercase “or” as AND. The rebuild must remove both translation-coupling bugs. All 79 reviewed examples must load into the Builder and round-trip back to the same structured flow without changing Wait or AND/OR meaning.
 
+The current data set contains 74 immediate examples and five delayed examples. It also contains seven reviewed OR examples that must stay OR: `Q-C07`, `IP-C15`, `PR-C02`, `PR-C06`, `SE-C09`, `SE-C13` and `W-C05`.
+
 Self-trigger validation must also use structured Trigger subtype, Action target, origin and duplicate-prevention policy. Do not reject a safe successor Action merely because it belongs to the same broad block family. For example, completing one Next Action may safely create its guarded successor, and watching Deal Value must not treat a Label change as editing the watched field.
 
 When source data changes, all visible totals must update from the dataset.
@@ -756,6 +791,7 @@ Claude must complete all of these before handing back the file.
 - [ ] Disabled/withheld blocks cannot be selected and display a reason.
 - [ ] A reviewed example loads the exact Starts when, Wait, Rules, Yes and No Actions into the Builder.
 - [ ] All 79 reviewed examples round-trip without changing `waitKind`, duration, `ruleJoin`, block IDs or branch contents.
+- [ ] The 74 immediate examples remain immediate, the five delayed examples retain their Wait, and the seven named OR examples remain OR.
 - [ ] The Builder cannot copy or simulate an invalid flow.
 - [ ] Sample Yes and No results match the visible flow.
 - [ ] The picker/drawer closes on selection, Escape, outside click and canvas drag/pan.
