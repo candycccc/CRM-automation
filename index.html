@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="./assets/css/crm.css?v=134">
+  <link rel="stylesheet" href="./assets/css/crm.css?v=147">
   <link rel="stylesheet" href="./assets/compat/variation-grouping-parity.css?v=3">
   <link rel="stylesheet" href="./assets/compat/variation-grouping-parity-v4.css?v=11">
   <link rel="stylesheet" href="./assets/compat/quote-first-co-trainline.css?v=4">
@@ -123,9 +123,10 @@
           </span>
         </div>
         <div class="acc-subs">
-          <div class="sub-row"><span class="dot"></span><div class="sub-item" onclick="showView('crm')"><span class="txt">Deals</span><span class="badge99 dim">99</span></div></div>
-          <div class="sub-row"><span class="dot"></span><div class="sub-item" onclick="showView('leads')"><span class="txt">Leads</span></div></div>
-          <div class="sub-row"><span class="dot"></span><button class="sub-item aut-nav-action" type="button" onclick="showView('automation')"><span class="txt">Automations</span></button></div>
+          <div class="sub-row"><span class="dot"></span><button class="sub-item" data-crm-nav-view="crm-dashboard" type="button" onclick="showView('crm-dashboard')"><span class="txt">Dashboard</span></button></div>
+          <div class="sub-row"><span class="dot"></span><button class="sub-item" data-crm-nav-view="crm" type="button" onclick="showView('crm')"><span class="txt">Deals</span><span class="badge99 dim">99</span></button></div>
+          <div class="sub-row"><span class="dot"></span><button class="sub-item" data-crm-nav-view="leads" type="button" onclick="showView('leads')"><span class="txt">Leads</span></button></div>
+          <div class="sub-row"><span class="dot"></span><button class="sub-item aut-nav-action" data-crm-nav-view="automation" type="button" onclick="showView('automation')"><span class="txt">Automations</span></button></div>
         </div>
       </div>
       <div class="acc">
@@ -431,7 +432,10 @@
     <div id="viewDashboard">
     <div class="db2-dashboard" hidden>
       <div class="db2-toolbar">
-        <div class="db2-tabs"><button class="active">Dealer Overview</button><button>Supplier sales</button><button>Supplier overview</button></div>
+        <div class="db2-tabs crmdb-section-tabs" role="tablist" aria-label="CRM Dashboard sections">
+          <button class="active" type="button" data-crmdb-section="overview" role="tab" aria-selected="true">Dashboard</button>
+          <button type="button" data-crmdb-section="history" role="tab" aria-selected="false">History activity</button>
+        </div>
         <div class="db2-toolbar-actions">
           <label class="db2-select"><i class="fai">&#xf073;</i><select aria-label="Forecast financial year"><option>FY 2026</option></select></label>
           <label class="db2-select db2-access-select"><i class="fai">&#xf007;</i><select id="db2AccessView" aria-label="Dashboard permission view"><option value="owner">Owner · financial access</option><option value="sales">Sales · restricted</option></select></label>
@@ -442,16 +446,31 @@
 
       <div class="db2-grid">
         <article class="db2-card db2-funnel-card">
-          <header><h2>CRM Funnel <b class="db2-info" data-tip="Conversion from created Leads through to Won Deals in FY 2026.">i</b></h2></header>
+          <header>
+            <div>
+              <h2>CRM Funnel <b class="db2-info" data-tip="Overall shows the complete Funnel for the selected year. By month follows Leads created in the selected month through the same Funnel.">i</b></h2>
+              <p id="db2FunnelPeriodLabel">All records in 2026</p>
+            </div>
+            <div class="db2-funnel-tools">
+              <div class="db2-funnel-period" role="group" aria-label="CRM Funnel view">
+                <button class="active" type="button" data-db2-funnel-period="fy" aria-pressed="true">Overall</button>
+                <button type="button" data-db2-funnel-period="month" aria-pressed="false">By month</button>
+              </div>
+              <label class="db2-funnel-month" id="db2FunnelMonthWrap" hidden>
+                <i class="fai" aria-hidden="true">&#xf073;</i>
+                <select id="db2FunnelMonth" aria-label="CRM Funnel month"></select>
+              </label>
+            </div>
+          </header>
           <div class="db2-funnel">
-            <div class="db2-funnel-step"><i class="fai">&#xf0c0;</i><span>Leads created</span><strong>148</strong></div>
-            <span class="db2-funnel-arrow">→<small>55.4%</small></span>
-            <div class="db2-funnel-step"><i class="fai">&#xf140;</i><span>Converted to Deals</span><strong>82</strong></div>
-            <span class="db2-funnel-arrow">→<small>74.4%</small></span>
-            <div class="db2-funnel-step"><i class="fai">&#xf570;</i><span>Deals with Quotes</span><strong>61</strong></div>
-            <span class="db2-funnel-arrow">→<small>6.1%</small></span>
-            <div class="db2-funnel-step won"><i class="fai">&#xf091;</i><span>Won Deals</span><strong>5</strong></div>
-            <div class="db2-funnel-step conversion"><i class="fai">&#xf201;</i><span>Conversion to Won</span><strong>6.1%</strong></div>
+            <div class="db2-funnel-step"><i class="fai">&#xf0c0;</i><span>Leads created</span><strong data-db2-funnel-value="leads">148</strong></div>
+            <span class="db2-funnel-arrow">→<small data-db2-funnel-rate="leadToDeal">55.4%</small></span>
+            <div class="db2-funnel-step"><i class="fai">&#xf140;</i><span>Converted to Deals</span><strong data-db2-funnel-value="deals">82</strong></div>
+            <span class="db2-funnel-arrow">→<small data-db2-funnel-rate="dealToQuote">74.4%</small></span>
+            <div class="db2-funnel-step"><i class="fai">&#xf570;</i><span>Deals with Quotes</span><strong data-db2-funnel-value="quotes">61</strong></div>
+            <span class="db2-funnel-arrow">→<small data-db2-funnel-rate="quoteToWon">8.2%</small></span>
+            <div class="db2-funnel-step won"><i class="fai">&#xf091;</i><span>Won Deals</span><strong data-db2-funnel-value="won">5</strong></div>
+            <div class="db2-funnel-step conversion"><i class="fai">&#xf201;</i><span>Lead-to-Won</span><strong data-db2-funnel-value="conversion">3.4%</strong></div>
           </div>
         </article>
 
@@ -471,29 +490,67 @@
         </article>
 
         <article class="db2-card db2-pipeline-card">
-          <header><h2>Pipeline Overview</h2></header>
-          <div class="db2-pipeline-kpis">
-            <div><span>Value in Pipeline <b class="db2-info" data-tip="Open protected Quote-lifecycle Stages only. Won is excluded.">i</b></span><strong>£221,582</strong><small>7 open Deals</small></div>
-            <div><span>Committed <b class="db2-info" data-tip="Open Deals the owner has committed to closing this year.">i</b></span><strong class="purple">£152,000</strong><small>5 committed Deals</small></div>
-            <div><span>Achieved so far</span><strong class="green">£295,326</strong><small>5 Won Deals</small></div>
-            <div><span>Target</span><strong>£500,000</strong><small>FY 2026</small></div>
-            <div><span>Difference</span><strong class="red">−£204,674</strong><small>Achieved minus target</small></div>
+          <header>
+            <div>
+              <h2>Pipeline Overview</h2>
+              <p id="db2PipelineContext">Expected close / won date · FY 2026</p>
+            </div>
+            <div class="db2-pipeline-tools">
+              <label class="db2-pipeline-filter">
+                <span>Pipeline</span>
+                <select id="db2PipelineFilter" aria-label="Pipeline Overview pipeline"></select>
+              </label>
+              <label class="db2-pipeline-filter">
+                <span>Period</span>
+                <select id="db2PipelinePeriod" aria-label="Pipeline Overview period"></select>
+              </label>
+            </div>
+          </header>
+          <div class="db2-pipeline-kpis" aria-live="polite">
+            <div><span>Value in Pipeline <b class="db2-info" data-tip="Open Deals in the selected Pipeline and period. Won and Lost are excluded.">i</b></span><strong data-db2-pipeline-kpi="value">£221,582</strong><small data-db2-pipeline-note="value">7 open Deals</small></div>
+            <div><span>Committed <b class="db2-info" data-tip="Open Deals the owner has committed to closing in the selected period.">i</b></span><strong class="purple" data-db2-pipeline-kpi="committed">£152,000</strong><small data-db2-pipeline-note="committed">5 committed Deals</small></div>
+            <div><span>Achieved so far</span><strong class="green" data-db2-pipeline-kpi="achieved">£295,326</strong><small data-db2-pipeline-note="achieved">5 Won Deals</small></div>
+            <div><span>Target</span><strong data-db2-pipeline-kpi="target">£500,000</strong><small data-db2-pipeline-note="target">FY 2026</small></div>
+            <div><span>Difference</span><strong class="red" data-db2-pipeline-kpi="difference">−£204,674</strong><small data-db2-pipeline-note="difference">Achieved minus target</small></div>
           </div>
-          <div class="db2-stage-title">Open pipeline by Stage</div>
-          <div class="db2-stage-bar"><i style="width:30.87%"></i><i style="width:44.32%"></i><i style="width:24.81%"></i></div>
-          <div class="db2-stage-legend">
-            <div><i class="qualified"></i><span>Qualified</span><strong>2 Deals · £68,400</strong><small>30.9%</small></div>
-            <div><i class="quoting"></i><span>In Progress</span><strong>3 Deals · £98,200</strong><small>44.3%</small></div>
-            <div><i class="sent"></i><span>Sent</span><strong>2 Deals · £54,982</strong><small>24.8%</small></div>
-          </div>
+          <div class="db2-stage-title" id="db2PipelineStageTitle">Open pipeline by Stage</div>
+          <div class="db2-stage-bar" id="db2PipelineStageBar" aria-hidden="true"></div>
+          <div class="db2-stage-legend" id="db2PipelineStageLegend"></div>
+          <div class="db2-stage-empty" id="db2PipelineStageEmpty" hidden></div>
         </article>
 
         <article class="db2-card db2-margins-card">
-          <header><h2>Monthly Margins <b class="db2-info" data-tip="Accepted-sales margin percentage. Hidden for roles without cost visibility.">i</b></h2><span class="db2-permission"><i class="fai">&#xf3ed;</i> Margin permission</span></header>
-          <div class="db2-margin-legend"><span><i></i>Accepted Sales Margin (%)</span><span><i></i>Target margin (20%)</span></div>
-          <div class="db2-margin-chart"><div class="target"></div>
-            <div style="--h:54%"><b>21.6%</b><i></i><span>Jan</span></div><div style="--h:46%"><b>18.3%</b><i></i><span>Feb</span></div><div style="--h:55%"><b>22.1%</b><i></i><span>Mar</span></div><div style="--h:49%"><b>19.7%</b><i></i><span>Apr</span></div><div style="--h:62%"><b>24.6%</b><i></i><span>May</span></div><div style="--h:53%"><b>21.2%</b><i></i><span>Jun</span></div><div style="--h:48%"><b>19.1%</b><i></i><span>Jul</span></div><div style="--h:59%"><b>23.4%</b><i></i><span>Aug</span></div><div style="--h:67%"><b>26.8%</b><i></i><span>Sep</span></div><div style="--h:51%"><b>20.5%</b><i></i><span>Oct</span></div><div style="--h:44%"><b>17.6%</b><i></i><span>Nov</span></div><div style="--h:57%"><b>22.9%</b><i></i><span>Dec</span></div>
+          <header>
+            <div>
+              <h2>Monthly Margins <b class="db2-info" data-tip="Total Deal Value is the combined Products, Labour and Margin value for each month.">i</b></h2>
+              <p>Products, labour and margin by month</p>
+            </div>
+            <span class="db2-permission"><i class="fai">&#xf3ed;</i> Margin permission</span>
+          </header>
+          <div class="db2-value-legend" aria-label="Chart legend">
+            <span class="product"><i></i>Product value</span>
+            <span class="labour"><i></i>Labour value</span>
+            <span class="margin"><i></i>Margin</span>
           </div>
+          <div class="db2-value-chart" id="db2MonthlyValueChart"></div>
+          <footer class="db2-value-summary" aria-label="2026 Deal value totals">
+            <span><small>Total Deal Value</small><b id="db2TotalDealValueTotal">—</b></span>
+            <span><small>Product value</small><b id="db2ProductValueTotal">—</b></span>
+            <span><small>Labour value</small><b id="db2LabourValueTotal">—</b></span>
+            <span><small>Margin</small><b id="db2MarginValueTotal">—</b></span>
+          </footer>
+        </article>
+
+        <article class="db2-card crmdb-activity-preview-card" aria-labelledby="crmDashboardActivityPreviewTitle">
+          <header>
+            <div>
+              <h2 id="crmDashboardActivityPreviewTitle">Recent activity</h2>
+              <p>Latest Deal &amp; Lead updates</p>
+            </div>
+            <button class="crmdb-open-history" type="button" data-crmdb-open-history>View all history <i class="fai">&#xf061;</i></button>
+          </header>
+          <div class="crmdb-activity-preview-list" id="crmDashboardActivityPreview"></div>
+          <div class="crmdb-activity-preview-empty" id="crmDashboardActivityPreviewEmpty" hidden>No recent Deal or Lead activity.</div>
         </article>
 
         <article class="db2-card db2-quotes-card"><header><h2>Latest Quotes</h2><a href="#">View all quotes <i class="fai">&#xf061;</i></a></header><table><thead><tr><th>Quote #</th><th>Customer</th><th>Project</th><th>Status</th><th>Expiry</th><th>Net total</th></tr></thead><tbody>
@@ -508,6 +565,31 @@
           <header><div class="db2-ops-tabs" role="tablist"><button class="active" type="button" data-db2-ops="sales" role="tab" aria-selected="true">Salespeople</button><button type="button" data-db2-ops="systems" role="tab" aria-selected="false">Systems</button><button type="button" data-db2-ops="working" role="tab" aria-selected="false">Who's working</button></div></header>
           <table><thead><tr id="db2OpsHead"><th>Salesperson</th><th>Quotes</th><th>Accepted Total</th></tr></thead><tbody id="db2OpsBody"></tbody></table>
           <footer><a href="#" id="db2OpsFooter">View all salespeople <i class="fai">&#xf061;</i></a></footer>
+        </article>
+
+        <article class="db2-card crmdb-activity-card" aria-labelledby="crmDashboardActivityTitle">
+          <header class="crmdb-activity-head">
+            <div>
+              <h2 id="crmDashboardActivityTitle">Deal &amp; Lead history activity</h2>
+              <p>Latest recorded changes across CRM Deals and Leads.</p>
+            </div>
+            <div class="crmdb-activity-tools">
+              <span id="crmDashboardActivityCount">0 recent events</span>
+              <div class="crmdb-activity-filter" role="group" aria-label="Filter CRM activity history">
+                <button class="active" type="button" data-crmdb-filter="all" aria-pressed="true">All activity</button>
+                <button type="button" data-crmdb-filter="deal" aria-pressed="false">Deals</button>
+                <button type="button" data-crmdb-filter="lead" aria-pressed="false">Leads</button>
+              </div>
+            </div>
+          </header>
+          <div class="crmdb-activity-table-wrap">
+            <table class="crmdb-activity-table">
+              <colgroup><col style="width:118px"><col style="width:86px"><col><col style="width:220px"><col style="width:150px"></colgroup>
+              <thead><tr><th>When</th><th>Type</th><th>Activity</th><th>Record</th><th>Actor</th></tr></thead>
+              <tbody id="crmDashboardActivityBody"></tbody>
+            </table>
+            <div class="crmdb-activity-empty" id="crmDashboardActivityEmpty" hidden><i class="fai">&#xf1da;</i><strong>No activity yet</strong><span>New Deal and Lead history will appear here.</span></div>
+          </div>
         </article>
       </div>
     </div>
@@ -3985,8 +4067,8 @@
   </footer>
 </aside>
 
-<script src="./assets/js/crm.js?v=166"></script>
-  <script src="./assets/js/automation.js?v=210"></script>
+<script src="./assets/js/crm.js?v=182"></script>
+  <script src="./assets/js/automation.js?v=211"></script>
 
 <!-- Pipeline stage drag insertion indicator -->
 

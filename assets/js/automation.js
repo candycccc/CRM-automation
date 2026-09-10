@@ -2074,17 +2074,24 @@
     if (!config) return;
     config.lastRunAt = new Date().toISOString();
     config.runCount = (Number(config.runCount) || 0) + 1;
-    automationRuntimeState.runs.unshift({
+    const recordType = typeof CRM_LEADS !== 'undefined' && CRM_LEADS.some(function (lead) { return lead.title === recordTitle; })
+      ? 'lead'
+      : (typeof CRM_DEALS !== 'undefined' && CRM_DEALS.some(function (deal) { return deal.t === recordTitle; }) ? 'deal' : '');
+    const run = {
       id: 'automation-run-' + Date.now() + '-' + automationRuntimeState.runs.length,
-      workflow: resolvedKey,
+      workflow: resolvedKey, workflowTitle: config.title || resolvedKey,
       event: eventName,
       message: message,
       record: recordTitle || '',
+      recordType: recordType,
+      source: 'automation',
       createdAt: config.lastRunAt
-    });
+    };
+    automationRuntimeState.runs.unshift(run);
     persistAutomationState();
     updateWorkflowList();
     if (activeWorkflowKey === resolvedKey) workflowMeta.textContent = 'Active · Last ran just now';
+    document.dispatchEvent(new CustomEvent('wequote:automation-run', { detail: run }));
   }
 
   function automationNotify(message) {

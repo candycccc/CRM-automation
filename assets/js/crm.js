@@ -187,9 +187,10 @@
     if (e.key === 'Escape' && csOverlay.classList.contains('open')) closeCustomise();
   });
 
-  // ---------- View switching (Dashboard / CRM Pipeline / CRM Leads) ----------
-  const VIEW_TITLES = { dashboard: 'Dashboard', crm: 'Pipeline', leads: 'Leads', automation: 'Automations', quotes: 'Quotes', customer: 'Customer', reqs: 'CRM Requirements' };
+  // ---------- View switching (Dashboard / CRM Dashboard / CRM Pipeline / CRM Leads) ----------
+  const VIEW_TITLES = { dashboard: 'Dashboard', 'crm-dashboard': 'Dashboard', crm: 'Pipeline', leads: 'Leads', automation: 'Automations', quotes: 'Quotes', customer: 'Customer', reqs: 'CRM Requirements' };
   const VIEW_CRUMBS = {
+    'crm-dashboard': ['CRM', 'Dashboard'],
     leads: ['CRM', 'Lead'],
     crm: ['CRM', 'Deal'],
     automation: ['<span class="crumb-link" onclick="showView(\'crm\')">CRM</span>', '<span class="crumb-link" onclick="window.openAutomationPipelineHub()">Automations</span>'],
@@ -199,12 +200,17 @@
   const CREATE_BTN_LABEL = { leads: 'Create Lead', crm: 'Create Deal' };
   let currentView = 'dashboard';
   function showView(v) {
+    const leadDetailPage = document.getElementById('leadDrawer');
+    if (v !== 'leads') {
+      if (leadDetailPage && leadDetailPage.classList.contains('open')) closeLeadPanel();
+      else if (/^#lead-/.test(window.location.hash) && history.replaceState) history.replaceState(null, '', window.location.href.split('#')[0]);
+    }
     if (v !== 'automation') {
       const appShell = document.querySelector('.app');
       if (appShell) appShell.classList.remove('aut-focus-mode', 'aut-sidebar-expanded', 'aut-builder-focus-mode');
     }
     document.getElementById('viewDashboard').style.display = v === 'dashboard' ? '' : 'none';
-    document.getElementById('viewCrm').style.display = v === 'crm' ? '' : 'none';
+    document.getElementById('viewCrm').style.display = v === 'crm' || v === 'crm-dashboard' ? '' : 'none';
     document.getElementById('viewAutomation').style.display = v === 'automation' ? '' : 'none';
     document.getElementById('viewQuotes').style.display = v === 'quotes' ? '' : 'none';
     document.getElementById('viewLeads').style.display = v === 'leads' ? '' : 'none';
@@ -219,6 +225,14 @@
     const onDeal = v === 'deal';
     const onAutomation = v === 'automation';
     const onQuotes = v === 'quotes';
+    const onCrmDashboard = v === 'crm-dashboard';
+    document.getElementById('viewCrm').classList.toggle('crm-dashboard-route', onCrmDashboard);
+    document.querySelectorAll('[data-crm-nav-view]').forEach(item => {
+      const route = v === 'deal' ? 'crm' : v;
+      const active = item.dataset.crmNavView === route;
+      item.classList.toggle('active', active);
+      item.setAttribute('aria-current', active ? 'page' : 'false');
+    });
     const automationTopbarContext = document.getElementById('autTopbarContext');
     const automationTopbarActions = document.getElementById('autTopbarActions');
     if (automationTopbarContext) {
@@ -232,6 +246,11 @@
     document.getElementById('topSearchPill').style.display = onDeal ? 'none' : '';
     document.getElementById('topCreateWrap').style.display = onDeal || onAutomation || onQuotes ? 'none' : '';
     currentView = v;
+    if (v === 'crm') setCrmSubview('pipeline');
+    if (onCrmDashboard) {
+      setCrmSubview('crmforecast');
+      setCrmDashboardSection(crmDashboardSection);
+    }
     if (v === 'automation' && typeof window.openAutomationPipelineHub === 'function') {
       window.openAutomationPipelineHub();
     }
@@ -245,8 +264,8 @@
     closeLeadKebab();
   }
   window.showView = showView;
-  document.querySelectorAll('.sub-item[onclick*="showView(\'automation\')"]').forEach(function (item) {
-    item.addEventListener('click', function () { showView('automation'); });
+  document.querySelectorAll('[data-crm-nav-view]').forEach(function (item) {
+    item.addEventListener('click', function () { showView(item.dataset.crmNavView); });
   });
   // ---------- CRM Deals pipeline (Figma DS – WeQuote Platform, node 2063-72600) ----------
   const CRM_STAGE_DEFS = [
@@ -1750,6 +1769,195 @@
     });
   }
 
+  const DB2_MONTHLY_VALUE_DATA = [
+    { month: 'Apr', product: 45, labour: 12, margin: 15 },
+    { month: 'May', product: 53, labour: 14, margin: 19 },
+    { month: 'Jun', product: 43, labour: 11, margin: 14 },
+    { month: 'Jul', product: 50, labour: 13, margin: 19 },
+    { month: 'Aug', product: 61, labour: 15, margin: 25, current: true },
+    { month: 'Sep', product: 58, labour: 15, margin: 22 },
+    { month: 'Oct', product: 48, labour: 12, margin: 16 },
+    { month: 'Nov', product: 40, labour: 11, margin: 12 },
+    { month: 'Dec', product: 54, labour: 14, margin: 21 },
+    { month: 'Jan', product: 28, labour: 7, margin: 8 },
+    { month: 'Feb', product: 37, labour: 10, margin: 11 },
+    { month: 'Mar', product: 33, labour: 9, margin: 9 }
+  ];
+
+  function db2CompactValue(thousands) {
+    if (thousands >= 1000) return '£' + (thousands / 1000).toFixed(thousands % 1000 ? 2 : 0) + 'm';
+    return '£' + Math.round(thousands) + 'k';
+  }
+
+  function ensureDb2FloatingTooltip(id, className) {
+    let tooltip = document.getElementById(id);
+    if (tooltip) return tooltip;
+    tooltip = document.createElement('div');
+    tooltip.id = id;
+    tooltip.className = 'db2-floating-tooltip' + (className ? ' ' + className : '');
+    tooltip.setAttribute('role', 'tooltip');
+    tooltip.hidden = true;
+    document.body.appendChild(tooltip);
+    return tooltip;
+  }
+
+  function positionDb2FloatingTooltip(tooltip, anchorX, anchorY) {
+    const edge = 8;
+    const gap = 11;
+    tooltip.hidden = false;
+    tooltip.style.left = '0px';
+    tooltip.style.top = '0px';
+    const box = tooltip.getBoundingClientRect();
+    let placement = 'top';
+    let top = anchorY - box.height - gap;
+    if (top < edge) {
+      placement = 'bottom';
+      top = anchorY + gap;
+    }
+    top = Math.min(Math.max(edge, top), Math.max(edge, window.innerHeight - box.height - edge));
+    const left = Math.min(Math.max(edge, anchorX - box.width / 2), Math.max(edge, window.innerWidth - box.width - edge));
+    tooltip.dataset.placement = placement;
+    tooltip.style.left = Math.round(left) + 'px';
+    tooltip.style.top = Math.round(top) + 'px';
+    tooltip.style.setProperty('--tip-arrow-x', Math.min(box.width - 12, Math.max(12, anchorX - left)) + 'px');
+  }
+
+  function hideDb2FloatingTooltip(tooltip) {
+    if (tooltip) tooltip.hidden = true;
+  }
+
+  function setupDb2InfoTooltips() {
+    const tooltip = ensureDb2FloatingTooltip('db2InfoTooltip', 'db2-info-tooltip');
+    document.querySelectorAll('.db2-info[data-tip]').forEach(icon => {
+      if (icon.dataset.tooltipBound === 'true') return;
+      icon.dataset.tooltipBound = 'true';
+      icon.tabIndex = 0;
+      icon.setAttribute('aria-describedby', tooltip.id);
+      const show = () => {
+        tooltip.textContent = icon.dataset.tip || '';
+        const rect = icon.getBoundingClientRect();
+        positionDb2FloatingTooltip(tooltip, rect.left + rect.width / 2, rect.top);
+      };
+      icon.addEventListener('pointerenter', show);
+      icon.addEventListener('pointerleave', () => hideDb2FloatingTooltip(tooltip));
+      icon.addEventListener('focus', show);
+      icon.addEventListener('blur', () => hideDb2FloatingTooltip(tooltip));
+    });
+    if (document.documentElement.dataset.db2TooltipViewportBound !== 'true') {
+      document.documentElement.dataset.db2TooltipViewportBound = 'true';
+      const hideAll = () => document.querySelectorAll('.db2-floating-tooltip').forEach(item => { item.hidden = true; });
+      window.addEventListener('resize', hideAll);
+      window.addEventListener('scroll', hideAll, true);
+      document.addEventListener('keydown', event => { if (event.key === 'Escape') hideAll(); });
+    }
+  }
+
+  function renderDb2MonthlyValue() {
+    const host = document.getElementById('db2MonthlyValueChart');
+    if (!host) return;
+    const width = 1000;
+    const height = 175;
+    const left = 54;
+    const right = 20;
+    const top = 10;
+    const bottom = 26;
+    const plotWidth = width - left - right;
+    const plotHeight = height - top - bottom;
+    const baseline = top + plotHeight;
+    const maxValue = Math.max(50, Math.ceil(Math.max(...DB2_MONTHLY_VALUE_DATA.map(item => item.product + item.labour + item.margin)) / 50) * 50);
+    const groupWidth = plotWidth / DB2_MONTHLY_VALUE_DATA.length;
+    const barWidth = 36;
+    const valueY = value => baseline - (value / maxValue) * plotHeight;
+    const valueTicks = [0, maxValue / 3, maxValue * 2 / 3, maxValue];
+    const grid = valueTicks.map(value => {
+      const y = valueY(value);
+      return '<line class="grid-line" x1="' + left + '" y1="' + y.toFixed(1) + '" x2="' + (width - right) + '" y2="' + y.toFixed(1) + '"></line>' +
+        '<text class="axis-label" x="' + (left - 5) + '" y="' + (y + 2.5).toFixed(1) + '" text-anchor="end">' + (value ? '£' + Math.round(value) + 'k' : '£0') + '</text>';
+    }).join('');
+    const bars = DB2_MONTHLY_VALUE_DATA.map((item, index) => {
+      const centre = left + groupWidth * index + groupWidth / 2;
+      const total = item.product + item.labour + item.margin;
+      const productY = valueY(item.product);
+      const labourY = valueY(item.product + item.labour);
+      const totalY = valueY(total);
+      const band = item.current
+        ? '<rect class="current-band" x="' + (left + groupWidth * index + 4).toFixed(1) + '" y="' + top + '" width="' + (groupWidth - 8).toFixed(1) + '" height="' + plotHeight + '" rx="5"></rect>'
+        : '';
+      return band + '<g class="month-group" data-month-index="' + index + '" tabindex="0" role="group" aria-label="' + item.month + ': Total Deal Value £' + total + 'k, Products £' + item.product + 'k, Labour £' + item.labour + 'k, Margin £' + item.margin + 'k">' +
+        '<rect class="month-hit" x="' + (left + groupWidth * index + 2).toFixed(1) + '" y="' + top + '" width="' + (groupWidth - 4).toFixed(1) + '" height="' + (height - top) + '"></rect>' +
+        '<rect class="value-bar product" x="' + (centre - barWidth / 2).toFixed(1) + '" y="' + totalY.toFixed(1) + '" width="' + barWidth + '" height="' + (baseline - totalY).toFixed(1) + '" rx="3"></rect>' +
+        '<rect class="value-bar labour" x="' + (centre - barWidth / 2).toFixed(1) + '" y="' + totalY.toFixed(1) + '" width="' + barWidth + '" height="' + (productY - totalY).toFixed(1) + '" rx="3"></rect>' +
+        '<rect class="value-bar margin" x="' + (centre - barWidth / 2).toFixed(1) + '" y="' + totalY.toFixed(1) + '" width="' + barWidth + '" height="' + (labourY - totalY).toFixed(1) + '" rx="3"></rect>' +
+        '<text class="month-label' + (item.current ? ' current' : '') + '" x="' + centre.toFixed(1) + '" y="' + (height - 8) + '" text-anchor="middle">' + item.month + '</text>' +
+      '</g>';
+    }).join('');
+    host.innerHTML = '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-labelledby="db2MonthlyChartTitle db2MonthlyChartDesc">' +
+      '<title id="db2MonthlyChartTitle">Monthly Margins</title>' +
+      '<desc id="db2MonthlyChartDesc">Stacked bars show Products, Labour and Margin, which combine into Total Deal Value.</desc>' +
+      grid + bars +
+    '</svg>';
+
+    const chartTooltip = ensureDb2FloatingTooltip('db2MonthlyValueTooltip', 'db2-chart-tooltip');
+    const hideMonthTooltip = () => {
+      host.classList.remove('has-active');
+      host.querySelectorAll('.month-group.is-active').forEach(item => item.classList.remove('is-active'));
+      hideDb2FloatingTooltip(chartTooltip);
+    };
+    const showMonthTooltip = (group, anchorX, anchorY) => {
+      const index = Number(group.dataset.monthIndex);
+      const item = DB2_MONTHLY_VALUE_DATA[index];
+      if (!item) return;
+      const total = item.product + item.labour + item.margin;
+      host.classList.add('has-active');
+      host.querySelectorAll('.month-group.is-active').forEach(node => node.classList.remove('is-active'));
+      group.classList.add('is-active');
+      chartTooltip.innerHTML = '<strong><span>' + item.month + '</span><span class="db2-tooltip-total"><small>Total Deal Value</small><b>' + db2CompactValue(total) + '</b></span></strong>' +
+        '<span class="db2-tooltip-row"><i class="db2-tooltip-swatch product"></i><span>Products</span><b>' + db2CompactValue(item.product) + '</b></span>' +
+        '<span class="db2-tooltip-row"><i class="db2-tooltip-swatch labour"></i><span>Labour</span><b>' + db2CompactValue(item.labour) + '</b></span>' +
+        '<span class="db2-tooltip-row"><i class="db2-tooltip-swatch margin"></i><span>Margin</span><b>' + db2CompactValue(item.margin) + '</b></span>';
+      positionDb2FloatingTooltip(chartTooltip, anchorX, anchorY);
+    };
+    host.onpointerover = event => {
+      const group = event.target.closest && event.target.closest('.month-group');
+      if (group && host.contains(group)) showMonthTooltip(group, event.clientX, event.clientY);
+    };
+    host.onpointermove = event => {
+      const group = event.target.closest && event.target.closest('.month-group');
+      if (group && group.classList.contains('is-active')) positionDb2FloatingTooltip(chartTooltip, event.clientX, event.clientY);
+    };
+    host.onpointerout = event => {
+      const group = event.target.closest && event.target.closest('.month-group');
+      if (!group) return;
+      if (event.relatedTarget && group.contains(event.relatedTarget)) return;
+      hideMonthTooltip();
+    };
+    host.onpointerleave = hideMonthTooltip;
+    host.onfocusin = event => {
+      const group = event.target.closest && event.target.closest('.month-group');
+      if (!group) return;
+      const target = group.querySelector('.month-hit');
+      const rect = (target || group).getBoundingClientRect();
+      showMonthTooltip(group, rect.left + rect.width / 2, rect.top);
+    };
+    host.onfocusout = event => {
+      const group = event.target.closest && event.target.closest('.month-group');
+      if (!group || (event.relatedTarget && group.contains(event.relatedTarget))) return;
+      hideMonthTooltip();
+    };
+
+    const productTotal = DB2_MONTHLY_VALUE_DATA.reduce((sum, item) => sum + item.product, 0);
+    const labourTotal = DB2_MONTHLY_VALUE_DATA.reduce((sum, item) => sum + item.labour, 0);
+    const marginTotal = DB2_MONTHLY_VALUE_DATA.reduce((sum, item) => sum + item.margin, 0);
+    const dealTotal = productTotal + labourTotal + marginTotal;
+    document.getElementById('db2TotalDealValueTotal').textContent = db2CompactValue(dealTotal);
+    document.getElementById('db2ProductValueTotal').textContent = db2CompactValue(productTotal);
+    document.getElementById('db2LabourValueTotal').textContent = db2CompactValue(labourTotal);
+    document.getElementById('db2MarginValueTotal').textContent = db2CompactValue(marginTotal);
+  }
+
+  renderDb2MonthlyValue();
+  setupDb2InfoTooltips();
+
   const DB2_PAYMENT_VIEWS = {
     all: {
       label: 'all invoices · showing 5 of 42',
@@ -1887,30 +2095,384 @@
   document.querySelectorAll('[data-db2-ops]').forEach(button => button.addEventListener('click', () => renderDb2Ops(button.dataset.db2Ops)));
   renderDb2Ops('sales');
 
+  const DB2_FUNNEL_FY_DATA = {
+    label: 'All records in 2026', comparisonLabel: '2025',
+    current: { leads: 148, deals: 82, quotes: 61, won: 5 },
+    comparison: { leads: 132, deals: 74, quotes: 54, won: 4 }
+  };
+  const DB2_FUNNEL_MONTH_DATA = [
+    { value: '2026-01', label: 'Jan 2026', fullLabel: 'January 2026', comparisonLabel: 'Jan 2025', current: { leads: 16, deals: 8, quotes: 6, won: 0 }, comparison: { leads: 14, deals: 7, quotes: 5, won: 0 } },
+    { value: '2026-02', label: 'Feb 2026', fullLabel: 'February 2026', comparisonLabel: 'Feb 2025', current: { leads: 18, deals: 9, quotes: 7, won: 0 }, comparison: { leads: 15, deals: 8, quotes: 6, won: 0 } },
+    { value: '2026-03', label: 'Mar 2026', fullLabel: 'March 2026', comparisonLabel: 'Mar 2025', current: { leads: 17, deals: 9, quotes: 6, won: 0 }, comparison: { leads: 15, deals: 8, quotes: 6, won: 0 } },
+    { value: '2026-04', label: 'Apr 2026', fullLabel: 'April 2026', comparisonLabel: 'Apr 2025', current: { leads: 20, deals: 11, quotes: 8, won: 1 }, comparison: { leads: 18, deals: 10, quotes: 7, won: 1 } },
+    { value: '2026-05', label: 'May 2026', fullLabel: 'May 2026', comparisonLabel: 'May 2025', current: { leads: 21, deals: 12, quotes: 9, won: 1 }, comparison: { leads: 19, deals: 10, quotes: 7, won: 1 } },
+    { value: '2026-06', label: 'Jun 2026', fullLabel: 'June 2026', comparisonLabel: 'Jun 2025', current: { leads: 18, deals: 10, quotes: 7, won: 0 }, comparison: { leads: 17, deals: 9, quotes: 6, won: 0 } },
+    { value: '2026-07', label: 'Jul 2026', fullLabel: 'July 2026', comparisonLabel: 'Jul 2025', current: { leads: 19, deals: 11, quotes: 8, won: 1 }, comparison: { leads: 17, deals: 10, quotes: 8, won: 1 } },
+    { value: '2026-08', label: 'Aug 2026', fullLabel: 'August 2026', comparisonLabel: 'Aug 2025', current: { leads: 19, deals: 12, quotes: 10, won: 2 }, comparison: { leads: 17, deals: 12, quotes: 9, won: 1 } }
+  ];
+  let db2FunnelPeriod = 'fy';
+
+  function db2FunnelRate(numerator, denominator) {
+    return denominator ? numerator / denominator * 100 : 0;
+  }
+
+  function db2FunnelRates(values) {
+    return {
+      leadToDeal: db2FunnelRate(values.deals, values.leads),
+      dealToQuote: db2FunnelRate(values.quotes, values.deals),
+      quoteToWon: db2FunnelRate(values.won, values.quotes),
+      conversion: db2FunnelRate(values.won, values.leads)
+    };
+  }
+
+  function db2FunnelPercent(value) {
+    return value.toFixed(1) + '%';
+  }
+
+  function db2FunnelComparisonText(label, current, comparison, percentagePoints) {
+    const difference = current - comparison;
+    let change;
+    if (percentagePoints) {
+      change = (difference > 0 ? '+' : difference < 0 ? '−' : '') + Math.abs(difference).toFixed(1) + 'pp';
+    } else if (!comparison) {
+      change = current ? 'new' : 'no change';
+    } else {
+      const percent = difference / comparison * 100;
+      change = (percent > 0 ? '+' : percent < 0 ? '−' : '') + Math.abs(percent).toFixed(1) + '%';
+    }
+    return label + ': ' + (percentagePoints ? db2FunnelPercent(comparison) : comparison) + ' · ' + change;
+  }
+
   const db2CompareButton = document.getElementById('db2CompareButton');
   const db2ComparisonBanner = document.getElementById('db2ComparisonBanner');
   const db2Dashboard = document.querySelector('.db2-dashboard');
-  const db2ComparisonValues = [
-    ['.db2-funnel-step:nth-of-type(1) strong', 'vs 132 · +12.1%'],
-    ['.db2-funnel-step:nth-of-type(2) strong', 'vs 74 · +10.8%'],
-    ['.db2-funnel-step:nth-of-type(3) strong', 'vs 54 · +13.0%'],
-    ['.db2-funnel-step:nth-of-type(4) strong', 'vs 4 · +25.0%'],
-    ['.db2-pipeline-kpis > div:nth-child(1) strong', 'FY 2025: £198,400 · +11.7%'],
-    ['.db2-pipeline-kpis > div:nth-child(2) strong', 'FY 2025: £136,000 · +11.8%'],
-    ['.db2-pipeline-kpis > div:nth-child(3) strong', 'FY 2025: £264,800 · +11.5%'],
-    ['.db2-pipeline-kpis > div:nth-child(4) strong', 'FY 2025 target: £450,000'],
-    ['.db2-pipeline-kpis > div:nth-child(5) strong', 'FY 2025: −£185,200']
-  ];
+  const db2FunnelCard = document.querySelector('.db2-funnel-card');
+  const db2FunnelPeriodLabel = document.getElementById('db2FunnelPeriodLabel');
+  const db2FunnelMonthWrap = document.getElementById('db2FunnelMonthWrap');
+  const db2FunnelMonth = document.getElementById('db2FunnelMonth');
+  const db2FunnelComparisonTargets = ['leads', 'deals', 'quotes', 'won', 'conversion'];
+  const db2PipelineCard = document.querySelector('.db2-pipeline-card');
+  const db2PipelineFilter = document.getElementById('db2PipelineFilter');
+  const db2PipelinePeriod = document.getElementById('db2PipelinePeriod');
+  const db2PipelineComparisonTargets = ['value', 'committed', 'achieved', 'target', 'difference'];
+  const DB2_PIPELINE_FY_START = 2026;
+  const DB2_PIPELINE_PERIODS = [{ value: 'all', label: 'All months', fullLabel: 'All months' }].concat(
+    Array.from({ length: 12 }, (_, offset) => {
+      const date = new Date(DB2_PIPELINE_FY_START, 3 + offset, 1);
+      return {
+        value: date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0'),
+        label: date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }),
+        fullLabel: date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+      };
+    })
+  );
+  const DB2_PIPELINE_PRIOR_FY = {
+    value: 198400,
+    committed: 136000,
+    achieved: 264800,
+    target: 450000,
+    difference: -185200
+  };
+  let db2PipelineSelection = activePipelineId;
+  let db2PipelinePeriodValue = 'all';
+
   if (db2Dashboard) {
-    db2ComparisonValues.forEach(([selector, label]) => {
-      const target = db2Dashboard.querySelector(selector);
+    db2FunnelComparisonTargets.forEach(key => {
+      const target = db2Dashboard.querySelector('[data-db2-funnel-value="' + key + '"]');
       if (!target) return;
       const delta = document.createElement('em');
       delta.className = 'db2-compare-delta';
-      delta.textContent = label;
+      delta.dataset.db2FunnelComparison = key;
+      target.insertAdjacentElement('afterend', delta);
+    });
+    db2PipelineComparisonTargets.forEach(key => {
+      const target = db2Dashboard.querySelector('[data-db2-pipeline-kpi="' + key + '"]');
+      if (!target) return;
+      const delta = document.createElement('em');
+      delta.className = 'db2-compare-delta';
+      delta.dataset.db2PipelineComparison = key;
       target.insertAdjacentElement('afterend', delta);
     });
   }
+
+  function db2PipelineMoney(value) {
+    if (!Number.isFinite(value)) return '—';
+    const rounded = Math.round(value);
+    return (rounded < 0 ? '−' : '') + '£' + Math.abs(rounded).toLocaleString('en-GB');
+  }
+
+  function db2PipelineDealCount(count, label) {
+    return count + ' ' + label + ' ' + (count === 1 ? 'Deal' : 'Deals');
+  }
+
+  function db2PipelineDate(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+    const date = new Date(raw + (/^\d{4}-\d{2}-\d{2}$/.test(raw) ? 'T12:00:00' : ''));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function db2PipelineColour(value) {
+    return /^#[0-9a-f]{3,8}$/i.test(String(value || '')) ? value : '#8294BA';
+  }
+
+  function db2PipelineDeals(pipeline) {
+    if (!pipeline) return [];
+    return pipeline.id === activePipelineId ? CRM_DEALS : (pipeline.deals || []);
+  }
+
+  function db2PipelineRows(pipeline) {
+    const deals = db2PipelineDeals(pipeline).filter(deal => !deal.archived);
+    if (pipeline.id === 'sales-pipeline') {
+      return Object.entries(CRM_COMMIT_DATA).map(([title, meta]) => {
+        const deal = deals.find(item => item.t === title);
+        if (!deal) return null;
+        const stage = (pipeline.stages || [])[deal.s] || {};
+        const outcome = meta.won || meta.category === 'won' ? 'won' : (meta.category === 'lost' ? 'lost' : '');
+        const close = ddDealExpectedCloseRaw(deal) || meta.close || '';
+        return {
+          deal,
+          value: Number(meta.value) || Number(deal.v) || 0,
+          category: meta.category,
+          outcome,
+          stageName: meta.stage || stage.name || 'Unassigned',
+          stageColour: db2PipelineColour(meta.color || stage.color),
+          stageOrder: Math.max(0, (pipeline.stages || []).findIndex(item => item.name === (meta.stage || stage.name))),
+          date: outcome === 'won' ? (db2PipelineDate(deal.wonAt) || db2PipelineDate(close)) : db2PipelineDate(close)
+        };
+      }).filter(Boolean);
+    }
+    return deals.map(deal => {
+      const stage = (pipeline.stages || [])[deal.s] || {};
+      const category = String(deal.forecastCategory || '').toLowerCase() ||
+        (stage.outcome === 'won' ? 'won' : (deal.committed || (+stage.probability || 0) >= 75 ? 'commit' : 'best'));
+      const close = ddDealExpectedCloseRaw(deal);
+      return {
+        deal,
+        value: Number(deal.v) || 0,
+        category,
+        outcome: stage.outcome || (category === 'won' ? 'won' : ''),
+        stageName: stage.name || 'Unassigned',
+        stageColour: db2PipelineColour(stage.color),
+        stageOrder: Number.isInteger(deal.s) ? deal.s : 999,
+        date: stage.outcome === 'won' ? (db2PipelineDate(deal.wonAt) || db2PipelineDate(close)) : db2PipelineDate(close)
+      };
+    });
+  }
+
+  function db2PipelineMatchesPeriod(row, period) {
+    if (period === 'all') {
+      if (!row.date) return true;
+      const start = new Date(DB2_PIPELINE_FY_START, 3, 1);
+      const end = new Date(DB2_PIPELINE_FY_START + 1, 3, 1);
+      return row.date >= start && row.date < end;
+    }
+    return Boolean(row.date) && row.date.getFullYear() + '-' + String(row.date.getMonth() + 1).padStart(2, '0') === period;
+  }
+
+  function db2PipelineTarget(pipeline, period) {
+    if (!pipeline) return null;
+    if (period === 'all') {
+      const configured = Number(pipeline.fyTarget == null ? pipeline.target : pipeline.fyTarget);
+      if (Number.isFinite(configured) && configured >= 0) return configured;
+      return pipeline.id === 'sales-pipeline' ? CRM_V2_TARGET : null;
+    }
+    const monthlyTargets = pipeline.monthlyTargets || pipeline.fyMonthlyTargets || {};
+    const configured = Number(monthlyTargets[period]);
+    return Number.isFinite(configured) && configured >= 0 ? configured : null;
+  }
+
+  function syncDb2PipelineFilters() {
+    if (db2PipelineFilter) {
+      const preferred = db2PipelineSelection;
+      db2PipelineFilter.replaceChildren(...CRM_PIPELINES.map(pipeline => new Option(pipeline.name, pipeline.id)));
+      db2PipelineSelection = CRM_PIPELINES.some(pipeline => pipeline.id === preferred)
+        ? preferred
+        : (CRM_PIPELINES.some(pipeline => pipeline.id === activePipelineId) ? activePipelineId : ((CRM_PIPELINES[0] || {}).id || ''));
+      db2PipelineFilter.value = db2PipelineSelection;
+    }
+    if (db2PipelinePeriod) {
+      if (!db2PipelinePeriod.options.length) {
+        db2PipelinePeriod.replaceChildren(...DB2_PIPELINE_PERIODS.map(period => new Option(period.label, period.value)));
+      }
+      if (!DB2_PIPELINE_PERIODS.some(period => period.value === db2PipelinePeriodValue)) db2PipelinePeriodValue = 'all';
+      db2PipelinePeriod.value = db2PipelinePeriodValue;
+    }
+  }
+
+  function db2PipelineComparisonText(key, current, period) {
+    const periodDef = DB2_PIPELINE_PERIODS.find(item => item.value === period) || DB2_PIPELINE_PERIODS[0];
+    if (db2PipelineSelection !== 'sales-pipeline' || period !== 'all') {
+      const previousLabel = period === 'all'
+        ? 'FY 2025'
+        : periodDef.fullLabel.replace(/(\d{4})$/, year => String(Number(year) - 1));
+      return previousLabel + ': No prior-year data';
+    }
+    const previous = DB2_PIPELINE_PRIOR_FY[key];
+    if (key === 'target') return 'FY 2025 target: ' + db2PipelineMoney(previous);
+    if (key === 'difference') return 'FY 2025: ' + db2PipelineMoney(previous);
+    const change = previous ? (current - previous) / previous * 100 : 0;
+    return 'FY 2025: ' + db2PipelineMoney(previous) + ' · ' + (change > 0 ? '+' : change < 0 ? '−' : '') + Math.abs(change).toFixed(1) + '%';
+  }
+
+  function renderDb2ComparisonBannerCopy(funnelData) {
+    if (!db2ComparisonBanner) return;
+    const summary = db2ComparisonBanner.querySelector('span');
+    const note = db2ComparisonBanner.querySelector('small');
+    if (db2FunnelPeriod === 'month' && db2PipelinePeriodValue === 'all') {
+      if (summary) summary.innerHTML = '<i class="fai">&#xf080;</i> Comparing <b>' + funnelData.fullLabel + '</b> with <b>' + funnelData.fullLabel.replace('2026', '2025') + '</b> for CRM Funnel';
+      if (note) note.textContent = 'Other dashboard figures compare FY 2026 with FY 2025.';
+    } else if (db2FunnelPeriod === 'month' || db2PipelinePeriodValue !== 'all') {
+      if (summary) summary.innerHTML = '<i class="fai">&#xf080;</i> Comparing each selected period with its <b>prior-year period</b>';
+      if (note) note.textContent = 'Each card keeps its own period selection; unavailable prior-year data is labelled.';
+    } else {
+      if (summary) summary.innerHTML = '<i class="fai">&#xf080;</i> Comparing <b>FY 2026</b> with <b>FY 2025</b>';
+      if (note) note.textContent = 'Comparison values appear below the current figures.';
+    }
+  }
+
+  function renderDb2PipelineOverview() {
+    if (!db2PipelineCard) return;
+    syncDb2PipelineFilters();
+    const pipeline = CRM_PIPELINES.find(item => item.id === db2PipelineSelection) || CRM_PIPELINES[0];
+    if (!pipeline) return;
+    const period = db2PipelinePeriodValue;
+    const periodDef = DB2_PIPELINE_PERIODS.find(item => item.value === period) || DB2_PIPELINE_PERIODS[0];
+    const rows = db2PipelineRows(pipeline).filter(row => db2PipelineMatchesPeriod(row, period));
+    const open = rows.filter(row => !row.outcome);
+    const committed = open.filter(row => row.category === 'commit' || row.deal.committed === true);
+    const won = rows.filter(row => row.outcome === 'won');
+    const openValue = open.reduce((sum, row) => sum + row.value, 0);
+    const committedValue = committed.reduce((sum, row) => sum + row.value, 0);
+    const achievedValue = won.reduce((sum, row) => sum + row.value, 0);
+    const targetValue = db2PipelineTarget(pipeline, period);
+    const differenceValue = Number.isFinite(targetValue) ? achievedValue - targetValue : null;
+    const values = { value: openValue, committed: committedValue, achieved: achievedValue, target: targetValue, difference: differenceValue };
+    const notes = {
+      value: db2PipelineDealCount(open.length, 'open'),
+      committed: db2PipelineDealCount(committed.length, 'committed'),
+      achieved: db2PipelineDealCount(won.length, 'Won'),
+      target: period === 'all' ? (Number.isFinite(targetValue) ? 'FY 2026' : 'No FY target set') : (Number.isFinite(targetValue) ? periodDef.label : 'No monthly target set'),
+      difference: Number.isFinite(differenceValue) ? 'Achieved minus target' : 'Target required'
+    };
+    Object.keys(values).forEach(key => {
+      const value = db2PipelineCard.querySelector('[data-db2-pipeline-kpi="' + key + '"]');
+      const note = db2PipelineCard.querySelector('[data-db2-pipeline-note="' + key + '"]');
+      if (value) value.textContent = db2PipelineMoney(values[key]);
+      if (note) note.textContent = notes[key];
+    });
+    const difference = db2PipelineCard.querySelector('[data-db2-pipeline-kpi="difference"]');
+    if (difference) {
+      difference.classList.toggle('red', Number.isFinite(differenceValue) && differenceValue < 0);
+      difference.classList.toggle('green', Number.isFinite(differenceValue) && differenceValue >= 0);
+    }
+
+    const unscheduled = rows.filter(row => !row.date).length;
+    const context = document.getElementById('db2PipelineContext');
+    if (context) context.textContent = period === 'all'
+      ? 'Expected close / won date · FY 2026' + (unscheduled ? ' · ' + unscheduled + ' unscheduled included' : '')
+      : periodDef.fullLabel + ' · expected close / won date';
+    const stageTitle = document.getElementById('db2PipelineStageTitle');
+    if (stageTitle) stageTitle.textContent = 'Open pipeline by Stage · ' + periodDef.label;
+
+    const groupsByName = new Map();
+    open.forEach(row => {
+      if (!groupsByName.has(row.stageName)) groupsByName.set(row.stageName, { name: row.stageName, colour: row.stageColour, order: row.stageOrder, rows: [], value: 0 });
+      const group = groupsByName.get(row.stageName);
+      group.rows.push(row);
+      group.value += row.value;
+    });
+    const groups = [...groupsByName.values()].sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    const stageBar = document.getElementById('db2PipelineStageBar');
+    const stageLegend = document.getElementById('db2PipelineStageLegend');
+    const stageEmpty = document.getElementById('db2PipelineStageEmpty');
+    if (stageBar) {
+      stageBar.innerHTML = groups.map(group => {
+        const percent = openValue ? group.value / openValue * 100 : 0;
+        return '<i style="width:' + percent.toFixed(2) + '%;background:' + group.colour + '" title="' + archiveEscape(group.name + ': ' + db2PipelineMoney(group.value)) + '"></i>';
+      }).join('');
+      stageBar.hidden = groups.length === 0;
+    }
+    if (stageLegend) {
+      stageLegend.innerHTML = groups.map(group => {
+        const percent = openValue ? group.value / openValue * 100 : 0;
+        return '<div><i style="background:' + group.colour + '"></i><span>' + archiveEscape(group.name) + '</span><strong>' + group.rows.length + ' ' + (group.rows.length === 1 ? 'Deal' : 'Deals') + ' · ' + db2PipelineMoney(group.value) + '</strong><small>' + percent.toFixed(1) + '%</small></div>';
+      }).join('');
+      stageLegend.hidden = groups.length === 0;
+    }
+    if (stageEmpty) {
+      stageEmpty.textContent = period === 'all'
+        ? 'No open Deals in ' + pipeline.name + ' for FY 2026.'
+        : 'No open Deals expected to close in ' + periodDef.fullLabel + '.';
+      stageEmpty.hidden = groups.length !== 0;
+    }
+
+    db2PipelineCard.querySelectorAll('[data-db2-pipeline-comparison]').forEach(delta => {
+      const key = delta.dataset.db2PipelineComparison;
+      delta.textContent = db2PipelineComparisonText(key, values[key], period);
+      delta.classList.toggle('neutral', db2PipelineSelection !== 'sales-pipeline' || period !== 'all');
+    });
+    const selectedFunnelMonth = DB2_FUNNEL_MONTH_DATA.find(item => item.value === (db2FunnelMonth && db2FunnelMonth.value)) || DB2_FUNNEL_MONTH_DATA[DB2_FUNNEL_MONTH_DATA.length - 1];
+    renderDb2ComparisonBannerCopy(db2FunnelPeriod === 'month' ? selectedFunnelMonth : DB2_FUNNEL_FY_DATA);
+  }
+
+  if (db2PipelineFilter) db2PipelineFilter.addEventListener('change', () => {
+    db2PipelineSelection = db2PipelineFilter.value;
+    renderDb2PipelineOverview();
+  });
+  if (db2PipelinePeriod) db2PipelinePeriod.addEventListener('change', () => {
+    db2PipelinePeriodValue = db2PipelinePeriod.value;
+    renderDb2PipelineOverview();
+  });
+  renderDb2PipelineOverview();
+
+  function renderDb2Funnel() {
+    if (!db2FunnelCard) return;
+    const selectedMonth = DB2_FUNNEL_MONTH_DATA.find(item => item.value === (db2FunnelMonth && db2FunnelMonth.value)) || DB2_FUNNEL_MONTH_DATA[DB2_FUNNEL_MONTH_DATA.length - 1];
+    const data = db2FunnelPeriod === 'month' ? selectedMonth : DB2_FUNNEL_FY_DATA;
+    const currentRates = db2FunnelRates(data.current);
+    const comparisonRates = db2FunnelRates(data.comparison);
+    ['leads', 'deals', 'quotes', 'won'].forEach(key => {
+      const target = db2FunnelCard.querySelector('[data-db2-funnel-value="' + key + '"]');
+      if (target) target.textContent = data.current[key];
+    });
+    const conversion = db2FunnelCard.querySelector('[data-db2-funnel-value="conversion"]');
+    if (conversion) conversion.textContent = db2FunnelPercent(currentRates.conversion);
+    Object.keys(currentRates).filter(key => key !== 'conversion').forEach(key => {
+      const target = db2FunnelCard.querySelector('[data-db2-funnel-rate="' + key + '"]');
+      if (target) target.textContent = db2FunnelPercent(currentRates[key]);
+    });
+    if (db2FunnelPeriodLabel) db2FunnelPeriodLabel.textContent = (data.fullLabel || data.label) + ' · Lead cohort';
+    if (db2FunnelMonthWrap) db2FunnelMonthWrap.hidden = db2FunnelPeriod !== 'month';
+    db2FunnelCard.classList.toggle('is-month-view', db2FunnelPeriod === 'month');
+    document.querySelectorAll('[data-db2-funnel-period]').forEach(button => {
+      const active = button.dataset.db2FunnelPeriod === db2FunnelPeriod;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    db2FunnelCard.querySelectorAll('[data-db2-funnel-comparison]').forEach(delta => {
+      const key = delta.dataset.db2FunnelComparison;
+      const percentagePoints = key === 'conversion';
+      const current = percentagePoints ? currentRates.conversion : data.current[key];
+      const comparison = percentagePoints ? comparisonRates.conversion : data.comparison[key];
+      delta.textContent = db2FunnelComparisonText(data.comparisonLabel, current, comparison, percentagePoints);
+      delta.classList.toggle('negative', current < comparison);
+      delta.classList.toggle('neutral', current === comparison);
+    });
+    renderDb2ComparisonBannerCopy(data);
+  }
+
+  if (db2FunnelMonth) {
+    DB2_FUNNEL_MONTH_DATA.forEach(item => db2FunnelMonth.add(new Option(item.label, item.value)));
+    db2FunnelMonth.value = DB2_FUNNEL_MONTH_DATA[DB2_FUNNEL_MONTH_DATA.length - 1].value;
+    db2FunnelMonth.addEventListener('change', renderDb2Funnel);
+  }
+  document.querySelectorAll('[data-db2-funnel-period]').forEach(button => button.addEventListener('click', () => {
+    db2FunnelPeriod = button.dataset.db2FunnelPeriod === 'month' ? 'month' : 'fy';
+    renderDb2Funnel();
+  }));
+  renderDb2Funnel();
+
   if (db2CompareButton && db2Dashboard && db2ComparisonBanner) {
     db2CompareButton.addEventListener('click', () => {
       const active = !db2Dashboard.classList.contains('comparison-on');
@@ -13563,6 +14125,316 @@
     return true;
   };
 
+  // ---------- CRM Dashboard: combined Deal + Lead history activity ----------
+  let crmDashboardSection = 'overview';
+  let crmDashboardActivityFilter = 'all';
+
+  function crmDashboardPlainText(value) {
+    const template = document.createElement('template');
+    template.innerHTML = String(value || '');
+    return (template.content.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function crmDashboardWorkflowLabel(workflowKey, snapshotTitle) {
+    if (snapshotTitle) return snapshotTitle;
+    const workflows = window.WeQuoteAutomation && window.WeQuoteAutomation.workflows;
+    const config = workflowKey && workflows ? workflows[workflowKey] : null;
+    if (config && config.title) return config.title;
+    return String(workflowKey || '').split(/[-_]+/).filter(Boolean)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  }
+
+  function crmDashboardActivityMeta(item, fallbackActor) {
+    const value = item || {};
+    const workflowKey = value.automationWorkflow || value.workflow || value.workflowKey || '';
+    let declaredActor = value.author || value.createdBy || value.uploadedBy || value.linkedBy || fallbackActor || 'System';
+    if (/^System(?:\s*[·|—-]|$)/i.test(String(declaredActor))) declaredActor = 'System';
+    const automated = String(value.source || '').toLowerCase() === 'automation' || Boolean(workflowKey) ||
+      declaredActor === 'Automation' || value.actionType === 'automation' || /^proposal-automation-/.test(String(value.id || ''));
+    return {
+      source: automated ? 'automation' : (String(value.source || '').toLowerCase() || 'manual'),
+      actor: automated ? 'Automation' : declaredActor,
+      workflowKey: workflowKey,
+      workflow: automated ? crmDashboardWorkflowLabel(workflowKey, value.workflowTitle) : ''
+    };
+  }
+
+  function crmDashboardAutomationEventLabel(eventName) {
+    return String(eventName || 'automation.completed').split('.').map((part, index) =>
+      index === 0 ? part.charAt(0).toUpperCase() + part.slice(1) : part
+    ).join(' ');
+  }
+
+  function crmDashboardActorHtml(item) {
+    const actor = item.actor || item.owner || 'System';
+    const automated = item.source === 'automation' || actor === 'Automation';
+    const initials = automated ? '&#xf0e7;' : archiveEscape(String(actor).split(/\s+/).map(word => word[0]).join('').slice(0, 2).toUpperCase());
+    return '<span class="crmdb-activity-owner' + (automated ? ' automation' : '') + '"><i' + (automated ? ' class="fai"' : '') + '>' + initials + '</i><span><b>' + archiveEscape(actor) + '</b>' +
+      (item.workflow ? '<small>' + archiveEscape(item.workflow) + '</small>' : '') + '</span></span>';
+  }
+
+  function crmDashboardActivityEvents() {
+    const dealEvents = [];
+    const leadEvents = [];
+    const add = (collection, event) => {
+      const timestamp = Date.parse(event.at);
+      if (!Number.isFinite(timestamp)) return;
+      collection.push({ ...event, timestamp });
+    };
+
+    CRM_DEALS.forEach((deal, recordIndex) => {
+      const stage = CRM_STAGE_DEFS[deal.s] || { name: 'Unknown Stage' };
+      const base = {
+        recordType: 'deal', recordIndex, record: deal.t,
+        owner: crmTableOwnerName(deal), stage: stage.name
+      };
+
+      (deal.meetings || []).forEach(meeting => add(dealEvents, {
+        ...base, eventType: 'meeting', targetKind: 'meeting', targetId: meeting.id,
+        at: meeting.createdAt || meeting.updatedAt || (meeting.date && meeting.time ? meeting.date + 'T' + meeting.time + ':00' : ''),
+        title: (meeting.title || 'Meeting') + ' scheduled',
+        summary: [stage.name, meeting.providerLabel || meeting.provider, deal.c].filter(Boolean).join(' · '),
+        ...crmDashboardActivityMeta(meeting, meeting.createdBy || meeting.owner || base.owner)
+      }));
+      (deal.notes || []).filter(note => !note.deletedAt).forEach(note => add(dealEvents, {
+        ...base, eventType: 'note', targetKind: 'note', targetId: note.id,
+        at: note.createdAt, title: 'Note added · ' + (note.title || 'Untitled note'),
+        summary: crmDashboardPlainText(note.bodyHtml || note.body) || stage.name,
+        ...crmDashboardActivityMeta(note, note.author || base.owner)
+      }));
+      (deal.files || []).forEach(file => add(dealEvents, {
+        ...base, eventType: 'file', at: file.uploadedAt || file.createdAt,
+        title: 'File uploaded', summary: file.name || stage.name,
+        ...crmDashboardActivityMeta(file, file.uploadedBy || file.author || base.owner)
+      }));
+      (deal.emails || []).forEach(email => add(dealEvents, {
+        ...base, eventType: 'email', at: email.createdAt,
+        title: email.subject || 'Email sent', summary: stage.name + (deal.c ? ' · ' + deal.c : ''),
+        ...crmDashboardActivityMeta(email, email.author || base.owner)
+      }));
+      (deal.actionHistory || []).forEach(action => add(dealEvents, {
+        ...base, eventType: 'action', at: action.createdAt,
+        title: action.title || 'Deal action updated', summary: stage.name + (deal.c ? ' · ' + deal.c : ''),
+        ...crmDashboardActivityMeta(action, action.author || base.owner)
+      }));
+      (deal.quoteActivity || []).forEach(activity => add(dealEvents, {
+        ...base, eventType: 'quote', at: activity.createdAt,
+        title: activity.title || 'Quote activity', summary: activity.quoteNo ? 'Quote #' + activity.quoteNo + ' · ' + stage.name : stage.name,
+        ...crmDashboardActivityMeta(activity, activity.author || base.owner)
+      }));
+      if (deal.archivedAt) add(dealEvents, {
+        ...base, eventType: 'archived', at: deal.archivedAt,
+        title: 'Deal archived', summary: (deal.archivedFromStage || stage.name) + ' · ' + (deal.c || 'No customer'),
+        ...crmDashboardActivityMeta({ author: deal.archivedBy }, deal.archivedBy || base.owner)
+      });
+    });
+
+    CRM_LEADS.forEach((lead, recordIndex) => {
+      const base = {
+        recordType: 'lead', recordIndex, record: lead.title,
+        owner: ownerDisplay(lead.owner), stage: LEAD_STATUS_LABEL[lead.status] || lead.status || 'Lead'
+      };
+      (lead.notes || []).forEach(note => add(leadEvents, {
+        ...base, eventType: 'note', targetKind: 'note', targetId: note.id,
+        at: note.createdAt, title: 'Note added · ' + (note.title || 'Untitled note'),
+        summary: crmDashboardPlainText(note.bodyHtml || note.body) || base.stage,
+        ...crmDashboardActivityMeta(note, note.author || base.owner)
+      }));
+      (lead.activities || []).forEach(activity => add(leadEvents, {
+        ...base, eventType: activity.type === 'meeting' ? 'meeting' : 'activity', targetKind: 'activity', targetId: activity.id,
+        at: activity.createdAt || activity.dueAt,
+        title: (activity.title || leadActivityTypeLabel(activity.type)) + (activity.status === 'completed' ? ' completed' : ' added'),
+        summary: leadActivityTypeLabel(activity.type) + ' · ' + base.stage,
+        ...crmDashboardActivityMeta(activity, activity.createdBy || activity.owner || base.owner)
+      }));
+      (lead.files || []).forEach(file => add(leadEvents, {
+        ...base, eventType: 'file', at: file.createdAt,
+        title: 'File uploaded', summary: file.name || base.stage,
+        ...crmDashboardActivityMeta(file, file.author || file.owner || base.owner)
+      }));
+      add(leadEvents, {
+        ...base, eventType: 'created', at: lead.createdAt || lead.created,
+        title: 'Lead created', summary: [lead.source, lead.org || lead.contact].filter(Boolean).join(' · '),
+        ...crmDashboardActivityMeta(lead, lead.createdBy || base.owner)
+      });
+    });
+
+    const automationRuns = window.WeQuoteAutomation && typeof window.WeQuoteAutomation.recentRuns === 'function'
+      ? window.WeQuoteAutomation.recentRuns() : [];
+    automationRuns.forEach(run => {
+      const dealIndex = run.recordType !== 'lead' ? CRM_DEALS.findIndex(deal => deal.t === run.record) : -1;
+      const leadIndex = dealIndex < 0 ? CRM_LEADS.findIndex(lead => lead.title === run.record) : -1;
+      if (dealIndex < 0 && leadIndex < 0) return;
+      const collection = dealIndex >= 0 ? dealEvents : leadEvents;
+      const record = dealIndex >= 0 ? CRM_DEALS[dealIndex] : CRM_LEADS[leadIndex];
+      const stage = dealIndex >= 0
+        ? ((CRM_STAGE_DEFS[record.s] || {}).name || 'Deal')
+        : (LEAD_STATUS_LABEL[record.status] || record.status || 'Lead');
+      const timestamp = Date.parse(run.createdAt);
+      if (!Number.isFinite(timestamp)) return;
+      const workflow = crmDashboardWorkflowLabel(run.workflow, run.workflowTitle);
+      const matchingEvents = collection.filter(item => item.record === run.record && item.source === 'automation' && Math.abs(item.timestamp - timestamp) <= 5000);
+      if (matchingEvents.length) {
+        matchingEvents.forEach(item => {
+          if (!item.workflowKey) item.workflowKey = run.workflow || '';
+          if (!item.workflow) item.workflow = workflow;
+        });
+        return;
+      }
+      add(collection, {
+        recordType: dealIndex >= 0 ? 'deal' : 'lead',
+        recordIndex: dealIndex >= 0 ? dealIndex : leadIndex,
+        record: run.record, owner: dealIndex >= 0 ? crmTableOwnerName(record) : ownerDisplay(record.owner), stage,
+        eventType: 'automation', at: run.createdAt,
+        title: run.message || 'Automation completed',
+        summary: 'Triggered by ' + crmDashboardAutomationEventLabel(run.event),
+        source: 'automation', actor: 'Automation', workflowKey: run.workflow || '', workflow
+      });
+    });
+
+    return dealEvents.concat(leadEvents).sort((a, b) => b.timestamp - a.timestamp);
+  }
+
+  function crmDashboardWhen(timestamp) {
+    const diff = Math.max(0, Date.now() - timestamp);
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return Math.floor(diff / 60000) + ' min ago';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + ' hr ago';
+    const days = Math.floor(diff / 86400000);
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return days + ' days ago';
+    return new Date(timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function crmDashboardExactTime(timestamp) {
+    return new Date(timestamp).toLocaleString('en-GB', {
+      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  function crmDashboardOpenActivity(event) {
+    const button = event.target.closest('[data-crmdb-record]');
+    if (!button) return;
+    const recordIndex = Number(button.dataset.recordIndex);
+    const targetKind = button.dataset.targetKind || '';
+    const targetId = button.dataset.targetId || '';
+    if (button.dataset.recordType === 'lead') {
+      if (!CRM_LEADS[recordIndex]) return;
+      showView('leads');
+      requestAnimationFrame(() => {
+        openLeadPanel(recordIndex);
+        if (targetKind === 'note' || targetKind === 'activity') {
+          window.setTimeout(() => viewLeadHistoryItem(targetKind, targetId), 50);
+        }
+      });
+      return;
+    }
+    const deal = CRM_DEALS[recordIndex];
+    if (!deal) return;
+    openDealPage(deal, findPipelineCardForDeal(deal));
+    if (targetKind === 'meeting') window.setTimeout(() => viewMeetingHistory(targetId), 60);
+    if (targetKind === 'note') window.setTimeout(() => viewNoteHistory(targetId), 60);
+  }
+
+  function renderCrmDashboardActivity() {
+    const body = document.getElementById('crmDashboardActivityBody');
+    const empty = document.getElementById('crmDashboardActivityEmpty');
+    const count = document.getElementById('crmDashboardActivityCount');
+    if (!body || !empty || !count) return;
+    const events = crmDashboardActivityEvents();
+    const matching = crmDashboardActivityFilter === 'all'
+      ? events
+      : events.filter(item => item.recordType === crmDashboardActivityFilter);
+    let visible;
+    if (crmDashboardActivityFilter === 'all') {
+      const latestDeals = events.filter(item => item.recordType === 'deal').slice(0, 6);
+      const latestLeads = events.filter(item => item.recordType === 'lead').slice(0, 6);
+      visible = latestDeals.concat(latestLeads).sort((a, b) => b.timestamp - a.timestamp).slice(0, 12);
+    } else {
+      visible = matching.slice(0, 12);
+    }
+    const icons = {
+      activity: '&#xf1da;', action: '&#xf058;', archived: '&#xf187;', created: '&#xf055;',
+      automation: '&#xf0e7;', email: '&#xf0e0;', file: '&#xf15b;', meeting: '&#xf073;', note: '&#xf249;', quote: '&#xf570;'
+    };
+    const preview = document.getElementById('crmDashboardActivityPreview');
+    const previewEmpty = document.getElementById('crmDashboardActivityPreviewEmpty');
+    const previewItems = events.filter(item => item.recordType === 'deal').slice(0, 2)
+      .concat(events.filter(item => item.recordType === 'lead').slice(0, 2))
+      .sort((a, b) => b.timestamp - a.timestamp);
+    if (preview && previewEmpty) {
+      preview.innerHTML = previewItems.map(item =>
+        '<button class="crmdb-preview-item" type="button" data-crmdb-record data-record-type="' + item.recordType + '" data-record-index="' + item.recordIndex + '" data-target-kind="' + archiveEscape(item.targetKind || '') + '" data-target-id="' + archiveEscape(item.targetId == null ? '' : item.targetId) + '">' +
+          '<time class="crmdb-preview-when"><b>' + archiveEscape(crmDashboardWhen(item.timestamp)) + '</b><small>' + archiveEscape(crmDashboardExactTime(item.timestamp)) + '</small></time>' +
+          '<span class="crmdb-record-type ' + item.recordType + '">' + (item.recordType === 'deal' ? 'Deal' : 'Lead') + '</span>' +
+          '<span class="crmdb-preview-copy"><b>' + (item.source === 'automation' ? '<i class="fai crmdb-preview-automation" aria-hidden="true">&#xf0e7;</i>' : '') + archiveEscape(item.title) + '</b><small>' + archiveEscape([item.record, item.stage, item.workflow ? 'Automation: ' + item.workflow : ''].filter(Boolean).join(' · ')) + '</small></span>' +
+          '<i class="fai">&#xf054;</i>' +
+        '</button>'
+      ).join('');
+      preview.hidden = previewItems.length === 0;
+      previewEmpty.hidden = previewItems.length !== 0;
+    }
+    body.innerHTML = visible.map(item =>
+      '<tr>' +
+        '<td><time class="crmdb-activity-when">' + archiveEscape(crmDashboardWhen(item.timestamp)) + '</time><small>' + archiveEscape(crmDashboardExactTime(item.timestamp)) + '</small></td>' +
+        '<td><span class="crmdb-record-type ' + item.recordType + '">' + (item.recordType === 'deal' ? 'Deal' : 'Lead') + '</span></td>' +
+        '<td><button class="crmdb-activity-detail" type="button" data-crmdb-record data-record-type="' + item.recordType + '" data-record-index="' + item.recordIndex + '" data-target-kind="' + archiveEscape(item.targetKind || '') + '" data-target-id="' + archiveEscape(item.targetId == null ? '' : item.targetId) + '"><span class="crmdb-activity-icon ' + item.eventType + '"><i class="fai">' + (icons[item.eventType] || icons.activity) + '</i></span><span><b>' + archiveEscape(item.title) + '</b><small>' + archiveEscape([item.summary || item.stage, item.source === 'automation' && item.workflow ? 'Automation: ' + item.workflow : ''].filter(Boolean).join(' · ')) + '</small></span></button></td>' +
+        '<td><button class="crmdb-record-link" type="button" data-crmdb-record data-record-type="' + item.recordType + '" data-record-index="' + item.recordIndex + '" data-target-kind="' + archiveEscape(item.targetKind || '') + '" data-target-id="' + archiveEscape(item.targetId == null ? '' : item.targetId) + '">' + archiveEscape(item.record) + '<small>' + archiveEscape(item.stage) + '</small></button></td>' +
+        '<td>' + crmDashboardActorHtml(item) + '</td>' +
+      '</tr>'
+    ).join('');
+    body.hidden = visible.length === 0;
+    empty.hidden = visible.length !== 0;
+    count.textContent = visible.length + (visible.length === 1 ? ' recent event' : ' recent events');
+    document.querySelectorAll('[data-crmdb-filter]').forEach(button => {
+      const active = button.dataset.crmdbFilter === crmDashboardActivityFilter;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function setCrmDashboardSection(section, options) {
+    crmDashboardSection = section === 'history' ? 'history' : 'overview';
+    const dashboard = document.querySelector('.db2-dashboard');
+    if (!dashboard) return;
+    const showingHistory = crmDashboardSection === 'history';
+    dashboard.classList.toggle('history-mode', showingHistory);
+    document.querySelectorAll('[data-crmdb-section]').forEach(button => {
+      const active = button.dataset.crmdbSection === crmDashboardSection;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    renderCrmDashboardActivity();
+    if (!showingHistory) renderDb2PipelineOverview();
+    const view = document.getElementById('crmForecastV2View');
+    if (view && (!options || options.scroll !== false)) view.scrollTop = 0;
+  }
+
+  document.querySelectorAll('[data-crmdb-section]').forEach(button => {
+    button.addEventListener('click', () => setCrmDashboardSection(button.dataset.crmdbSection));
+  });
+  document.querySelectorAll('[data-crmdb-open-history]').forEach(button => {
+    button.addEventListener('click', () => setCrmDashboardSection('history'));
+  });
+  setCrmDashboardSection('overview', { scroll: false });
+
+  document.querySelectorAll('[data-crmdb-filter]').forEach(button => {
+    button.addEventListener('click', () => {
+      crmDashboardActivityFilter = ['all', 'deal', 'lead'].includes(button.dataset.crmdbFilter) ? button.dataset.crmdbFilter : 'all';
+      renderCrmDashboardActivity();
+    });
+  });
+  const crmDashboardActivityBody = document.getElementById('crmDashboardActivityBody');
+  if (crmDashboardActivityBody) crmDashboardActivityBody.addEventListener('click', crmDashboardOpenActivity);
+  const crmDashboardActivityPreview = document.getElementById('crmDashboardActivityPreview');
+  if (crmDashboardActivityPreview) crmDashboardActivityPreview.addEventListener('click', crmDashboardOpenActivity);
+  document.addEventListener('wequote:attention-changed', () => {
+    if (currentView === 'crm-dashboard') renderCrmDashboardActivity();
+  });
+  document.addEventListener('wequote:automation-run', () => {
+    if (currentView === 'crm-dashboard') renderCrmDashboardActivity();
+  });
+
   function crmAttentionReopenEntry(entry) {
     if (!entry || !entry.source) return false;
     if (entry.kind === 'note-followup') {
@@ -14392,7 +15264,8 @@
     </tr>
   `).join("");
 
-  if (window.location.hash === '#crm') showView('crm');
+  if (window.location.hash === '#crm-dashboard') showView('crm-dashboard');
+  else if (window.location.hash === '#crm') showView('crm');
 
   // Sales by Salesperson rows — data from Figma frame 362:20252 (31 rows, clipped by card)
   const sp = [
