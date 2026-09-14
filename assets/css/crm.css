@@ -259,9 +259,9 @@
   }
   .sub-item:hover { background: var(--grey-100); }
   .sub-item.active {
-    background: #FFF1F4;
-    color: #D92349;
-    box-shadow: inset 2px 0 0 #F12B53;
+    background: rgba(151,169,208,.13);
+    color: #576A92;
+    box-shadow: none;
   }
   .sub-item .txt { flex: 1; }
 
